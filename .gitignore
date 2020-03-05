@@ -1,0 +1,12 @@
+# IDE
+.idea
+
+# macos file
+.DS_Store
+contracts/.DS_Store
+
+# client
+client/node_modules
+client/src/contracts
+
+
