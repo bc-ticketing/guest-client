@@ -1,4 +1,6 @@
 import SimpleStorage from './contracts/SimpleStorage.json'
+import EventFactory from './contracts/EventFactory.json'
+
 
 const options = {
   web3: {
@@ -8,7 +10,7 @@ const options = {
       url: 'ws://127.0.0.1:7545'
     }
   },
-  contracts: [SimpleStorage],
+  contracts: [SimpleStorage, EventFactory],
   events: {
     SimpleStorage: ['StorageSet']
   },

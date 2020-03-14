@@ -1,42 +1,21 @@
 <template>
-  <div v-if="isDrizzleInitialized" id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-
-    <div class="section">
-      <h2>Show the Accounts</h2>
-      <drizzle-account units="Ether" :precision="2" />
+  <div id="app">
+    <div id="nav">
+      <router-link to="/">Home</router-link> |
+      <router-link to="/event-hosting">Event Hosting</router-link> |
+      <router-link to="/identification">Identification</router-link> |
+      <router-link to="/lottery">Lottery</router-link> |
+      <router-link to="/wallet-funding">Wallet Funding</router-link> |
+      <router-link to="/simple-storage">Simple Storage</router-link>
     </div>
-
-    <div class="section">
-      <h2>Simple Storage</h2>
-      <SimpleStorage />
-    </div>
+    <router-view/>
   </div>
-
-  <div v-else>Loading...</div>
 </template>
 
 <script>
-import SimpleStorage from './views/SimpleStorage'
-import { mapGetters } from 'vuex'
 
 export default {
-  name: 'app',
-  components: {
-    SimpleStorage
-  },
-
-  computed: mapGetters('drizzle', ['isDrizzleInitialized'])
+  components:{
+  }
 }
 </script>
-
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
