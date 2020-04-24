@@ -1,5 +1,8 @@
 const bs58 = require("bs58");
 
+// Check out the link for IPFS hash conversion:
+// https://ipfs-sec.stackexchange.cloudflare-ipfs.com/ethereum/A/question/17094.html
+
 const EventFactory = artifacts.require("EventFactory");
 const Event = artifacts.require("Event");
 
@@ -25,7 +28,10 @@ contract("EventFactory", () => {
   });
 
   it("Smart contract deployment", async () => {
-    assert(eventFactory.address !== "");
+    assert.notEqual(
+      eventFactory.address !== "",
+      "The event address is not set correctly."
+    );
   });
 
   it("Create an Event with ipfs hash", async () => {
@@ -45,12 +51,40 @@ contract("EventFactory", () => {
     const calledHashFunction = calledMetadataMultihash.hashFunction.toNumber();
     const calledSize = calledMetadataMultihash.hashSize.toNumber();
 
-    console.log("metadata " + calledBytes);
     const loadedIPFSHash = getIpfsHashFromBytes32(
       calledBytes,
       calledHashFunction,
       calledSize
     );
-    assert(loadedIPFSHash === ipfsHash);
+    assert.equal(
+      loadedIPFSHash,
+      ipfsHash,
+      "The IPFS hash was not loaded correctly."
+    );
+  });
+
+  it("Get event array", async () => {
+    await eventFactory.createEvent(
+      "0x6162636400000000000000000000000000000000000000000000000000000000",
+      18,
+      32
+    );
+    await eventFactory.createEvent(
+      "0x6162636400000000000000000000000000000000000000000000000000000000",
+      18,
+      32
+    );
+    await eventFactory.createEvent(
+      "0x6162636400000000000000000000000000000000000000000000000000000000",
+      18,
+      32
+    );
+
+    const events = await eventFactory.getEvents();
+    assert.equal(
+      events.length,
+      4,
+      "The number of events added does not match."
+    );
   });
 });

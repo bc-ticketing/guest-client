@@ -23,4 +23,8 @@ contract EventFactory {
         events.push(address(newEvent));
         emit EventCreated(address(newEvent));
     }
+
+    function getEvents() public view returns (address[] memory) {
+        return events;
+    }
 }
