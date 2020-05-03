@@ -4,9 +4,11 @@ pragma experimental ABIEncoderV2; //allows returning a struct from a function
 import "./EventLibrary.sol";
 
 contract Event{
+    event IpfsCid(bytes1 hashFunction, bytes1 size, bytes32 digest);
+
     address payable owner;
     uint eventId;
-    EventLibrary.Multihash public metadataMultihash; // IPFS id, hash of JSON storing name, date, location, website
+    // EventLibrary.Multihash public metadataMultihash; // IPFS id, hash of JSON storing name, date, location, website
     uint fungibleTicketFactoryIndex;
     mapping (uint => EventLibrary.FungibleTicketFactory) fungibleTickets;
     uint nonFungibleTicketFactoryIndex;
@@ -15,16 +17,25 @@ contract Event{
     // TODO allowed different verification methods
     // TODO affiliate addressess
     
-    constructor(address payable _owner, bytes32 _hashBytes, uint8 _hashFunction, uint8 _hashSize) public{
+    constructor(address payable _owner,  bytes1 _hashFunction, bytes1 _size, bytes32 _digest) public{
         owner = _owner;
         fungibleTicketFactoryIndex = 0;
         nonFungibleTicketFactoryIndex = 0;
 
-        metadataMultihash = EventLibrary.Multihash({
-            hashBytes: _hashBytes,
-            hashFunction: _hashFunction,
-            hashSize: _hashSize
-        });
+        emit IpfsCid(
+             _hashFunction,
+             _size,
+             _digest
+        );
+    }
+    
+    function updateIpfsCid(bytes1 _hashFunction, bytes1 _size, bytes32 _digest) public {
+        //TODO only owner
+            emit IpfsCid(
+            _hashFunction,
+            _size,
+            _digest
+        );
     }
     
     function addFungibleTicketFactory(uint _ticketPrice, uint _numberTickets, string memory _metadataURI) public{

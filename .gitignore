@@ -5,8 +5,9 @@
 .DS_Store
 contracts/.DS_Store
 
-# client
-client/node_modules
-client/src/contracts
+# app
+app/node_modules
+app/src/contracts
 
-
+# truffle project
+node_modules

@@ -29,16 +29,17 @@
 - [Ganache](https://www.trufflesuite.com/ganache) to spin up a blockchain with funded test accounts and instant mining
 
 ## Project Setup
+
 ### Clone the Project
 
 ```bash
-git clone https://github.com/simibac/bc-ticketing
+git clone https://github.com/bc-ticketing/guest-client
 ```
 
-### Set up Client
+### Set up Vue.js app
 
 ```bash
-cd bc-ticketing/client/
+cd guest-client/app/
 npm install
 ```
 
@@ -51,7 +52,7 @@ sudo npm install -g truffle
 ### Setup Metamask
 
 1. Start a local blockchain by opening the `Ganache` application.
-2. Create a new workspace and add `bc-ticketing/truffle-config.js` to the project and safe the workspace.
+2. Create a new workspace and add `guest-client/truffle-config.js` to the project and safe the workspace.
 3. Copy the mnemonic phrase (12 word seed phrase) in the `Ganache` application.
 4. Open `Metamask` in your browser (Google Chrome recommended).
 5. Click on `import using account seed phrase` and paste the mnemonic seed phrase. (No funds are shown because Metamask is not connected to the local network yet.)
@@ -67,7 +68,7 @@ _everytime to run the environment_
 1. Pull the latest commits:
    ```bash
    # Terminal Tab #1
-   cd /path/to/bc-ticketing
+   cd /path/to/guest-client
    git pull
    ```
 2. Start local blockchain with by opening the `Ganache` application.
@@ -81,19 +82,18 @@ _everytime to run the environment_
    # Terminal Tab #1
    truffle migrate --reset
    ```
-4. Start the `Truffle` console:
+5. Start the `Truffle` console:
    ```bash
    # Terminal Tab #1
    truffle console
    ```
-5. Start the `Vue.js` client:
+6. Start the `Vue.js` app:
    ```bash
    # Terminal Tab #2
-   cd /path/to/bc-ticketing/client
+   cd /path/to/guest-client/app
    npm install
    npm run serve
    ```
-6. `localhost:8080` serves the application
+7. `localhost:8080` serves the application
 
 :warning: Make sure your Metamask is connected to the correct network! :warning:
-

@@ -3,9 +3,9 @@ pragma solidity >=0.4.22 <0.7.0;
 
 library EventLibrary {
     struct Multihash {
-        bytes32 hashBytes;
         uint8 hashFunction;
         uint8 hashSize;
+        bytes32 hashBytes;
     }
 
     // ********** Fungible Tickets **********

@@ -1,7 +1,6 @@
 pragma solidity >=0.4.22 <0.7.0;
 
 import "./Event.sol";
-import "./EventLibrary.sol";
 
 
 contract EventFactory {
@@ -9,17 +8,10 @@ contract EventFactory {
 
     event EventCreated(address _contractAddress);
 
-    function createEvent(
-        bytes32 _hashBytes,
-        uint8 _hashFunction,
-        uint8 _hashSize
-    ) public {
-        Event newEvent = new Event(
-            msg.sender,
-            _hashBytes,
-            _hashFunction,
-            _hashSize
-        );
+    function createEvent(bytes1 _hashFunction, bytes1 _size, bytes32 _digest)
+        public
+    {
+        Event newEvent = new Event(msg.sender, _hashFunction, _size, _digest);
         events.push(address(newEvent));
         emit EventCreated(address(newEvent));
     }

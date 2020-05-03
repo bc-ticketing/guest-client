@@ -1,5 +1,5 @@
 {
-  "name": "bc-ticketing",
+  "name": "bc-ticketing-guest-client",
   "version": "0.0.1",
   "private": true,
   "scripts": {
