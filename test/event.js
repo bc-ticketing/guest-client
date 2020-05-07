@@ -2,6 +2,7 @@ const multihashes = require("multihashes");
 
 const EventFactory = artifacts.require("EventFactory");
 const Event = artifacts.require("Event");
+const FungibleTicketFactory = artifacts.require("FungibleTicketFactory");
 
 // util function to decode IPFS CID
 const cidToArgs = (cid) => {
@@ -20,44 +21,61 @@ const argsToCid = (hashFunction, size, digest) => {
   return multihashes.toB58String(hashBytes);
 };
 
-contract("EventFactory", () => {
+contract("Event", () => {
   const cid = "QmWATWQ7fVPP2EFGu71UkfnqhYXDYH566qy47CnJDgvs8u";
 
   let eventFactory = null;
   let event = null;
+  let fungibleTicketFactory = null;
 
-  // before(async () => {
-  //   eventFactory = await EventFactory.deployed();
+  before(async () => {
+    eventFactory = await EventFactory.deployed();
 
-  //   const args = cidToArgs(cid);
+    const args = cidToArgs(cid);
 
-  //   await eventFactory.createEvent(ipfsBytes, ipfsHashFunction, ipfsSize);
-  //   const eventAddress = await eventFactory.events(0);
-  //   event = await Event.at(eventAddress);
-  // });
+    await eventFactory.createEvent(args.hashFunction, args.size, args.digest);
 
-  // it("Deploying the EventFactory smart contract.", async () => {
-  //   assert.notEqual(
-  //     eventFactory.address !== "",
-  //     "The event factory address is not set correctly."
-  //   );
-  // });
+    const eventAddress = await eventFactory.events(0);
+    event = await Event.at(eventAddress);
+  });
 
-  // it("Deploying the Event smart contract.", async () => {
-  //   assert.notEqual(
-  //     event.address !== "",
-  //     "The event address is not set correctly."
-  //   );
-  // });
+  it("should return the event factory smart contract", async () => {
+    assert.notEqual(
+      eventFactory.address !== "",
+      "The event factory address is not set correctly."
+    );
+  });
 
-  // it("Creating multiple events.", async () => {
-  //   const ticketPriceWei = 1000;
-  //   const numTickets = 3;
-  //   const ticketMetadataBytes =
-  //     "0x6162636400000000000000000000000000000000000000000000000000000000";
-  //   const ticketMetadataHashFunction = 12;
-  //   const ticketMetadataSize = 32;
+  it("should return the event smart contract", async () => {
+    assert.notEqual(
+      event.address !== "",
+      "The event address is not set correctly."
+    );
+  });
 
-  //   event.addFungibleTicketFactory();
-  // });
+  it("should add a ticket factory", async () => {
+    const ticketPriceWei = 1000;
+    const numTickets = 3;
+    const ticketIpfsCid = "QmWATWQ7fVPP2EFGu71UkfnqhYXDYH566qy47CnJDgvs8u";
+    const metadataArgs = cidToArgs(ticketIpfsCid);
+
+    await event.addFungibleTicketFactory(
+      metadataArgs.hashFunction,
+      metadataArgs.size,
+      metadataArgs.digest,
+      ticketPriceWei,
+      numTickets
+    );
+
+    const ticketFactoryAddress = await event.fungibleTicketFactories(0);
+
+    assert.notEqual(
+      event.address !== "",
+      "The ticket factory address is not set correctly."
+    );
+
+    fungibleTicketFactory = await FungibleTicketFactory.at(
+      ticketFactoryAddress
+    );
+  });
 });
