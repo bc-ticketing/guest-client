@@ -1,6 +1,7 @@
 pragma solidity >=0.4.22 <0.7.0;
 
 contract FungibleTicketFactory {
+    //"0xBfcE6Cc0aA9950427576bD2114E1e3eBf629C562", "0x12","0x20","0x6162636400000000000000000000000000000000000000000000000000000000",1,1000000000000000000
 
     // stores the metadata of the event
     event IpfsCid(bytes1 hashFunction, bytes1 size, bytes32 digest);
@@ -67,11 +68,15 @@ contract FungibleTicketFactory {
         // if not all tickets have been issued, the buyer automatically buys from the event owner
         if(ticketIndex < numberTickets){
             issueFungibleTicket(msg.sender);
+            return;
         }
 
         // if people want to sell tickets, the buyer automatically buys from the earliest seller
-        else if(sellingQueueTail != sellingQueueHead){
+        (address sellerAddress, uint newSellingQueueHead) = getNextAddressInSellingQueue();
+        if( sellerAddress != address(0)){
+            sellingQueueHead = newSellingQueueHead;
             buyFromSellingQueue(msg.sender);
+            sellingQueueHead++;
         }
 
         // if nobody wants to sell yet, the buyer joins the buying queue
@@ -103,7 +108,6 @@ contract FungibleTicketFactory {
 
         // remove user from the queue
         delete sellingQueue[sellingQueueHead];
-        sellingQueueHead++;
     }
 
     function joinBuyingQueue() internal{
@@ -113,20 +117,21 @@ contract FungibleTicketFactory {
 
     function sellFungibleTicket() public{
 
-        require(ticketOwners[msg.sender] == 1, "Only the owner of this ticket can sell this ticket.");
+        require(ticketOwners[msg.sender] == 1, "The sender does NOT own a ticket of this kind.");
 
         // if people are in the waiting queue for buying tickets
-        if(buyingQueueTail != buyingQueueHead){
+        (address buyerAddress, uint newBuyingQueueHead) = getNextAddressInBuyingQueue();
+        if(buyerAddress != address(0)){
             // transfer money
             (msg.sender).transfer(ticketPriceWei);
 
             // transfer ownership
-            ticketOwners[buyingQueue[buyingQueueHead]] = 1;
+            ticketOwners[buyingQueue[newBuyingQueueHead]] = 1;
             delete ticketOwners[msg.sender];
 
             // remove user from the queue
             delete buyingQueue[buyingQueueHead];
-            buyingQueueHead++;
+            buyingQueueHead = newBuyingQueueHead + 1;
         }
 
         // else join selling queue
@@ -136,7 +141,53 @@ contract FungibleTicketFactory {
         }
     }
     
+    function exitSellingQueue() public{
+        for(uint256 i = sellingQueueHead; i < sellingQueueTail; i++){
+            if(sellingQueue[i] == msg.sender){
+                delete sellingQueue[i];
+                break;
+            }
+        }
+    }
+    
+    function exitBuyingQueue() public {
+        for(uint256 i = buyingQueueHead; i < buyingQueueTail; i++){
+            if(buyingQueue[i] == msg.sender){
+                
+                // delete posistion in the queue
+                // basically doing this: sellingQueue[i] == address(0);
+                delete buyingQueue[i];
+                
+                
+                // refund deposit
+                (msg.sender).transfer(ticketPriceWei);
+                
+                break;
+            }
+        }
+    }
+    
     function hasTicket(address _address) public view returns(bool){
         return ticketOwners[_address] == 1;
+    }
+    
+    function getNextAddressInBuyingQueue() internal view returns(address buyerAddress, uint newBuyingQueueHead){
+        uint i = buyingQueueHead;
+        while(i < buyingQueueTail){
+            if(buyingQueue[i] != address(0)){
+                return (buyingQueue[i], i);
+            }
+        }
+        return (address(0), 0);
+    }
+    
+    function getNextAddressInSellingQueue() internal view returns(address sellerAddress, uint newSellingQueueHead){
+        uint i = sellingQueueHead;
+        while(i < sellingQueueTail){
+            if(sellingQueue[i] != address(0)){
+                return (sellingQueue[i], i);
+            }
+        }
+        return (address(0), 0);
     }
 }
