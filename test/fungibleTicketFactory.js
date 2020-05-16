@@ -129,33 +129,42 @@ contract("Event", (accounts) => {
   });
 
   it("should sell the ticket to account[3]", async () => {
-    await fungibleTicketFactory.sellFungibleTicket({
-      from: accounts[0],
+    const account = accounts[0];
+    const ticketId = await fungibleTicketFactory.getTicketId({
+      from: account,
+    });
+    await fungibleTicketFactory.sellFungibleTicket(ticketId.toNumber(), {
+      from: account,
     });
 
     assert.equal(
       await fungibleTicketFactory.hasTicket(accounts[3]),
       true,
-      "The ownership of the ticket was not transferred correctly."
+      "The ownership of the ticket was not transferred correctly. Buyer has not received the ticket."
     );
 
     assert.equal(
       await fungibleTicketFactory.hasTicket(accounts[0]),
       false,
-      "The ownership of the ticket was not transferred correctly."
+      "The ownership of the ticket was not transferred correctly. Seller still owns the ticket."
     );
   });
 
   it("should add the seller to the selling queue account[1]", async () => {
-    await fungibleTicketFactory.sellFungibleTicket({
-      from: accounts[1],
+    const account = accounts[1];
+    const ticketId = await fungibleTicketFactory.getTicketId({
+      from: account,
+    });
+    await fungibleTicketFactory.sellFungibleTicket(ticketId.toNumber(), {
+      from: account,
     });
 
     const sellingQueueHead = await fungibleTicketFactory.sellingQueueHead();
 
+    const ticket = await fungibleTicketFactory.sellingQueue(sellingQueueHead);
     assert.equal(
-      await fungibleTicketFactory.sellingQueue(sellingQueueHead),
-      accounts[1],
+      ticket["ticketOwner"],
+      account,
       "The ownership of the ticket was not transferred correctly."
     );
   });

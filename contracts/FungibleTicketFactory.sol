@@ -1,10 +1,17 @@
 pragma solidity >=0.4.22 <0.7.0;
+pragma experimental ABIEncoderV2; //allows returning a struct from a function
+
 
 contract FungibleTicketFactory {
     //"0xBfcE6Cc0aA9950427576bD2114E1e3eBf629C562", "0x12","0x20","0x6162636400000000000000000000000000000000000000000000000000000000",1,1000000000000000000
 
     // stores the metadata of the event
     event IpfsCid(bytes1 hashFunction, bytes1 size, bytes32 digest);
+
+    struct ticket{
+        uint ticketId;
+        address payable ticketOwner;
+    }
 
     // ticket details
     uint256 public numberTickets;
@@ -17,7 +24,10 @@ contract FungibleTicketFactory {
     
     //address payable[] public ticketOwners;
 
-    mapping(address => uint8) public ticketOwners;
+    //mapping(address => uint8) public ticketOwners;
+
+    // ticketId => ticketOwner
+    mapping(uint => address) public tickets;
 
     // parameters for secondary market logic
     uint256 public sellingQueueHead;
@@ -25,7 +35,7 @@ contract FungibleTicketFactory {
     uint256 public buyingQueueHead;
     uint256 public buyingQueueTail;
 
-    mapping(uint256 => address payable) public sellingQueue;
+    mapping(uint256 => ticket) public sellingQueue;
     mapping(uint256 => address payable) public buyingQueue;
 
     struct FTicket {
@@ -72,10 +82,10 @@ contract FungibleTicketFactory {
         }
 
         // if people want to sell tickets, the buyer automatically buys from the earliest seller
-        (address sellerAddress, uint newSellingQueueHead) = getNextAddressInSellingQueue();
+        (uint ticketId, address sellerAddress, uint newSellingQueueHead) = getNextAddressInSellingQueue();
         if( sellerAddress != address(0)){
             sellingQueueHead = newSellingQueueHead;
-            buyFromSellingQueue(msg.sender);
+            buyFromSellingQueue(ticketId, msg.sender);
             sellingQueueHead++;
         }
 
@@ -89,7 +99,7 @@ contract FungibleTicketFactory {
 
     function issueFungibleTicket(address payable _ticketOwner) internal {
         // issue the ticket
-        ticketOwners[_ticketOwner] = 1;
+        tickets[ticketIndex] = _ticketOwner;
 
         ticketIndex++;
 
@@ -98,13 +108,13 @@ contract FungibleTicketFactory {
     }
 
 
-    function buyFromSellingQueue(address payable _newOwner) internal{
+    function buyFromSellingQueue(uint _ticketId, address payable _newOwner) internal{
         // transfer money
-        (sellingQueue[sellingQueueHead]).transfer(ticketPriceWei);
+        (sellingQueue[sellingQueueHead].ticketOwner).transfer(ticketPriceWei);
 
         // transfer ownership
-        delete ticketOwners[sellingQueue[sellingQueueHead]];
-        ticketOwners[_newOwner] = 1;
+        delete tickets[sellingQueue[sellingQueueHead].ticketId];
+        tickets[_ticketId] = _newOwner;
 
         // remove user from the queue
         delete sellingQueue[sellingQueueHead];
@@ -115,9 +125,9 @@ contract FungibleTicketFactory {
         buyingQueueTail++;
     }
 
-    function sellFungibleTicket() public{
+    function sellFungibleTicket(uint _ticketId) public{
 
-        require(ticketOwners[msg.sender] == 1, "The sender does NOT own a ticket of this kind.");
+        require(tickets[_ticketId] == msg.sender, "The sender does NOT own a ticket of this kind.");
 
         // if people are in the waiting queue for buying tickets
         (address buyerAddress, uint newBuyingQueueHead) = getNextAddressInBuyingQueue();
@@ -126,8 +136,7 @@ contract FungibleTicketFactory {
             (msg.sender).transfer(ticketPriceWei);
 
             // transfer ownership
-            ticketOwners[buyingQueue[newBuyingQueueHead]] = 1;
-            delete ticketOwners[msg.sender];
+            tickets[_ticketId] = buyingQueue[newBuyingQueueHead];
 
             // remove user from the queue
             delete buyingQueue[buyingQueueHead];
@@ -136,14 +145,14 @@ contract FungibleTicketFactory {
 
         // else join selling queue
         else{
-            sellingQueue[sellingQueueTail] = msg.sender;
+            sellingQueue[sellingQueueTail] = ticket({ticketId:_ticketId, ticketOwner:msg.sender});
             sellingQueueTail++;
         }
     }
     
     function exitSellingQueue() public{
         for(uint256 i = sellingQueueHead; i < sellingQueueTail; i++){
-            if(sellingQueue[i] == msg.sender){
+            if(sellingQueue[i].ticketOwner == msg.sender){
                 delete sellingQueue[i];
                 break;
             }
@@ -167,8 +176,22 @@ contract FungibleTicketFactory {
         }
     }
     
+    function getTicketId() public view returns(uint){
+        for(uint i = 0; i < ticketIndex; i++){
+            if(tickets[i] == msg.sender){
+                return i;
+            }
+        }
+        return 0;
+    }
+    
     function hasTicket(address _address) public view returns(bool){
-        return ticketOwners[_address] == 1;
+        for(uint i = 0; i < ticketIndex; i++){
+            if(tickets[i] == _address){
+                return true;
+            }
+        }
+        return false;
     }
     
     function getNextAddressInBuyingQueue() internal view returns(address buyerAddress, uint newBuyingQueueHead){
@@ -181,13 +204,23 @@ contract FungibleTicketFactory {
         return (address(0), 0);
     }
     
-    function getNextAddressInSellingQueue() internal view returns(address sellerAddress, uint newSellingQueueHead){
+    function getNextAddressInSellingQueue() internal view returns(uint ticketId, address sellerAddress, uint newSellingQueueHead){
         uint i = sellingQueueHead;
         while(i < sellingQueueTail){
-            if(sellingQueue[i] != address(0)){
-                return (sellingQueue[i], i);
+            if(sellingQueue[i].ticketOwner != address(0)){
+                return (sellingQueue[i].ticketId, sellingQueue[i].ticketOwner, i);
             }
         }
-        return (address(0), 0);
+        return (0, address(0), 0);
+    }
+    
+    function getAllTicketOwners() public view returns(address[] memory _owners){
+        _owners = new address[](ticketIndex);
+        
+        for(uint i = 0; i < ticketIndex; i++){
+            _owners[i] = tickets[i];
+        }
+        
+        return _owners;
     }
 }
