@@ -32,13 +32,13 @@
 ### Clone the Project
 
 ```bash
-git clone https://github.com/simibac/bc-ticketing
+git clone https://github.com/bc-ticketing/guest-client
 ```
 
 ### Set up Client
 
 ```bash
-cd bc-ticketing/client/
+cd guest-client/
 npm install
 ```
 
