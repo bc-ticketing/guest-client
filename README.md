@@ -50,38 +50,36 @@ sudo npm install -g truffle
 
 ## Run Environment
 
-_everytime to run the environment_
+First, start local blockchain with by opening the `Ganache` application.
 
-1. Pull the latest commits:
-   ```bash
-   # Terminal Tab #1
-   cd /path/to/guest-client
-   git pull
-   ```
-2. Start local blockchain with by opening the `Ganache` application.
-3. Compile the `Smart Contracts`:
-   ```bash
-   # Terminal Tab #1
-   truffle compile
-   ```
-4. Deploy the `Smart Contracts` on the `Ganache` network:
-   ```bash
-   # Terminal Tab #1
-   truffle migrate --reset
-   ```
-4. Start the `Truffle` console:
-   ```bash
-   # Terminal Tab #1
-   truffle console
-   ```
-5. Start the `Vue.js` client:
-   ```bash
-   # Terminal Tab #2
-   cd /path/to/guest-client/client
-   npm install
-   npm run serve
-   ```
-6. `localhost:8080` serves the application
+Then:
+```bash
+# get recent contracts, deploy them and run
+./deployRun.sh
+```
+
+```bash
+# if contracts already deployed, to run the environment
+npm install
+npm run serve
+```
+
+## Standalone setup and run commands
+
+```bash
+# compiles and minifies for production
+npm run build
+```
+
+```bash
+# run unit tests
+npm run test:unit
+```
+
+```bash
+# lints and fixes files
+npm run lint
+```
 
 :warning: Make sure your Metamask is connected to the correct network! :warning:
 
