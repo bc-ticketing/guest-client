@@ -1,0 +1,3 @@
+[submodule "idetix"]
+	path = idetix
+	url = git@github.com:bc-ticketing/idetix.git
