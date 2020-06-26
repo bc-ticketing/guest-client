@@ -1,16 +1,16 @@
 {
   "contractName": "EventLibrary",
   "abi": [],
-  "metadata": "{\"compiler\":{\"version\":\"0.6.8+commit.0bbfe453\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/michael/MScProjectRepositories/guest-client/idetix/contracts/EventLibrary.sol\":\"EventLibrary\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/michael/MScProjectRepositories/guest-client/idetix/contracts/EventLibrary.sol\":{\"keccak256\":\"0xf157bac6adc913ad9d6593454b63aac8a942faa37ff3eb317eac8e6d5fdd0434\",\"urls\":[\"bzz-raw://f021eb7e934a0f946115faa2ac91c8ea37719dbfc266b7ef89b76a6313ffe6a8\",\"dweb:/ipfs/Qmdu5TmAsqTMLQBeYSYFSD7RRbay1sF1Hd1BrWfCg5kdNm\"]}},\"version\":1}",
-  "bytecode": "0x60566023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212202df1f8f12e0dd5f61a1d902a198dbf7c8d840a44ac4b9ba5fd0fa8f638a2715d64736f6c63430006080033",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212202df1f8f12e0dd5f61a1d902a198dbf7c8d840a44ac4b9ba5fd0fa8f638a2715d64736f6c63430006080033",
+  "metadata": "{\"compiler\":{\"version\":\"0.6.8+commit.0bbfe453\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/EventLibrary.sol\":\"EventLibrary\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/EventLibrary.sol\":{\"keccak256\":\"0xf8451d62f723aa5a8b83fca9da08b5686d683c04d48ccdda41a4885e63e627b5\",\"urls\":[\"bzz-raw://a9911a3f231eb7451a2804395202b288a0ae815b4f58332ea6326ff142d327e2\",\"dweb:/ipfs/QmbGiF13mXxdGEPiWYkDLfMA1ZCFZWUHzkghn1RP9eANmj\"]}},\"version\":1}",
+  "bytecode": "0x60566023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220538cc70cc9b711363f3aac437c6f0a8c3b67142994bf310b549877ef08176a7764736f6c63430006080033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220538cc70cc9b711363f3aac437c6f0a8c3b67142994bf310b549877ef08176a7764736f6c63430006080033",
   "immutableReferences": {},
-  "sourceMap": "35:1781:2:-:0;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
-  "deployedSourceMap": "35:1781:2:-:0;;;;;;12:1:-1;9;2:12",
-  "source": "pragma solidity >=0.4.22 <0.7.0;\n\n\nlibrary EventLibrary {\n    struct Multihash {\n        bytes32 hashBytes;\n        uint8 hashFunction;\n        uint8 hashSize;\n    }\n\n    // ********** Fungible Tickets **********\n    // Tickets which are indifferent to each other (eg. standing room area 1)\n    //    struct FungibleTicket {\n    //        uint256 id;\n    //        address payable owner;\n    //    }\n\n    // struct FungibleTicketFactory {\n    //     // ticket details\n    //     string metadataURI; // JSON storing ticket details such VIP access\n    //     bytes32 hashMetadata; // hash of JSON to verify the retrieved data\n    //     uint256 numberTickets;\n    //     uint256 ticketPrice;\n    //     // keeping track of sold tickets\n    //     // using hashes as ids\n    //     uint256 ticketIndex;\n    //     mapping(uint256 => FungibleTicket) tickets;\n    //     // parameters for secondary market logic\n    //     uint256 sellingQueueHead;\n    //     uint256 sellingQueueTail;\n    //     uint256 buyingQueueHead;\n    //     uint256 buyingQueueTail;\n    //     mapping(uint256 => FungibleTicket) sellingQueue;\n    //     mapping(uint256 => address payable) buyingQueue;\n    // }\n\n    // ********** Non Fungible Tickets **********\n    // Tickets which cannot be replaced by another ticket of the same event such as theater ticket (seat reservation).\n    struct NonFungibleTicket {\n        uint256 id;\n        address payable owner;\n        bool isForSale;\n    }\n\n    struct NonFungibleTicketFactory {\n        uint256 numberTickets;\n        uint256 ticketPrice;\n        string metadataURI; // JSON storing ticket details such as seat number\n        bytes32 hashMetadata; // hash of JSON to verify the retrieved data\n        uint256 numberTicketsIssued;\n        mapping(uint256 => NonFungibleTicket) tickets;\n    }\n}\n",
-  "sourcePath": "/Users/michael/MScProjectRepositories/guest-client/idetix/contracts/EventLibrary.sol",
+  "sourceMap": "38:1830:2:-:0;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
+  "deployedSourceMap": "38:1830:2:-:0;;;;;;12:1:-1;9;2:12",
+  "source": "pragma solidity >=0.4.22 <0.7.0;\r\n\r\n\r\nlibrary EventLibrary {\r\n    struct Multihash {\r\n        bytes32 hashBytes;\r\n        uint8 hashFunction;\r\n        uint8 hashSize;\r\n    }\r\n\r\n    // ********** Fungible Tickets **********\r\n    // Tickets which are indifferent to each other (eg. standing room area 1)\r\n    //    struct FungibleTicket {\r\n    //        uint256 id;\r\n    //        address payable owner;\r\n    //    }\r\n\r\n    // struct FungibleTicketFactory {\r\n    //     // ticket details\r\n    //     string metadataURI; // JSON storing ticket details such VIP access\r\n    //     bytes32 hashMetadata; // hash of JSON to verify the retrieved data\r\n    //     uint256 numberTickets;\r\n    //     uint256 ticketPrice;\r\n    //     // keeping track of sold tickets\r\n    //     // using hashes as ids\r\n    //     uint256 ticketIndex;\r\n    //     mapping(uint256 => FungibleTicket) tickets;\r\n    //     // parameters for secondary market logic\r\n    //     uint256 sellingQueueHead;\r\n    //     uint256 sellingQueueTail;\r\n    //     uint256 buyingQueueHead;\r\n    //     uint256 buyingQueueTail;\r\n    //     mapping(uint256 => FungibleTicket) sellingQueue;\r\n    //     mapping(uint256 => address payable) buyingQueue;\r\n    // }\r\n\r\n    // ********** Non Fungible Tickets **********\r\n    // Tickets which cannot be replaced by another ticket of the same event such as theater ticket (seat reservation).\r\n    struct NonFungibleTicket {\r\n        uint256 id;\r\n        address payable owner;\r\n        bool isForSale;\r\n    }\r\n\r\n    struct NonFungibleTicketFactory {\r\n        uint256 numberTickets;\r\n        uint256 ticketPrice;\r\n        string metadataURI; // JSON storing ticket details such as seat number\r\n        bytes32 hashMetadata; // hash of JSON to verify the retrieved data\r\n        uint256 numberTicketsIssued;\r\n        mapping(uint256 => NonFungibleTicket) tickets;\r\n    }\r\n}\r\n",
+  "sourcePath": "C:\\Users\\brass\\Documents\\dev\\guest-client\\idetix\\contracts\\EventLibrary.sol",
   "ast": {
-    "absolutePath": "/Users/michael/MScProjectRepositories/guest-client/idetix/contracts/EventLibrary.sol",
+    "absolutePath": "/C/Users/brass/Documents/dev/guest-client/idetix/contracts/EventLibrary.sol",
     "exportedSymbols": {
       "EventLibrary": [
         201
@@ -60,7 +60,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 178,
-                "src": "89:17:2",
+                "src": "94:17:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -71,7 +71,7 @@
                   "id": 172,
                   "name": "bytes32",
                   "nodeType": "ElementaryTypeName",
-                  "src": "89:7:2",
+                  "src": "94:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_bytes32",
                     "typeString": "bytes32"
@@ -88,7 +88,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 178,
-                "src": "116:18:2",
+                "src": "122:18:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -99,7 +99,7 @@
                   "id": 174,
                   "name": "uint8",
                   "nodeType": "ElementaryTypeName",
-                  "src": "116:5:2",
+                  "src": "122:5:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint8",
                     "typeString": "uint8"
@@ -116,7 +116,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 178,
-                "src": "144:14:2",
+                "src": "151:14:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -127,7 +127,7 @@
                   "id": 176,
                   "name": "uint8",
                   "nodeType": "ElementaryTypeName",
-                  "src": "144:5:2",
+                  "src": "151:5:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint8",
                     "typeString": "uint8"
@@ -140,7 +140,7 @@
             "name": "Multihash",
             "nodeType": "StructDefinition",
             "scope": 201,
-            "src": "62:103:2",
+            "src": "66:107:2",
             "visibility": "public"
           },
           {
@@ -155,7 +155,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 185,
-                "src": "1391:10:2",
+                "src": "1430:10:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -166,7 +166,7 @@
                   "id": 179,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1391:7:2",
+                  "src": "1430:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -183,7 +183,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 185,
-                "src": "1411:21:2",
+                "src": "1451:21:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -194,7 +194,7 @@
                   "id": 181,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1411:15:2",
+                  "src": "1451:15:2",
                   "stateMutability": "payable",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address_payable",
@@ -212,7 +212,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 185,
-                "src": "1442:14:2",
+                "src": "1483:14:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -223,7 +223,7 @@
                   "id": 183,
                   "name": "bool",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1442:4:2",
+                  "src": "1483:4:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_bool",
                     "typeString": "bool"
@@ -236,7 +236,7 @@
             "name": "NonFungibleTicket",
             "nodeType": "StructDefinition",
             "scope": 201,
-            "src": "1356:107:2",
+            "src": "1394:111:2",
             "visibility": "public"
           },
           {
@@ -251,7 +251,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1511:21:2",
+                "src": "1556:21:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -262,7 +262,7 @@
                   "id": 186,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1511:7:2",
+                  "src": "1556:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -279,7 +279,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1542:19:2",
+                "src": "1588:19:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -290,7 +290,7 @@
                   "id": 188,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1542:7:2",
+                  "src": "1588:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -307,7 +307,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1571:18:2",
+                "src": "1618:18:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -318,7 +318,7 @@
                   "id": 190,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1571:6:2",
+                  "src": "1618:6:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_string_storage_ptr",
                     "typeString": "string"
@@ -335,7 +335,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1650:20:2",
+                "src": "1698:20:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -346,7 +346,7 @@
                   "id": 192,
                   "name": "bytes32",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1650:7:2",
+                  "src": "1698:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_bytes32",
                     "typeString": "bytes32"
@@ -363,7 +363,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1725:27:2",
+                "src": "1774:27:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -374,7 +374,7 @@
                   "id": 194,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1725:7:2",
+                  "src": "1774:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -391,7 +391,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1762:45:2",
+                "src": "1812:45:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -404,14 +404,14 @@
                     "id": 196,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1770:7:2",
+                    "src": "1820:7:2",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
                   "nodeType": "Mapping",
-                  "src": "1762:37:2",
+                  "src": "1812:37:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_NonFungibleTicket_$185_storage_$",
                     "typeString": "mapping(uint256 => struct EventLibrary.NonFungibleTicket)"
@@ -422,7 +422,7 @@
                     "name": "NonFungibleTicket",
                     "nodeType": "UserDefinedTypeName",
                     "referencedDeclaration": 185,
-                    "src": "1781:17:2",
+                    "src": "1831:17:2",
                     "typeDescriptions": {
                       "typeIdentifier": "t_struct$_NonFungibleTicket_$185_storage_ptr",
                       "typeString": "struct EventLibrary.NonFungibleTicket"
@@ -436,18 +436,18 @@
             "name": "NonFungibleTicketFactory",
             "nodeType": "StructDefinition",
             "scope": 201,
-            "src": "1469:345:2",
+            "src": "1513:352:2",
             "visibility": "public"
           }
         ],
         "scope": 202,
-        "src": "35:1781:2"
+        "src": "38:1830:2"
       }
     ],
-    "src": "0:1817:2"
+    "src": "0:1870:2"
   },
   "legacyAST": {
-    "absolutePath": "/Users/michael/MScProjectRepositories/guest-client/idetix/contracts/EventLibrary.sol",
+    "absolutePath": "/C/Users/brass/Documents/dev/guest-client/idetix/contracts/EventLibrary.sol",
     "exportedSymbols": {
       "EventLibrary": [
         201
@@ -497,7 +497,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 178,
-                "src": "89:17:2",
+                "src": "94:17:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -508,7 +508,7 @@
                   "id": 172,
                   "name": "bytes32",
                   "nodeType": "ElementaryTypeName",
-                  "src": "89:7:2",
+                  "src": "94:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_bytes32",
                     "typeString": "bytes32"
@@ -525,7 +525,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 178,
-                "src": "116:18:2",
+                "src": "122:18:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -536,7 +536,7 @@
                   "id": 174,
                   "name": "uint8",
                   "nodeType": "ElementaryTypeName",
-                  "src": "116:5:2",
+                  "src": "122:5:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint8",
                     "typeString": "uint8"
@@ -553,7 +553,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 178,
-                "src": "144:14:2",
+                "src": "151:14:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -564,7 +564,7 @@
                   "id": 176,
                   "name": "uint8",
                   "nodeType": "ElementaryTypeName",
-                  "src": "144:5:2",
+                  "src": "151:5:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint8",
                     "typeString": "uint8"
@@ -577,7 +577,7 @@
             "name": "Multihash",
             "nodeType": "StructDefinition",
             "scope": 201,
-            "src": "62:103:2",
+            "src": "66:107:2",
             "visibility": "public"
           },
           {
@@ -592,7 +592,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 185,
-                "src": "1391:10:2",
+                "src": "1430:10:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -603,7 +603,7 @@
                   "id": 179,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1391:7:2",
+                  "src": "1430:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -620,7 +620,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 185,
-                "src": "1411:21:2",
+                "src": "1451:21:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -631,7 +631,7 @@
                   "id": 181,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1411:15:2",
+                  "src": "1451:15:2",
                   "stateMutability": "payable",
                   "typeDescriptions": {
                     "typeIdentifier": "t_address_payable",
@@ -649,7 +649,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 185,
-                "src": "1442:14:2",
+                "src": "1483:14:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -660,7 +660,7 @@
                   "id": 183,
                   "name": "bool",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1442:4:2",
+                  "src": "1483:4:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_bool",
                     "typeString": "bool"
@@ -673,7 +673,7 @@
             "name": "NonFungibleTicket",
             "nodeType": "StructDefinition",
             "scope": 201,
-            "src": "1356:107:2",
+            "src": "1394:111:2",
             "visibility": "public"
           },
           {
@@ -688,7 +688,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1511:21:2",
+                "src": "1556:21:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -699,7 +699,7 @@
                   "id": 186,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1511:7:2",
+                  "src": "1556:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -716,7 +716,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1542:19:2",
+                "src": "1588:19:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -727,7 +727,7 @@
                   "id": 188,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1542:7:2",
+                  "src": "1588:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -744,7 +744,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1571:18:2",
+                "src": "1618:18:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -755,7 +755,7 @@
                   "id": 190,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1571:6:2",
+                  "src": "1618:6:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_string_storage_ptr",
                     "typeString": "string"
@@ -772,7 +772,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1650:20:2",
+                "src": "1698:20:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -783,7 +783,7 @@
                   "id": 192,
                   "name": "bytes32",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1650:7:2",
+                  "src": "1698:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_bytes32",
                     "typeString": "bytes32"
@@ -800,7 +800,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1725:27:2",
+                "src": "1774:27:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -811,7 +811,7 @@
                   "id": 194,
                   "name": "uint256",
                   "nodeType": "ElementaryTypeName",
-                  "src": "1725:7:2",
+                  "src": "1774:7:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_uint256",
                     "typeString": "uint256"
@@ -828,7 +828,7 @@
                 "nodeType": "VariableDeclaration",
                 "overrides": null,
                 "scope": 200,
-                "src": "1762:45:2",
+                "src": "1812:45:2",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
@@ -841,14 +841,14 @@
                     "id": 196,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1770:7:2",
+                    "src": "1820:7:2",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
                     }
                   },
                   "nodeType": "Mapping",
-                  "src": "1762:37:2",
+                  "src": "1812:37:2",
                   "typeDescriptions": {
                     "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_NonFungibleTicket_$185_storage_$",
                     "typeString": "mapping(uint256 => struct EventLibrary.NonFungibleTicket)"
@@ -859,7 +859,7 @@
                     "name": "NonFungibleTicket",
                     "nodeType": "UserDefinedTypeName",
                     "referencedDeclaration": 185,
-                    "src": "1781:17:2",
+                    "src": "1831:17:2",
                     "typeDescriptions": {
                       "typeIdentifier": "t_struct$_NonFungibleTicket_$185_storage_ptr",
                       "typeString": "struct EventLibrary.NonFungibleTicket"
@@ -873,15 +873,15 @@
             "name": "NonFungibleTicketFactory",
             "nodeType": "StructDefinition",
             "scope": 201,
-            "src": "1469:345:2",
+            "src": "1513:352:2",
             "visibility": "public"
           }
         ],
         "scope": 202,
-        "src": "35:1781:2"
+        "src": "38:1830:2"
       }
     ],
-    "src": "0:1817:2"
+    "src": "0:1870:2"
   },
   "compiler": {
     "name": "solc",
@@ -891,12 +891,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xB844fc70c774D03FF08Cba813791188496300368",
-      "transactionHash": "0x8de960a3865ce43f2afefdcdc866a8821108367f900693e0dac30bce3ba4889a"
+      "address": "0xBF2b13FfAFC4432Bb31b7CF5F50429f0d48Cf6C0",
+      "transactionHash": "0x9b95aedd85005f9aaba1e96f48729a9142b2557670bde34ed37beebd4bed004a"
     }
   },
   "schemaVersion": "3.2.0",
-  "updatedAt": "2020-06-26T09:44:57.734Z",
+  "updatedAt": "2020-06-26T12:20:14.920Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

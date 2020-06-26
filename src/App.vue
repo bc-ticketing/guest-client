@@ -20,6 +20,17 @@
 </template>
 
 <script>
+// Material kit css
+import 'vue-material/dist/vue-material.min.css';
+import 'vue-material/dist/theme/default.css';
+
+import Vue from 'vue';
+
+// Importing Modules from the material kit, these are global imports
+// For components only used in single views, import locally
+import { MdButton } from 'vue-material/dist/components'
+Vue.use(MdButton);
+
 export default {
   components: {},
 };
@@ -65,6 +76,7 @@ p {
   max-width: 1080px;
   margin: auto;
 }
+
 /* ---------- Navigation Bar ---------- */
 #nav {
   display: flex;
