@@ -2,16 +2,10 @@
   <div id="app">
     <div id="nav">
       <div class="logo-container">
-        <img src="" alt="Logo" />
+        <!-- <img src="" alt="Logo" /> -->
+        Idetix
       </div>
-      <div class="navigation-container">
-        <router-link to="/">Home</router-link> |
-        <router-link to="/event-hosting">Event Hosting</router-link> |
-        <router-link to="/identification">Identification</router-link> |
-        <router-link to="/lottery">Lottery</router-link> |
-        <router-link to="/wallet-funding">Wallet Funding</router-link> |
-        <router-link to="/simple-storage">Simple Storage</router-link>
-      </div>
+      <Navigation />
     </div>
     <div class="container">
       <router-view />
@@ -21,18 +15,20 @@
 
 <script>
 // Material kit css
-import 'vue-material/dist/vue-material.min.css';
-import 'vue-material/dist/theme/default.css';
-
-import Vue from 'vue';
+import "vue-material/dist/vue-material.min.css";
+import "vue-material/dist/theme/default.css";
+import Navigation from "./components/Navigation";
+import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
 // For components only used in single views, import locally
-import { MdButton } from 'vue-material/dist/components'
+import { MdButton } from "vue-material/dist/components";
 Vue.use(MdButton);
 
 export default {
-  components: {},
+  components: {
+    Navigation
+  },
 };
 </script>
 
@@ -72,10 +68,12 @@ p {
   font-size: 1rem;
 }
 .container {
-  width: 80%;
+  width: 90%;
   max-width: 1080px;
   margin: auto;
 }
+
+
 
 /* ---------- Navigation Bar ---------- */
 #nav {
@@ -94,6 +92,10 @@ p {
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */
-@media only screen and (max-width: 600px) {
+
+@media screen and (min-width: 992px) {
+  .container {
+    width: 80%;
+  }
 }
 </style>
