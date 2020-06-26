@@ -9,8 +9,3 @@ truffle migrate --reset
 #move compiled contracts' .js files to client
 rm -rf ../src/abi
 cp -r abi ../src/
-
-#start vue.js client
-cd ..
-npm install
-npm run serve
