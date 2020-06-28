@@ -20,10 +20,10 @@ export default new Router({
       component: Home,
     },
     {
-      path: "/event-hosting",
-      name: "event-hosting",
+      path: "/events",
+      name: "events",
 
-      component: loadView("EventHosting"),
+      component: loadView("Events"),
     },
     {
       path: "/identification",
