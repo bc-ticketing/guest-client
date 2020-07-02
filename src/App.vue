@@ -1,33 +1,50 @@
 <template>
   <div id="app">
-    <div id="nav">
+    <div id="nav" ref="nav">
       <div class="container">
         <div class="logo-container">
           <!-- <img src="" alt="Logo" /> -->
           Idetix
         </div>
-        <Navigation />
+        <Navigation v-bind:navHeight="navHeight" />
       </div>
     </div>
-    <router-view />
+    <div class="content" ref="content">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script>
 // Material kit css
 import "vue-material/dist/vue-material.min.css";
-// import "vue-material/dist/theme/default.css";
+//import "vue-material/dist/theme/default.css";
 import Navigation from "./components/Navigation";
 import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
 // For components only used in single views, import locally
-import { MdButton } from "vue-material/dist/components";
+import { MdButton, MdIcon } from "vue-material/dist/components";
 Vue.use(MdButton);
+Vue.use(MdIcon);
 
 export default {
   components: {
     Navigation,
+  },
+  data() {
+    return {
+      navHeight: 100,
+    };
+  },
+  methods: {
+    getNavHeight: function() {
+      return this.$refs["nav"].getBoundingClientRect().height;
+    },
+  },
+  mounted: function() {
+    this.navHeight = this.getNavHeight();
+    //this.$refs["content"].style.paddingTop = this.navHeight + "px";
   },
 };
 </script>
@@ -35,6 +52,7 @@ export default {
 <style>
 /* ----------- Fonts ----------- */
 @import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 /* ----------- Color Definitions ----------- */
 :root {
   --fg: #584d53;
@@ -60,20 +78,30 @@ html {
 h1 {
   font-size: 3rem;
   font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 h2 {
   font-size: 2.5rem;
   font-weight: 500;
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 h3 {
   font-size: 2.2rem;
   font-weight: 500;
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 h4 {
   font-size: 1.6rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 h5 {
   font-size: 1.2rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 p {
   font-size: 1rem;
@@ -102,6 +130,8 @@ a:hover {
   width: 100%;
   padding: 20px 0px;
   background-color: var(--bg-dark);
+  position: sticky;
+  top: 0;
 }
 #nav .container {
   display: flex;
@@ -113,7 +143,9 @@ a:hover {
 }
 
 /* ---------- Basic Components ---------- */
-
+.content {
+  padding-top:2rem;
+}
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */
 
