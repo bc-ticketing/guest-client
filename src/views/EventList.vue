@@ -162,7 +162,6 @@ export default {
   margin-right: 1rem;
 }
 .event-details {
-  margin-bottom: 1rem;
   max-height: 0;
   transition: max-height 0.5s linear;
   overflow: hidden;
