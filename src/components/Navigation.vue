@@ -37,14 +37,14 @@ export default {
   name: "Navigation",
   data() {
     return {
-      mobileNavOpen: false,
+      mobileNavOpen: false
     };
   },
   methods: {
     toggleMobileNav: function() {
       this.mobileNavOpen = !this.mobileNavOpen;
-    },
-  },
+    }
+  }
 };
 </script>
 

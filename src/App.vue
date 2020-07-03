@@ -27,8 +27,8 @@ Vue.use(MdButton);
 
 export default {
   components: {
-    Navigation,
-  },
+    Navigation
+  }
 };
 </script>
 
@@ -74,6 +74,8 @@ h4 {
 }
 h5 {
   font-size: 1.2rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
 }
 p {
   font-size: 1rem;
