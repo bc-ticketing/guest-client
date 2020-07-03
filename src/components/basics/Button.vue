@@ -12,7 +12,7 @@ export default {
     return {};
   },
   props: {
-    label: String,
+    label: String
   },
   methods: {
     click: function(event) {
@@ -27,14 +27,14 @@ export default {
         ripple.style.display = "none";
       }, 1000);
       this.$emit("click");
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style scoped>
 .button {
-    display: inline-block;
+  display: inline-block;
   padding: 10px 20px;
   cursor: pointer;
   position: relative;
@@ -43,7 +43,7 @@ export default {
   background-color: var(--button-neutral);
 }
 .button.round {
-    border-radius: 15px;
+  border-radius: 15px;
 }
 .button .ripple {
   display: none;

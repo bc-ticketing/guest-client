@@ -30,22 +30,22 @@ Vue.use(MdIcon);
 
 export default {
   components: {
-    Navigation,
+    Navigation
   },
   data() {
     return {
-      navHeight: 100,
+      navHeight: 100
     };
   },
   methods: {
     getNavHeight: function() {
       return this.$refs["nav"].getBoundingClientRect().height;
-    },
+    }
   },
   mounted: function() {
     this.navHeight = this.getNavHeight();
     //this.$refs["content"].style.paddingTop = this.navHeight + "px";
-  },
+  }
 };
 </script>
 
@@ -144,7 +144,7 @@ a:hover {
 
 /* ---------- Basic Components ---------- */
 .content {
-  padding-top:2rem;
+  padding-top: 1rem;
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */
