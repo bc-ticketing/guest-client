@@ -59,7 +59,7 @@ export default {
   --fg-light: hsl(9, 36%, 85%);
   --bg: white;
   --bg-dark: #584d53;
-  --accent: #a38294;
+  --accent: #FF0266;
   --button-neutral: #e1ada6;
   --button-confirm: #0f5e59;
   --button-cancel: #3e2737;
@@ -129,7 +129,7 @@ a:hover {
 #nav {
   width: 100%;
   padding: 20px 0px;
-  background-color: var(--bg-dark);
+  background-color: var(--bg);
   position: sticky;
   top: 0;
 }
@@ -139,7 +139,7 @@ a:hover {
   align-items: center;
 }
 .logo-container {
-  color: var(--fg-light);
+  color: var(--accent);
 }
 
 /* ---------- Basic Components ---------- */

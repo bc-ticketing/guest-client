@@ -10,6 +10,7 @@
     </div>
 
     <div class="burger-wrapper">
+      <!--
       <div
         id="burger"
         @click="toggleMobileNav"
@@ -19,6 +20,17 @@
         <span class="burger-bar bar2"></span>
         <span class="burger-bar bar3"></span>
       </div>
+      -->
+      <button
+        class="hamburger hamburger--elastic"
+        type="button"
+        v-bind:class="{ open: mobileNavOpen }"
+        @click="toggleMobileNav"
+      >
+        <span class="hamburger-box">
+          <span class="hamburger-inner"></span>
+        </span>
+      </button>
     </div>
 
     <div
@@ -58,6 +70,98 @@ export default {
 </script>
 
 <style scoped>
+.hamburger {
+  padding: 15px 15px;
+  display: inline-block;
+  cursor: pointer;
+  transition-property: opacity, filter;
+  transition-duration: 0.15s;
+  transition-timing-function: linear;
+  font: inherit;
+  color: inherit;
+  text-transform: none;
+  background-color: transparent;
+  border: 0;
+  margin: 0;
+  overflow: visible;
+}
+.hamburger:hover {
+  opacity: 0.7;
+}
+.hamburger.open:hover {
+  opacity: 0.7;
+}
+.hamburger.open .hamburger-inner,
+.hamburger.open .hamburger-inner::before,
+.hamburger.open .hamburger-inner::after {
+  background-color: var(--accent);
+}
+
+.hamburger-box {
+  width: 40px;
+  height: 24px;
+  display: inline-block;
+  position: relative;
+}
+
+.hamburger-inner {
+  display: block;
+  top: 50%;
+  margin-top: -2px;
+}
+.hamburger-inner,
+.hamburger-inner::before,
+.hamburger-inner::after {
+  width: 40px;
+  height: 4px;
+  background-color: var(--accent);
+  border-radius: 4px;
+  position: absolute;
+  transition-property: transform;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+.hamburger-inner::before,
+.hamburger-inner::after {
+  content: "";
+  display: block;
+}
+.hamburger-inner::before {
+  top: -10px;
+}
+.hamburger-inner::after {
+  bottom: -10px;
+}
+/*
+   * Elastic
+   */
+.hamburger--elastic .hamburger-inner {
+  top: 2px;
+  transition-duration: 0.275s;
+  transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+.hamburger--elastic .hamburger-inner::before {
+  top: 10px;
+  transition: opacity 0.125s 0.275s ease;
+}
+.hamburger--elastic .hamburger-inner::after {
+  top: 20px;
+  transition: transform 0.275s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.hamburger--elastic.open .hamburger-inner {
+  transform: translate3d(0, 10px, 0) rotate(135deg);
+  transition-delay: 0.075s;
+}
+.hamburger--elastic.open .hamburger-inner::before {
+  transition-delay: 0s;
+  opacity: 0;
+}
+.hamburger--elastic.open .hamburger-inner::after {
+  transform: translate3d(0, -20px, 0) rotate(-270deg);
+  transition-delay: 0.075s;
+}
+
 #burger {
   transition: transform 1s linear, background-color 1s linear;
 }
@@ -69,7 +173,7 @@ export default {
 .burger-bar {
   height: 3px;
   width: 15px;
-  background-color: black;
+  background-color: var(--accent);
   display: block;
   margin-bottom: 2px;
 }
