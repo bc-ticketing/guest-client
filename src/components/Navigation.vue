@@ -21,7 +21,11 @@
       </div>
     </div>
 
-    <div class="navigation-mobile" v-bind:class="{ open: mobileNavOpen }">
+    <div
+      class="navigation-mobile"
+      v-bind:class="{ open: mobileNavOpen }"
+      ref="mobile-nav"
+    >
       <router-link to="/">Home</router-link>
       <router-link to="/events">Events</router-link>
       <router-link to="/identification">Identification</router-link>
@@ -37,14 +41,19 @@ export default {
   name: "Navigation",
   data() {
     return {
-      mobileNavOpen: false
+      mobileNavOpen: false,
     };
+  },
+  props: {
+    navHeight: Number,
   },
   methods: {
     toggleMobileNav: function() {
       this.mobileNavOpen = !this.mobileNavOpen;
-    }
-  }
+      this.$refs["mobile-nav"].style.top = this.navHeight + "px";
+    },
+  },
+  mounted: function() {},
 };
 </script>
 
@@ -69,12 +78,8 @@ export default {
 }
 
 .burger-wrapper {
-  position: absolute;
-  top: 50px;
-  right: 50px;
   z-index: 99;
   cursor: pointer;
-  background-color: white;
 }
 
 .navigation-mobile {
