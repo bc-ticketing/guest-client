@@ -2,7 +2,7 @@
   <div class="navigation-container">
     <div class="navigation-links">
       <router-link to="/">Home</router-link>
-      <router-link to="/events">Events</router-link>
+      <router-link to="/event-list">Events</router-link>
       <router-link to="/identification">Identification</router-link>
       <router-link to="/lottery">Lottery</router-link>
       <router-link to="/wallet-funding">Wallet Funding</router-link>
@@ -25,9 +25,10 @@
       class="navigation-mobile"
       v-bind:class="{ open: mobileNavOpen }"
       ref="mobile-nav"
+      @click="toggleMobileNav"
     >
       <router-link to="/">Home</router-link>
-      <router-link to="/events">Events</router-link>
+      <router-link to="/event-list">Events</router-link>
       <router-link to="/identification">Identification</router-link>
       <router-link to="/lottery">Lottery</router-link>
       <router-link to="/wallet-funding">Wallet Funding</router-link>
@@ -41,19 +42,19 @@ export default {
   name: "Navigation",
   data() {
     return {
-      mobileNavOpen: false,
+      mobileNavOpen: false
     };
   },
   props: {
-    navHeight: Number,
+    navHeight: Number
   },
   methods: {
     toggleMobileNav: function() {
       this.mobileNavOpen = !this.mobileNavOpen;
       this.$refs["mobile-nav"].style.top = this.navHeight + "px";
-    },
+    }
   },
-  mounted: function() {},
+  mounted: function() {}
 };
 </script>
 

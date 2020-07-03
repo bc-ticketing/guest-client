@@ -2,13 +2,12 @@
   <div class="events">
     <div class="container-fluid"></div>
     <div class="container">
+      <div class="search-filter-wrapper">
+        <div class="search-bar">TODO: search bar</div>
+        <div class="filter-burger">filt</div>
+      </div>
       <div class="event-list">
-        <div
-          class="event"
-          v-for="event in events"
-          v-bind:key="event.id"
-          @click="toggleEventPreview(event)"
-        >
+        <div class="event" v-for="event in events" v-bind:key="event.id">
           <div class="event-front">
             <div class="event-info">
               <span class="info-date">{{ event.date }}</span>
@@ -29,8 +28,10 @@
               </div>
             </div>
             <div class="event-tickets">
-              <div class="info-group">
-                <Button v-bind:label="'Tickets'"></Button>
+              <div class="info-group" id="ticket-link">
+                <router-link :to="{ name: '/event', params: { id: event.id } }"
+                  >Tickets</router-link
+                >
               </div>
             </div>
           </div>
@@ -60,13 +61,13 @@
 </template>
 
 <script>
-import Button from "./../components/basics/Button";
+// import Button from "./../components/basics/Button";
 
 export default {
-  name: "Events",
-  components: {
-    Button
-  },
+  name: "EventList",
+  // components: {
+  //   Button
+  // },
   data() {
     return {
       events: [
@@ -80,7 +81,7 @@ export default {
           organizer: "Events Gmbh",
           description:
             "This will be an awesome open air if covid-19 does not fuck it up and it will be super cool for sure",
-          approvers: "idetix"
+          approvers: "Idetix"
         },
         {
           name: "Theatre",
@@ -93,6 +94,17 @@ export default {
           description:
             "Sick Theaters will host this screening for the fist time since the covid outbreak and it will be super awesome so dont fucking miss it",
           approvers: "SBB"
+        },
+        {
+          name: "Robin Schulz",
+          Type: "Concert",
+          lowestPrice: "0.11",
+          date: "04.05.20",
+          location: "Zurich",
+          id: "3",
+          organizer: "GN",
+          description: "",
+          approvers: "Idetix"
         }
       ]
     };
@@ -112,12 +124,28 @@ export default {
 </script>
 
 <style scoped>
+.search-filter-wrapper {
+  /*margin-bottom: 0.1rem;*/
+  /*margin-top: 0.1rem;*/
+  display: inline;
+}
+.search-bar {
+  display: inline-block;
+  margin-left: 0.5rem;
+  width: 85%;
+  border: black dotted 0.001rem;
+}
+.filter-burger {
+  float: right;
+  margin-right: 0.5rem;
+  border: black dotted 0.001rem;
+}
 .event-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 .event {
-  margin: 0.5rem 0 1rem 0;
+  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
   background-color: #fff;
   transition: box-shadow 0.25s;
   border-radius: 1px;
@@ -129,6 +157,9 @@ export default {
 .event-tickets {
   margin-top: auto;
   margin-bottom: auto;
+}
+#ticket-link {
+  margin-right: 1rem;
 }
 .event-details {
   margin-bottom: 1rem;
@@ -146,10 +177,11 @@ export default {
   float: left;
 }
 .show-details {
-  border-top: 1px dashed black;
+  border: 1px dashed black;
   display: block;
   margin: 1px;
   text-align: center;
+  margin-top: 1rem;
 }
 .event h3 {
   margin-bottom: 20px;
