@@ -71,8 +71,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -91,8 +90,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.6.8+commit.0bbfe453\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"identity\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"level\",\"type\":\"uint256\"}],\"name\":\"approveIdentity\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"approver\",\"type\":\"address\"}],\"name\":\"getApproverInfo\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"approver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"identity\",\"type\":\"address\"}],\"name\":\"getSecurityLevel\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ipfsHash\",\"type\":\"bytes32\"}],\"name\":\"registerApprover\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/Identity.sol\":\"identity\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/Identity.sol\":{\"keccak256\":\"0x1ec4183e2b82999c1cc9975056fe8cdc4068535bcf28966774522ff1a68ce911\",\"urls\":[\"bzz-raw://6c88465fbd8494aa7ae09e32b03cb3fc728613c8b2ef7165af5245e516a80ba2\",\"dweb:/ipfs/QmYwuqocbYPH8AC1z9GM2C9KjNFg273ZEyjBaGQfX48DdP\"]}},\"version\":1}",
@@ -3490,8 +3488,7 @@
     }
   },
   "schemaVersion": "3.2.0",
-  "updatedAt": "2020-06-26T12:20:14.923Z",
-  "networkType": "ethereum",
+  "updatedAt": "2020-07-08T16:30:24.254Z",
   "devdoc": {
     "methods": {}
   },

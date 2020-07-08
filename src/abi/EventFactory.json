@@ -31,8 +31,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     },
     {
       "inputs": [
@@ -68,8 +67,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "constant": true
+      "type": "function"
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.6.8+commit.0bbfe453\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_contractAddress\",\"type\":\"address\"}],\"name\":\"EventCreated\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes1\",\"name\":\"_hashFunction\",\"type\":\"bytes1\"},{\"internalType\":\"bytes1\",\"name\":\"_size\",\"type\":\"bytes1\"},{\"internalType\":\"bytes32\",\"name\":\"_digest\",\"type\":\"bytes32\"}],\"name\":\"createEvent\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"events\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getEvents\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/EventFactory.sol\":\"EventFactory\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/Event.sol\":{\"keccak256\":\"0xc92f0503e9bb2c31f9fc2a6407741b4900b6b921a9ca837ad97623a740bc1e54\",\"urls\":[\"bzz-raw://11debd7e7a4c796e5611e83e3e3007b2c29c01d7df7ea9284b0ad2ef4722d6e8\",\"dweb:/ipfs/Qmb1Y5LKQgR8xjy9v49gEvHerM2XQHRY3hwbarYKSt5Dqx\"]},\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/EventFactory.sol\":{\"keccak256\":\"0x711ee39be8ae3bfdcd661efa6be8dbcc6e52b7dc54d5f9402033bdb7fe1d51ed\",\"urls\":[\"bzz-raw://375c297180d59ffea2a430579061e3c45c070c0908270c2a4bb6fef865c54ba5\",\"dweb:/ipfs/QmNaySVyAtgD3v6XyZ1DFFZ5uBCJ2xqU3qbbM9ASxYwKk8\"]},\"/C/Users/brass/Documents/dev/guest-client/idetix/contracts/FungibleTicketFactory.sol\":{\"keccak256\":\"0x7e4c70e9214c3d5efd02e2cc837e85250de060eb05e5918be777d1430a544d40\",\"urls\":[\"bzz-raw://ac278569aa8316361fd8b568618968b97a1d3df5052870c18eee9d89e8030ec7\",\"dweb:/ipfs/QmRyXBDdBpyW32Y7XVE5vq6QcQ9tdUJ1qWGsDHvVpG6ii5\"]}},\"version\":1}",
@@ -1607,8 +1605,7 @@
     }
   },
   "schemaVersion": "3.2.0",
-  "updatedAt": "2020-06-26T12:20:14.921Z",
-  "networkType": "ethereum",
+  "updatedAt": "2020-07-08T16:30:24.244Z",
   "devdoc": {
     "methods": {}
   },

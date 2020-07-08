@@ -1,75 +1,49 @@
 <template>
   <div class="events">
-    <div class="container-fluid"></div>
+    <div class="search-filter-wrapper container-fluid" id="search-container">
+      <md-field>
+        <md-icon>search</md-icon>
+        <label>Search</label>
+        <md-input v-model="searchInput"></md-input>
+      </md-field>
+    </div>
     <div class="container">
-      <div class="search-filter-wrapper">
-        <div class="search-bar">TODO: search bar</div>
-        <div class="filter-burger">filt</div>
-      </div>
-      <div class="event-list">
-        <div class="event" v-for="event in events" v-bind:key="event.id">
-          <div class="event-front">
-            <div class="event-info">
-              <span class="info-date">{{ event.date }}</span>
-              <h5>{{ event.name }}</h5>
-              <div class="info-group">
-                <span class="info-title">Location</span>
-                <span class="info-value">{{ event.location }}</span>
-              </div>
-              <div class="info-group">
-                <span class="info-title">Price</span>
-                <span class="info-value">{{ event.lowestPrice }} ETH</span>
-              </div>
-              <div class="info-group">
-                <span class="info-title">Conversion</span>
-                <span class="info-value"
-                  >~{{ event.lowestPrice * 250 }} CHF</span
-                >
-              </div>
-            </div>
-            <div class="event-tickets">
-              <div class="info-group" id="ticket-link">
-                <router-link :to="{ name: '/event', params: { id: event.id } }"
-                  >Tickets</router-link
-                >
-              </div>
-            </div>
-          </div>
-          <div class="show-preview">
-            <span class="show-details" @click="toggleDetails(event.id)">
-              Show details
-            </span>
-          </div>
-          <div class="event-details" :ref="'details_' + event.id">
-            <div class="info-group">
-              <span class="info-title">Required Approvers</span>
-              <span class="info-value">{{ event.approvers }}</span>
-            </div>
-            <div class="info-group">
-              <span class="info-title">Organizer</span>
-              <span class="info-value">{{ event.organizer }}</span>
-            </div>
-            <div class="info-group">
-              <span class="info-title">Description</span>
-              <span class="info-value">{{ event.description }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <isotope
+        ref="isotope"
+        class="event-list"
+        :options="getOptions()"
+        :list="events"
+        @filter="filterOption = arguments[0]"
+        @sort="sortOption = arguments[0]"
+      >
+        <EventCard
+          v-for="event in events"
+          v-bind:key="event.id"
+          v-bind:event_data="event"
+        ></EventCard>
+      </isotope>
     </div>
   </div>
 </template>
 
 <script>
 // import Button from "./../components/basics/Button";
+import EventCard from "./../components/EventCard";
+import isotope from "vueisotope";
+//import func from "../../vue-temp/vue-editor-bridge";
 
 export default {
   name: "EventList",
-  // components: {
-  //   Button
-  // },
+  components: {
+    EventCard,
+    isotope,
+  },
   data() {
     return {
+      searchInput: "",
+      sortOption: null,
+      filterOption: null,
+      filterText: "",
       events: [
         {
           name: "Bastille",
@@ -81,7 +55,8 @@ export default {
           organizer: "Events Gmbh",
           description:
             "This will be an awesome open air if covid-19 does not fuck it up and it will be super cool for sure",
-          approvers: "Idetix"
+          approvers: "Idetix",
+          img_url: require("@/assets/event_img/event_1.jpg"),
         },
         {
           name: "Theatre",
@@ -93,7 +68,8 @@ export default {
           organizer: "Sick Theaters",
           description:
             "Sick Theaters will host this screening for the fist time since the covid outbreak and it will be super awesome so dont fucking miss it",
-          approvers: "SBB"
+          approvers: "SBB",
+          img_url: require("@/assets/event_img/event_2.jpg"),
         },
         {
           name: "Robin Schulz",
@@ -104,10 +80,21 @@ export default {
           id: "3",
           organizer: "GN",
           description: "",
-          approvers: "Idetix"
-        }
-      ]
+          approvers: "Idetix",
+          img_url: require("@/assets/event_img/event_3.jpg"),
+        },
+      ],
     };
+  },
+  watch: {
+    searchInput: function() {
+      console.log(`current search: ${this.searchInput}`);
+      this.filterText = this.searchInput;
+      this.$refs["isotope"].filter("filterByText");
+    },
+  },
+  mounted: function() {
+    window.addEventListener("scroll", this.handleScroll);
   },
   methods: {
     toggleDetails: function(event_id) {
@@ -118,16 +105,73 @@ export default {
       } else {
         element.classList.add("open");
       }
-    }
-  }
+    },
+    getOptions: function() {
+      var _this = this;
+      return {
+        layoutMode: "vertical",
+        getSortData: {
+          id: "id",
+          name: function(itemElem) {
+            return itemElem.name.toLowerCase();
+          },
+        },
+        getFilterData: {
+          filterByText: function(itemElem) {
+            return itemElem.name
+              .toLowerCase()
+              .includes(_this.filterText.toLowerCase());
+          },
+        },
+      };
+    },
+    sort: function(key) {
+      this.isotopeSort(key);
+      this.sortOption = key;
+    },
+    filter: function(key) {
+      if (this.filterOption == key) key = null;
+      this.isotopeFilter(key);
+      this.filterOption = key;
+    },
+    handleScroll: function() {
+      var scrollTop = window.scrollY;
+      var nav_height = document.getElementById("nav").offsetHeight;
+      if (scrollTop > nav_height) {
+        var scrollbox = document.getElementById("search-container");
+        scrollbox.classList.add("sticky");
+        scrollbox.style.top = nav_height + "px";
+      }
+      var window_height = window.screen.height / 2;
+
+      var cards = document.getElementsByClassName("event");
+      cards.forEach((card) => {
+        var card_center =
+          (card.getBoundingClientRect().top + card.offsetHeight) / 2;
+        if (Math.abs(window_height - card_center) < 80) {
+          card.classList.add("raised");
+        } else {
+          card.classList.remove("raised");
+        }
+      });
+    },
+  },
 };
 </script>
 
 <style scoped>
+.item {
+  width: 100%;
+  padding-bottom: 20px;
+}
 .search-filter-wrapper {
-  /*margin-bottom: 0.1rem;*/
-  /*margin-top: 0.1rem;*/
-  display: inline;
+  margin-bottom: 2rem;
+  z-index: 6;
+  background-color: white;
+  padding: 10px;
+}
+.search-filter-wrapper.sticky {
+  position: sticky;
 }
 .search-bar {
   display: inline-block;
@@ -141,59 +185,8 @@ export default {
   border: black dotted 0.001rem;
 }
 .event-list {
+  z-index: 5;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-.event {
-  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
-  background-color: #fff;
-  transition: box-shadow 0.25s;
-  border-radius: 1px;
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
-}
-.event-front {
-  display: flex;
-}
-.event-tickets {
-  margin-top: auto;
-  margin-bottom: auto;
-}
-#ticket-link {
-  margin-right: 1rem;
-}
-.event-details {
-  max-height: 0;
-  transition: max-height 0.5s linear;
-  overflow: hidden;
-}
-.event-details.open {
-  max-height: 500px;
-}
-.event-info {
-  padding: 10px;
-}
-.info-group {
-  float: left;
-}
-.show-details {
-  border: 1px dashed black;
-  display: block;
-  margin: 1px;
-  text-align: center;
-  margin-top: 1rem;
-}
-.event h3 {
-  margin-bottom: 20px;
-  margin-top: 0;
-}
-.info-title {
-  display: inline-block;
-  color: var(--accent);
-  min-width: 100px;
-}
-.info-value {
-  display: inline-block;
-  color: var(--accent);
-  min-width: 100px;
 }
 </style>

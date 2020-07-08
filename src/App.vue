@@ -18,34 +18,33 @@
 <script>
 // Material kit css
 import "vue-material/dist/vue-material.min.css";
-//import "vue-material/dist/theme/default.css";
+import "vue-material/dist/theme/default.css";
 import Navigation from "./components/Navigation";
 import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
 // For components only used in single views, import locally
-import { MdButton, MdIcon } from "vue-material/dist/components";
-Vue.use(MdButton);
-Vue.use(MdIcon);
+import VueMaterial from 'vue-material';
+Vue.use(VueMaterial);
 
 export default {
   components: {
-    Navigation
+    Navigation,
   },
   data() {
     return {
-      navHeight: 100
+      navHeight: 100,
     };
   },
   methods: {
     getNavHeight: function() {
       return this.$refs["nav"].getBoundingClientRect().height;
-    }
+    },
   },
   mounted: function() {
     this.navHeight = this.getNavHeight();
     //this.$refs["content"].style.paddingTop = this.navHeight + "px";
-  }
+  },
 };
 </script>
 
@@ -59,7 +58,7 @@ export default {
   --fg-light: hsl(9, 36%, 85%);
   --bg: white;
   --bg-dark: #584d53;
-  --accent: #FF0266;
+  --accent: #ff0266;
   --button-neutral: #e1ada6;
   --button-confirm: #0f5e59;
   --button-cancel: #3e2737;
@@ -132,6 +131,7 @@ a:hover {
   background-color: var(--bg);
   position: sticky;
   top: 0;
+  z-index: 8;
 }
 #nav .container {
   display: flex;
