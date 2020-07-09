@@ -1,8 +1,29 @@
 <template>
   <div id="identity">
     <div class="container">
-      <h1>Identity</h1>
-      <div class="search"></div>
+      <!--      <div class="md-layout md-gutter">-->
+      <div class="wrapper">
+        <div class="md-layout-item">
+          <md-field>
+            <md-select
+              v-model="approver"
+              name="approver"
+              id="approver"
+              placeholder="Approver"
+              @click="toggleForm()"
+            >
+              <md-option value="Idetix" @click="toggleFormChoice()"
+                >Idetix</md-option
+              >
+              <md-option value="Starticket">Starticket</md-option>
+            </md-select>
+          </md-field>
+        </div>
+      </div>
+      <div class="form-wrapper">
+        <PhoneVerificationForm id="phone-verification"></PhoneVerificationForm>
+        <MailVerificationForm id="mail-verification"></MailVerificationForm>
+      </div>
       <div class="approver-list-wrapper">
         <div
           class="approver-wrapper"
@@ -33,16 +54,15 @@
 </template>
 
 <script>
-import Vue from "vue";
-
-import { MdIcon } from "vue-material/dist/components";
-import "material-design-icons";
-Vue.use(MdIcon);
+import PhoneVerificationForm from "../components/PhoneVerificationForm";
+import MailVerificationForm from "../components/MailVerificationForm";
 
 export default {
   name: "Identification",
+  components: { PhoneVerificationForm, MailVerificationForm },
   data() {
     return {
+      approver: "",
       approvers: [
         {
           name: "Idetix",
@@ -50,17 +70,17 @@ export default {
           methods: [
             {
               name: "Mail",
-              approved: false,
+              approved: false
             },
             {
               name: "Phone",
-              approved: true,
+              approved: true
             },
             {
               name: "Airbnb",
-              approved: false,
-            },
-          ],
+              approved: false
+            }
+          ]
         },
         {
           name: "Starticket",
@@ -68,34 +88,33 @@ export default {
           methods: [
             {
               name: "Mail",
-              approved: false,
+              approved: false
             },
             {
               name: "Phone",
-              approved: false,
+              approved: false
             },
             {
               name: "Blackberry",
-              approved: false,
-            },
-          ],
-        },
-      ],
+              approved: false
+            }
+          ]
+        }
+      ]
     };
   },
   methods: {
     getApprovedFraction: function(approver_id) {
-      var approver = this.approvers.filter((app) => app.id == approver_id)[0];
+      var approver = this.approvers.filter(app => app.id === approver_id)[0];
       var approved = 0;
       var total = 0;
-      approver.methods.forEach((method) => {
+      approver.methods.forEach(method => {
         if (method.approved) approved += 1;
         total += 1;
       });
       return `${approved}/${total}`;
     },
     toggleApprover: function(approved_id) {
-      //var approver = this.approvers.filter((app) => app.id == approver_id)[0];
       var test = `methods_${approved_id}`;
       var element = this.$refs[test][0];
       if (element.classList.contains("open")) {
@@ -104,7 +123,18 @@ export default {
         element.classList.add("open");
       }
     },
-  },
+    toggleFormChoice: function() {
+      var ver = this.$ref(`phone-verification`);
+      if (ver.contains("open")) {
+        ver.remove("open");
+      } else {
+        ver.add("open");
+      }
+      // var kind = `approval_`;
+      // if (this.approver === "Idetix") {
+      // }
+    }
+  }
 };
 </script>
 
@@ -118,6 +148,7 @@ export default {
 .approver-methods.open {
   max-height: 500px;
 }
+
 .overview {
   display: flex;
   justify-content: space-between;
@@ -137,5 +168,25 @@ export default {
 .method {
   display: flex;
   justify-content: space-between;
+}
+
+#phone-verification {
+  margin-bottom: 1rem;
+  max-height: 0;
+  transition: max-height 0.3s linear;
+  overflow: hidden;
+}
+#phone-verification.open {
+  max-height: 500px;
+}
+
+#mail-verification {
+  margin-bottom: 1rem;
+  max-height: 0;
+  transition: max-height 0.3s linear;
+  overflow: hidden;
+}
+#mail-verification.open {
+  max-height: 500px;
 }
 </style>
