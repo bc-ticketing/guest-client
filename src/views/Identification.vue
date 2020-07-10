@@ -125,7 +125,6 @@ export default {
     toggleApprover: function(approved_id) {
       var test = `methods_${approved_id}`;
       var element = this.$refs[test][0];
-      console.log(element);
       if (element.classList.contains("open")) {
         element.classList.remove("open");
       } else {
@@ -137,7 +136,6 @@ export default {
       var mailElem = document.getElementById(`mail-verification`);
       if (option === `phone-verification`) {
         if (!phoneElem.classList.contains("open")) {
-          console.log("not containing open");
           phoneElem.classList.add("open");
         }
         if (mailElem.classList.contains("open")) {
@@ -180,14 +178,11 @@ export default {
 
 .approver-list-wrapper {
   border-top: 2px solid black;
-  padding-top: 1rem;
-  margin-top: ;
 }
 
 .approver-wrapper {
   border-bottom: 2px solid black;
-  margin-bottom: 1rem;
-  max-height: 3rem;
+  margin-top: 1rem;
 }
 
 .method {

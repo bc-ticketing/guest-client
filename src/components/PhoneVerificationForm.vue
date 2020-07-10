@@ -7,10 +7,17 @@
           <span class="md-prefix">+41</span>
           <md-input md-counter="9" maxlength="9"></md-input>
         </md-field>
-        <md-button class="md-primary">Send code.</md-button>
+        <md-button class="md-primary" @click.native="showPhoneSignatureInputs()"
+          >Send code.</md-button
+        >
       </div>
-      <md-button class="md-primary">I already have a code.</md-button>
-      <div class="signed-input-wrapper">
+      <md-button class="md-primary" @click.native="showPhoneSignatureInputs()"
+        >I already have a code.</md-button
+      >
+      <div
+        class="phone-signature-input-wrapper"
+        id="phone-signature-input-wrapper"
+      >
         <md-field>
           <label>Signed code</label>
           <md-input md-counter="32" maxlength="32"></md-input>
@@ -27,12 +34,27 @@ export default {
   name: "PhoneVerificationForm",
   data: () => ({
     approvers: null
-  })
+  }),
+  methods: {
+    showPhoneSignatureInputs: function() {
+      document.getElementById(`signature-input-wrapper`).classList.add("open");
+    }
+  }
 };
 </script>
 
 <style scoped>
 .input-wrapper {
   display: flex;
+}
+
+.signature-input-wrapper {
+  margin-bottom: 1rem;
+  max-height: 0;
+  transition: max-height 0.3s linear;
+  overflow: hidden;
+}
+.signature-input-wrapper.open {
+  max-height: 500px;
 }
 </style>
