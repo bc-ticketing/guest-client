@@ -7,7 +7,7 @@ yarn-error.log
 .editorconfig
 
 # Contracts
-/src/abi
+/src/abi/
 
 # Editor directories and files
 .idea
