@@ -12,7 +12,7 @@
         <Button v-bind:label="'Neutral'" class="round"></Button>
       </div>
       <h3>Links</h3>
-      <a class='link-ix' href="">This is a link</a>
+      <a class="link-ix" href="">This is a link</a>
     </div>
   </div>
 </template>
@@ -25,17 +25,17 @@ import Button from "./../components/basics/Button";
 export default {
   name: "Home",
   components: {
-    Button,
+    Button
   },
   data() {
     return {};
   },
-  methods: {},
+  methods: {}
 };
 </script>
 
 <style scoped>
 .button-list .button {
-  margin: 0px 20px;
+  margin: 0 20px;
 }
 </style>

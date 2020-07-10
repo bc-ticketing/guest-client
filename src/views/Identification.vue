@@ -1,28 +1,31 @@
 <template>
   <div id="identity">
     <div class="container">
-      <!--      <div class="md-layout md-gutter">-->
-      <div class="wrapper">
+      <div class="verification-wrapper">
         <div class="md-layout-item">
-          <md-field>
+          <md-field class="md-field-select-verification-option">
+            <label>VerificationOption</label>
             <md-select
-              v-model="approver"
-              name="approver"
-              id="approver"
-              placeholder="Approver"
-              @click="toggleForm()"
+              v-model="verificationOption"
+              name="verificationOption"
+              id="verificationOption"
+              placeholder="Verification Option"
             >
-              <md-option value="Idetix" @click="toggleFormChoice()"
-                >Idetix</md-option
-              >
-              <md-option value="Starticket">Starticket</md-option>
+              <md-option value="phone-verification">Phone Number</md-option>
+              <md-option value="mail-verification">Mail Address</md-option>
             </md-select>
           </md-field>
         </div>
-      </div>
-      <div class="form-wrapper">
-        <PhoneVerificationForm id="phone-verification"></PhoneVerificationForm>
-        <MailVerificationForm id="mail-verification"></MailVerificationForm>
+        <div class="form-wrapper">
+          <PhoneVerificationForm
+            ref="phone-verification"
+            id="phone-verification"
+          ></PhoneVerificationForm>
+          <MailVerificationForm
+            ref="mail-verification"
+            id="mail-verification"
+          ></MailVerificationForm>
+        </div>
       </div>
       <div class="approver-list-wrapper">
         <div
@@ -62,7 +65,7 @@ export default {
   components: { PhoneVerificationForm, MailVerificationForm },
   data() {
     return {
-      approver: "",
+      verificationOption: "",
       approvers: [
         {
           name: "Idetix",
@@ -103,6 +106,11 @@ export default {
       ]
     };
   },
+  watch: {
+    verificationOption: function(val) {
+      this.toggleForm(val);
+    }
+  },
   methods: {
     getApprovedFraction: function(approver_id) {
       var approver = this.approvers.filter(app => app.id === approver_id)[0];
@@ -117,22 +125,32 @@ export default {
     toggleApprover: function(approved_id) {
       var test = `methods_${approved_id}`;
       var element = this.$refs[test][0];
+      console.log(element);
       if (element.classList.contains("open")) {
         element.classList.remove("open");
       } else {
         element.classList.add("open");
       }
     },
-    toggleFormChoice: function() {
-      var ver = this.$ref(`phone-verification`);
-      if (ver.contains("open")) {
-        ver.remove("open");
-      } else {
-        ver.add("open");
+    toggleForm: function(option) {
+      var phoneElem = document.getElementById(`phone-verification`);
+      var mailElem = document.getElementById(`mail-verification`);
+      if (option === `phone-verification`) {
+        if (!phoneElem.classList.contains("open")) {
+          console.log("not containing open");
+          phoneElem.classList.add("open");
+        }
+        if (mailElem.classList.contains("open")) {
+          mailElem.classList.remove("open");
+        }
+      } else if (option === `mail-verification`) {
+        if (!mailElem.classList.contains("open")) {
+          mailElem.classList.add("open");
+        }
+        if (phoneElem.classList.contains("open")) {
+          phoneElem.classList.remove("open");
+        }
       }
-      // var kind = `approval_`;
-      // if (this.approver === "Idetix") {
-      // }
     }
   }
 };
@@ -160,14 +178,25 @@ export default {
   font-size: 1.3rem;
 }
 
+.approver-list-wrapper {
+  border-top: 2px solid black;
+  padding-top: 1rem;
+  margin-top: ;
+}
+
 .approver-wrapper {
   border-bottom: 2px solid black;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  max-height: 3rem;
 }
 
 .method {
   display: flex;
   justify-content: space-between;
+}
+
+.md-field-select-verification-option {
+  margin: 0;
 }
 
 #phone-verification {

@@ -10,17 +10,6 @@
     </div>
 
     <div class="burger-wrapper">
-      <!--
-      <div
-        id="burger"
-        @click="toggleMobileNav"
-        v-bind:class="{ open: mobileNavOpen }"
-      >
-        <span class="burger-bar bar1"></span>
-        <span class="burger-bar bar2"></span>
-        <span class="burger-bar bar3"></span>
-      </div>
-      -->
       <button
         class="hamburger hamburger--elastic"
         type="button"
