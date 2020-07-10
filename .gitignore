@@ -6,6 +6,9 @@ yarn-error.log
 .babelrc
 .editorconfig
 
+# Contracts
+/src/abi
+
 # Editor directories and files
 .idea
 *.suo
