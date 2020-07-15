@@ -16,14 +16,8 @@
               <span class="info-value">{{ event_data.location }}</span>
             </div>
             <div class="info-group">
-              <span class="info-title">Price</span>
-              <span class="info-value">{{ event_data.lowestPrice }} ETH</span>
-            </div>
-            <div class="info-group">
-              <span class="info-title">Conversion</span>
-              <span class="info-value"
-                >{{ event_data.lowestPrice * 250 }} CHF</span
-              >
+              <span class="info-title">Venue</span>
+              <span class="info-value">Placeholder</span>
             </div>
           </div>
         </div>
@@ -38,17 +32,33 @@
         -->
         <div class="flip-card-back" @click="flipCard">
           <div class="event-info">
-            <div class="info-group">
+            <div class="info-group description">
               <span class="info-value">{{ event_data.description }}</span>
             </div>
             <div class="info-group">
-              <span class="info-title">Required Approvers</span>
+              <span class="info-title">Approvers</span>
               <span class="info-value">{{ event_data.approvers }}</span>
             </div>
             <div class="info-group">
               <span class="info-title">Organizer</span>
               <span class="info-value">{{ event_data.organizer }}</span>
             </div>
+            <div class="info-group">
+              <span class="info-title">Price</span>
+              <span class="info-value">{{ event_data.lowestPrice }} ETH</span>
+            </div>
+            <div class="info-group">
+              <span class="info-title">Conversion</span>
+              <span class="info-value"
+                >{{ event_data.lowestPrice * 250 }} CHF</span
+              >
+            </div>
+            <div class="ticket-buttons">
+              <md-button class="md-raised md-primary" @click="goToDetails"
+                >Tickets</md-button
+              >
+            </div>
+            <!--
             <div class="event-tickets">
               <div class="info-group" id="ticket-link">
                 <router-link
@@ -57,6 +67,7 @@
                 >
               </div>
             </div>
+            -->
           </div>
         </div>
       </div>
@@ -83,9 +94,12 @@ export default {
     img_url: String,
   },
   methods: {
-      flipCard: function() {
-          this.$refs['card'].classList.toggle('flipped');
-      }
+    flipCard: function() {
+      this.$refs["card"].classList.toggle("flipped");
+    },
+    goToDetails: function() {
+      this.$router.push({ name: 'event', params: { id: this.event_data.id } });
+    },
   },
   computed: {},
   mounted: function() {},
@@ -131,7 +145,9 @@ export default {
 .flip-card-back .info-title {
   color: var(--accent);
 }
-
+.description {
+  margin-bottom: 2rem;
+}
 /* Flipping animation */
 
 .flip-card {
@@ -149,7 +165,8 @@ export default {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
-.flip-card:hover .flip-card-inner, .flip-card.flipped .flip-card-inner {
+.flip-card:hover .flip-card-inner,
+.flip-card.flipped .flip-card-inner {
   transform: rotateY(180deg);
 }
 

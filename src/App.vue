@@ -144,7 +144,6 @@ a:hover {
 
 /* ---------- Basic Components ---------- */
 .content {
-  padding-top: 1rem;
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */
