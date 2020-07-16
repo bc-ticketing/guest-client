@@ -1,8 +1,32 @@
 <template>
   <div id="identity">
     <div class="container">
-      <h1>Identity</h1>
-      <div class="search"></div>
+      <div class="verification-wrapper">
+        <div class="md-layout-item">
+          <md-field class="md-field-select-verification-option">
+            <label>VerificationOption</label>
+            <md-select
+              v-model="verificationOption"
+              name="verificationOption"
+              id="verificationOption"
+              placeholder="Verification Option"
+            >
+              <md-option value="phone-verification">Phone Number</md-option>
+              <md-option value="mail-verification">Mail Address</md-option>
+            </md-select>
+          </md-field>
+        </div>
+        <div class="form-wrapper">
+          <PhoneVerificationForm
+            ref="phone-verification"
+            id="phone-verification"
+          ></PhoneVerificationForm>
+          <MailVerificationForm
+            ref="mail-verification"
+            id="mail-verification"
+          ></MailVerificationForm>
+        </div>
+      </div>
       <div class="approver-list-wrapper">
         <div
           class="approver-wrapper"
@@ -33,16 +57,15 @@
 </template>
 
 <script>
-import Vue from "vue";
-
-import { MdIcon } from "vue-material/dist/components";
-import "material-design-icons";
-Vue.use(MdIcon);
+import PhoneVerificationForm from "../components/PhoneVerificationForm";
+import MailVerificationForm from "../components/MailVerificationForm";
 
 export default {
   name: "Identification",
+  components: { PhoneVerificationForm, MailVerificationForm },
   data() {
     return {
+      verificationOption: "",
       approvers: [
         {
           name: "Idetix",
@@ -50,17 +73,17 @@ export default {
           methods: [
             {
               name: "Mail",
-              approved: false,
+              approved: false
             },
             {
               name: "Phone",
-              approved: true,
+              approved: true
             },
             {
               name: "Airbnb",
-              approved: false,
-            },
-          ],
+              approved: false
+            }
+          ]
         },
         {
           name: "Starticket",
@@ -68,34 +91,38 @@ export default {
           methods: [
             {
               name: "Mail",
-              approved: false,
+              approved: false
             },
             {
               name: "Phone",
-              approved: false,
+              approved: false
             },
             {
               name: "Blackberry",
-              approved: false,
-            },
-          ],
-        },
-      ],
+              approved: false
+            }
+          ]
+        }
+      ]
     };
+  },
+  watch: {
+    verificationOption: function(val) {
+      this.toggleForm(val);
+    }
   },
   methods: {
     getApprovedFraction: function(approver_id) {
-      var approver = this.approvers.filter((app) => app.id == approver_id)[0];
+      var approver = this.approvers.filter(app => app.id === approver_id)[0];
       var approved = 0;
       var total = 0;
-      approver.methods.forEach((method) => {
+      approver.methods.forEach(method => {
         if (method.approved) approved += 1;
         total += 1;
       });
       return `${approved}/${total}`;
     },
     toggleApprover: function(approved_id) {
-      //var approver = this.approvers.filter((app) => app.id == approver_id)[0];
       var test = `methods_${approved_id}`;
       var element = this.$refs[test][0];
       if (element.classList.contains("open")) {
@@ -104,7 +131,26 @@ export default {
         element.classList.add("open");
       }
     },
-  },
+    toggleForm: function(option) {
+      var phoneElem = document.getElementById(`phone-verification`);
+      var mailElem = document.getElementById(`mail-verification`);
+      if (option === `phone-verification`) {
+        if (!phoneElem.classList.contains("open")) {
+          phoneElem.classList.add("open");
+        }
+        if (mailElem.classList.contains("open")) {
+          mailElem.classList.remove("open");
+        }
+      } else if (option === `mail-verification`) {
+        if (!mailElem.classList.contains("open")) {
+          mailElem.classList.add("open");
+        }
+        if (phoneElem.classList.contains("open")) {
+          phoneElem.classList.remove("open");
+        }
+      }
+    }
+  }
 };
 </script>
 
@@ -118,6 +164,7 @@ export default {
 .approver-methods.open {
   max-height: 500px;
 }
+
 .overview {
   display: flex;
   justify-content: space-between;
@@ -129,13 +176,41 @@ export default {
   font-size: 1.3rem;
 }
 
+.approver-list-wrapper {
+  border-top: 2px solid black;
+}
+
 .approver-wrapper {
   border-bottom: 2px solid black;
-  margin-bottom: 2rem;
+  margin-top: 1rem;
 }
 
 .method {
   display: flex;
   justify-content: space-between;
+}
+
+.md-field-select-verification-option {
+  margin: 0;
+}
+
+#phone-verification {
+  margin-bottom: 1rem;
+  max-height: 0;
+  transition: max-height 0.3s linear;
+  overflow: hidden;
+}
+#phone-verification.open {
+  max-height: 500px;
+}
+
+#mail-verification {
+  margin-bottom: 1rem;
+  max-height: 0;
+  transition: max-height 0.3s linear;
+  overflow: hidden;
+}
+#mail-verification.open {
+  max-height: 500px;
 }
 </style>

@@ -7,7 +7,11 @@ cd idetix/contracts
 truffle compile
 truffle migrate --reset
 
-#move compiled contracts' .js files to client
+#move contracts (.sol) to client
 cd ..
+rm -rf ../src/contracts
+cp -r contracts ../src/
+
+#move compiled contracts' .js files to client
 rm -rf ../src/abi
 cp -r abi ../src/

@@ -4,7 +4,7 @@
       <div class="container">
         <div class="logo-container">
           <!-- <img src="" alt="Logo" /> -->
-          Idetix
+          <h4 id="nav-title">Idetix</h4>
         </div>
         <Navigation v-bind:navHeight="navHeight" />
       </div>
@@ -24,27 +24,27 @@ import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
 // For components only used in single views, import locally
-import VueMaterial from 'vue-material';
+import VueMaterial from "vue-material";
 Vue.use(VueMaterial);
 
 export default {
   components: {
-    Navigation,
+    Navigation
   },
   data() {
     return {
-      navHeight: 100,
+      navHeight: 100
     };
   },
   methods: {
     getNavHeight: function() {
       return this.$refs["nav"].getBoundingClientRect().height;
-    },
+    }
   },
   mounted: function() {
     this.navHeight = this.getNavHeight();
     //this.$refs["content"].style.paddingTop = this.navHeight + "px";
-  },
+  }
 };
 </script>
 
@@ -127,7 +127,7 @@ a:hover {
 /* ---------- Navigation Bar ---------- */
 #nav {
   width: 100%;
-  padding: 20px 0px;
+  padding: 20px 0;
   background-color: var(--bg);
   position: sticky;
   top: 0;
@@ -141,9 +141,13 @@ a:hover {
 .logo-container {
   color: var(--accent);
 }
+#nav-title {
+  display: flex;
+}
 
 /* ---------- Basic Components ---------- */
 .content {
+  padding-top: 0;
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */
