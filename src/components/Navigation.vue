@@ -1,5 +1,6 @@
 <template>
   <div class="navigation-container">
+    <!--
     <div class="navigation-links">
       <router-link to="/">Home</router-link>
       <router-link to="/event-list">Events</router-link>
@@ -35,6 +36,7 @@
       <router-link to="/wallet-funding">Wallet Funding</router-link>
       <router-link to="/simple-storage">Simple Storage</router-link>
     </div>
+    -->
   </div>
 </template>
 
@@ -43,23 +45,33 @@ export default {
   name: "Navigation",
   data() {
     return {
-      mobileNavOpen: false
+      mobileNavOpen: false,
     };
   },
   props: {
-    navHeight: Number
+    navHeight: Number,
   },
   methods: {
     toggleMobileNav: function() {
       this.mobileNavOpen = !this.mobileNavOpen;
       this.$refs["mobile-nav"].style.top = this.navHeight + "px";
-    }
+    },
   },
-  mounted: function() {}
+  mounted: function() {},
 };
 </script>
 
 <style scoped>
+.phone-viewport {
+  width: 100vw;
+  height: 200px;
+  display: inline-flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid rgba(#000, 0.26);
+  background: rgba(#000, 0.06);
+}
+
 .hamburger {
   padding: 15px 15px;
   display: inline-block;

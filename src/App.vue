@@ -6,12 +6,16 @@
           <!-- <img src="" alt="Logo" /> -->
           <h4 id="nav-title">Idetix</h4>
         </div>
-        <Navigation v-bind:navHeight="navHeight" />
+        <div class="wallet-info">
+          <walletInfo></walletInfo>
+        </div>
+        <!-- <Navigation v-bind:navHeight="navHeight" /> -->
       </div>
     </div>
     <div class="content" ref="content">
       <router-view />
     </div>
+    <bottomBar></bottomBar>
   </div>
 </template>
 
@@ -19,7 +23,9 @@
 // Material kit css
 import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
-import Navigation from "./components/Navigation";
+// import Navigation from "./components/Navigation";
+import bottomBar from "./components/bottomBar";
+import walletInfo from "./components/walletInfo";
 import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
@@ -29,22 +35,24 @@ Vue.use(VueMaterial);
 
 export default {
   components: {
-    Navigation
+    //Navigation,
+    bottomBar,
+    walletInfo,
   },
   data() {
     return {
-      navHeight: 100
+      navHeight: 100,
     };
   },
   methods: {
     getNavHeight: function() {
       return this.$refs["nav"].getBoundingClientRect().height;
-    }
+    },
   },
   mounted: function() {
     this.navHeight = this.getNavHeight();
     //this.$refs["content"].style.paddingTop = this.navHeight + "px";
-  }
+  },
 };
 </script>
 
@@ -74,6 +82,7 @@ html {
   color: var(--fg);
   background-color: var(--bg);
 }
+/*
 h1 {
   font-size: 3rem;
   font-weight: 700;
@@ -102,6 +111,7 @@ h5 {
   margin-top: 0;
   margin-bottom: 1rem;
 }
+*/
 p {
   font-size: 1rem;
 }

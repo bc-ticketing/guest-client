@@ -1,24 +1,12 @@
 <template>
-  <div>
-    <div class="container">
-      <h1>Wallet Funding</h1>
-      <div class="connected-info" v-if="isConnected">
-        <span class="balance">
-          <md-icon class="icon-accent">public</md-icon> {{ networkName }}
-        </span>
-        <span class="balance">
-          <md-icon class="icon-accent">contact_mail</md-icon> {{ web3.account }}
-        </span>
-        <span class="balance"
-          ><md-icon class="icon-accent">account_balance_wallet</md-icon>
-          {{ web3.balance }}</span
+  <div class="info-wrapper">
+    <div class="user-icon">
+      <span class="balance" @click="openConnectModal"
+        ><md-icon class="md-size-2x" :class="{ active: isConnected }"
+          >public</md-icon
         >
-      </div>
-      <div class="connect-button" v-if="!isConnected">
-        <md-button class="md-raised md-primary" @click="openConnectModal"
-          >Connect</md-button
-        >
-      </div>
+        <span v-if="isConnected">{{ web3.balance }} ETH</span>
+      </span>
     </div>
   </div>
 </template>
@@ -27,7 +15,7 @@
 import { NETWORKS } from "./../util/constants/constants.js";
 
 export default {
-  name: "WalletFunding",
+  name: "walletInfo",
   components: {},
   methods: {
     openConnectModal: function() {
@@ -57,6 +45,9 @@ export default {
   display: block;
 }
 .balance .md-icon.md-theme-default.md-icon-font {
+  transition: color 0.5s linear;
+}
+.balance .md-icon.md-theme-default.md-icon-font.active {
   color: var(--accent);
 }
 </style>
