@@ -21,7 +21,15 @@
       md-icon="theaters"
       @click="
         theme = 'red';
-        navigateTo('simple-storage');
+        navigateTo('inventory');
+      "
+    ></md-bottom-bar-item>
+    <md-bottom-bar-item
+      md-label="Identity"
+      md-icon="face"
+      @click="
+        theme = 'red';
+        navigateTo('identification');
       "
     ></md-bottom-bar-item>
   </md-bottom-bar>

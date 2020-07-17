@@ -17,38 +17,38 @@ export default new Router({
     {
       path: "/",
       name: "home",
-      component: Home
+      component: Home,
     },
     {
       path: "/event-list",
       name: "event-list",
 
-      component: loadView("EventList")
+      component: loadView("EventList"),
     },
     {
       path: "/event/:id",
       name: "event",
-      component: loadView("Event")
+      component: loadView("Event"),
     },
     {
       path: "/identification",
       name: "identification",
-      component: loadView("Identification")
+      component: loadView("Identification"),
     },
     {
-      path: "/lottery",
-      name: "lottery",
-      component: loadView("Lottery")
+      path: "/inventory",
+      name: "inventory",
+      component: loadView("Inventory"),
     },
     {
       path: "/wallet-funding",
       name: "wallet-funding",
-      component: loadView("WalletFunding")
+      component: loadView("WalletFunding"),
     },
     {
       path: "/simple-storage",
       name: "simple-storage",
-      component: loadView("SimpleStorage")
-    }
-  ]
+      component: loadView("SimpleStorage"),
+    },
+  ],
 });
