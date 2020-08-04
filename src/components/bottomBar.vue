@@ -4,7 +4,7 @@
       md-label="Home"
       md-icon="home"
       @click="
-        theme = 'teal';
+        theme = '#00bec0';
         navigateTo('home');
       "
     ></md-bottom-bar-item>

@@ -1,17 +1,20 @@
 <template>
   <div id="app">
+    <!--
     <div id="nav" ref="nav">
       <div class="container">
         <div class="logo-container">
-          <!-- <img src="" alt="Logo" /> -->
+           <img src="" alt="Logo" /> 
           <h4 id="nav-title">Idetix</h4>
         </div>
         <div class="wallet-info">
           <walletInfo></walletInfo>
         </div>
-        <!-- <Navigation v-bind:navHeight="navHeight" /> -->
+         <Navigation v-bind:navHeight="navHeight" /> 
       </div>
+      
     </div>
+    -->
     <div class="content" ref="content">
       <router-view />
     </div>
@@ -25,7 +28,7 @@ import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
 // import Navigation from "./components/Navigation";
 import bottomBar from "./components/bottomBar";
-import walletInfo from "./components/walletInfo";
+//import walletInfo from "./components/walletInfo";
 import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
@@ -37,7 +40,7 @@ export default {
   components: {
     //Navigation,
     bottomBar,
-    walletInfo,
+    //walletInfo,
   },
   data() {
     return {
@@ -158,6 +161,7 @@ a:hover {
 /* ---------- Basic Components ---------- */
 .content {
   padding-top: 0;
+  overflow-x: hidden;
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */
