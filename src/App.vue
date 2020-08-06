@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <walletInfo v-bind:open="infoOpen"></walletInfo>
     <!--
     <div id="nav" ref="nav">
       <div class="container">
@@ -8,7 +9,7 @@
           <h4 id="nav-title">Idetix</h4>
         </div>
         <div class="wallet-info">
-          <walletInfo></walletInfo>
+          
         </div>
          <Navigation v-bind:navHeight="navHeight" /> 
       </div>
@@ -28,7 +29,7 @@ import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
 // import Navigation from "./components/Navigation";
 import bottomBar from "./components/bottomBar";
-//import walletInfo from "./components/walletInfo";
+import walletInfo from "./components/walletInfo";
 import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
@@ -40,11 +41,12 @@ export default {
   components: {
     //Navigation,
     bottomBar,
-    //walletInfo,
+    walletInfo,
   },
   data() {
     return {
       navHeight: 100,
+      infoOpen: false,
     };
   },
   methods: {
@@ -52,8 +54,15 @@ export default {
       return this.$refs["nav"].getBoundingClientRect().height;
     },
   },
-  mounted: function() {
-    this.navHeight = this.getNavHeight();
+  beforeCreate() {
+    this.$store.dispatch("registerWeb3");
+  },
+  mounted: async function() {
+    setTimeout(() => {
+      this.infoOpen = true;
+    }, 1000);
+
+    //this.navHeight = this.getNavHeight();
     //this.$refs["content"].style.paddingTop = this.navHeight + "px";
   },
 };
@@ -138,25 +147,6 @@ a:hover {
 }
 
 /* ---------- Navigation Bar ---------- */
-#nav {
-  width: 100%;
-  padding: 20px 0;
-  background-color: var(--bg);
-  position: sticky;
-  top: 0;
-  z-index: 8;
-}
-#nav .container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.logo-container {
-  color: var(--accent);
-}
-#nav-title {
-  display: flex;
-}
 
 /* ---------- Basic Components ---------- */
 .content {

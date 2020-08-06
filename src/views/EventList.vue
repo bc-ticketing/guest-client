@@ -1,10 +1,12 @@
 <template>
   <div class="events">
     <div class="search-filter-wrapper container-fluid" id="search-container">
+      <!--
       <div class="search-field">
         <md-icon>search</md-icon>
         <md-input v-model="searchInput"></md-input>
       </div>
+      -->
       <!--<md-field>
         <md-icon>search</md-icon>
         <label>Search</label>
@@ -27,6 +29,7 @@
         ></EventEntry>
       </isotope>
     </div>
+    <div class="test" @click="loadEvents">Fetch events (click me)</div>
   </div>
 </template>
 
@@ -34,6 +37,11 @@
 // import Button from "./../components/basics/Button";
 import EventEntry from "./../components/EventEntry";
 import isotope from "vueisotope";
+import { EVENT_ABI, EVENT_FACTORY_ABI } from "./../util/constants/abi";
+import {
+  TEST_EVENT_ADDRESS,
+  EVENT_FACTORY_ADDRESS,
+} from "./../util/constants/addresses";
 //import func from "../../vue-temp/vue-editor-bridge";
 
 export default {
@@ -41,6 +49,11 @@ export default {
   components: {
     EventEntry,
     isotope,
+  },
+  computed: {
+    web3() {
+      return this.$store.state.web3.web3Instance;
+    },
   },
   data() {
     return {
@@ -108,6 +121,23 @@ export default {
     window.addEventListener("scroll", this.handleScroll);
   },
   methods: {
+    /* Load all event contract addresses from event factory */
+    loadEvents: async function() {
+      const eventFactory = new this.web3.eth.Contract(
+        EVENT_FACTORY_ABI,
+        EVENT_FACTORY_ADDRESS
+      );
+      const eventAddresses = await eventFactory.methods.getEvents().call();
+      this.loadEventDetails(TEST_EVENT_ADDRESS);
+      console.log(eventAddresses);
+    },
+    /* Load event details from event contract address and ipfs */
+    loadEventDetails(event_address) {
+      const event = new this.web3.eth.Contract(EVENT_ABI, event_address);
+      console.log(event.proberties);
+      var result = event.methods.owner;
+      console.log(result);
+    },
     toggleDetails: function(event_id) {
       var event = `details_${event_id}`;
       var element = this.$refs[event][0];

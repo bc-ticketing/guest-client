@@ -2,14 +2,18 @@
   <div class="home">
     <div class="container-fluid content-container" ref="content">
       <div class="content" id="map">
+        <!--
         <div class="search-wrapper">
           <div class="drag-wrapper">
             <md-icon>drag_handle</md-icon>
           </div>
+          
           <div class="search-bar">
-            <md-input placeholder="Search" v-model="searchInput"></md-input>
+             <md-input placeholder="Search" v-model="searchInput"></md-input> 
           </div>
+          
         </div>
+        -->
         <GmapMap
           :center="{ lat: 47.3774338, lng: 8.4666756 }"
           :zoom="3"
@@ -65,6 +69,7 @@ export default {
   components: {
     //Button
   },
+
   methods: {
     async getLocation() {
       return new Promise((resolve, reject) => {

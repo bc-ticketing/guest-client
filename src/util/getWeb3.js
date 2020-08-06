@@ -1,11 +1,14 @@
 import Web3 from "web3";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
-async function getWeb3() {
-  await linkWeb3(true);
+export async function getWeb3() {
+  await linkWeb3(false);
   try {
     // Acccounts now exposed
     var web3 = {};
+    // link to actual web3 object
+    web3.web3Instance = window.web3;
+    // some usefuell values to minimize web3 api calls
     web3.networkId = await window.web3.eth.net.getId();
     web3.accounts = await window.web3.eth.getAccounts();
     web3.account = web3.accounts[0];
@@ -18,7 +21,22 @@ async function getWeb3() {
   }
 }
 
-export default getWeb3;
+export async function updateWeb3() {
+  try {
+    // Acccounts now exposed
+    var web3 = {};
+    web3.networkId = await window.web3.eth.net.getId();
+    web3.accounts = await window.web3.eth.getAccounts();
+    web3.web3Instance = window.web3;
+    web3.account = web3.accounts[0];
+    web3.balance = await window.web3.eth.getBalance(web3.account);
+    return web3;
+  } catch (error) {
+    // User denied account access...
+    console.log(error);
+    return new Error("Web3 has not been linked yet");
+  }
+}
 
 async function linkWeb3(walletConnect) {
   if (walletConnect) {
