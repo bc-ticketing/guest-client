@@ -17,6 +17,7 @@
     "register-service-worker": "^1.7.1",
     "sass": "^1.26.10",
     "sass-loader": "^9.0.2",
+    "swiper": "^6.1.1",
     "vue": "^2.6.11",
     "vue-material": "^1.0.0-beta-14",
     "vue-material-design-icons": "^4.7.1",

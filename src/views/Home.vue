@@ -7,7 +7,7 @@
             <md-icon>drag_handle</md-icon>
           </div>
           <div class="search-bar">
-              <md-input placeholder='Search' v-model="searchInput"></md-input>
+            <md-input placeholder="Search" v-model="searchInput"></md-input>
           </div>
         </div>
         <GmapMap
@@ -47,9 +47,9 @@
 import Vue from "vue";
 import axios from "axios";
 import { gmapApi } from "gmap-vue";
-import { MdContent, MdIcon} from "vue-material/dist/components";
+import { MdContent, MdIcon } from "vue-material/dist/components";
 Vue.use(MdContent);
-Vue.use(MdIcon)
+Vue.use(MdIcon);
 import * as VueGoogleMaps from "gmap-vue";
 
 Vue.use(VueGoogleMaps, {
@@ -113,7 +113,7 @@ export default {
     },
   },
   created: async function() {
-    this.location = await this.getLocation();
+    //this.location = await this.getLocation();
   },
   mounted() {
     this.$refs.map.$mapPromise.then((map) => {
@@ -533,7 +533,7 @@ export default {
   left: 0;
   z-index: 100;
   width: 100vw;
-  background-color: rgba(0,0,0, 0.2);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 .search-bar {
   width: 95vw;

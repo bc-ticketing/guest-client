@@ -1,10 +1,38 @@
 <template>
   <div class="event">
-    <div class="container-fluid parallax" ref="parallax">
-      <!--<img :src="event_data.img_url" alt="" class="img-fluid" /> -->
+    <div class="container-fluid header-img">
+      <div class="parallax" ref="parallax">
+        <!--<img :src="event_data.img_url" alt="" class="img-fluid" /> -->
+      </div>
+      <div class="return-arrow">
+        <router-link to="/event-list"
+          ><md-icon>arrow_back_ios</md-icon></router-link
+        >
+      </div>
+      <div class="event-header">
+        <span class="event-title">{{ event_data.name }}</span>
+        <span class="event-cat">Concert</span>
+      </div>
+      <div class="nav-bar">
+        <div
+          class="nav-entry about active"
+          ref="about"
+          @click="toggleTab('about')"
+        >
+          About
+        </div>
+        <div
+          class="nav-entry tickets"
+          ref="tickets"
+          @click="toggleTab('tickets')"
+        >
+          Tickets
+        </div>
+      </div>
     </div>
+
     <div class="container">
-      <div class="event-info-wrapper">
+      <div class="event-info-wrapper active" ref="content-about">
         <span class="event-title">
           <h2>{{ event_data.name }}</h2>
         </span>
@@ -12,28 +40,39 @@
           {{ event_data.description }}
         </div>
         <div class="info-group">
-          <span class="info-title">Location</span>
+          <md-icon class="info-title">location_on</md-icon>
           <span class="info-value">{{ event_data.location }}</span>
         </div>
         <div class="info-group">
-          <span class="info-title">Venue</span>
-          <span class="info-value">Placeholder</span>
+          <md-icon class="info-title">home</md-icon>
+          <span class="info-value">Hallenstadion</span>
         </div>
         <div class="info-group">
-          <span class="info-title">Organizer</span>
-          <span class="info-value">{{ event_data.organizer }}</span>
+          <md-icon class="info-title">verified_user</md-icon>
+          <span class="info-value">{{ event_data.approvers }}</span>
+        </div>
+        <div class="info-group">
+          <md-icon class="info-title">local_offer</md-icon>
+          <span class="info-value">{{ event_data.lowestPrice }} ETH</span>
         </div>
       </div>
-      <div class="info-group">
-        <span class="info-title">Approvers</span>
-        <span class="info-value">{{ event_data.approvers }}</span>
-      </div>
-      <div class="info-group">
-        <span class="info-title">Price</span>
-        <span class="info-value">{{ event_data.lowestPrice }} ETH</span>
-      </div>
-      <div class="return-arrow">
-        <router-link to="/events">go back</router-link>
+      <div class="event-info-wrapper" ref="content-tickets">
+        <span class="event-title"><h2>Tickets</h2></span>
+        <div class="ticket-container">
+          <div
+            class="ticket-category"
+            v-for="(ticket, index) in tickets"
+            v-bind:key="index"
+          >
+            <div class="ticket-info">
+              <span class="ticket-title">{{ ticket.name }}</span>
+              <span class="ticket-price">{{ ticket.price }} ETH</span>
+            </div>
+            <div class="ticket-select">
+              <md-button class="md-raised md-primary">Buy</md-button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -45,10 +84,21 @@ import getEvent from "./../util/mockData.js";
 export default {
   name: "Event",
   data() {
-    return {};
+    return {
+      tabs: ["about", "tickets"],
+      tickets: [{ name: "fungible", price: 50 }],
+    };
   },
   props: {},
   methods: {
+    toggleTab: function(tab) {
+      this.tabs.forEach((t) => {
+        this.$refs[t].classList.remove("active");
+        this.$refs[`content-${t}`].classList.remove("active");
+      });
+      this.$refs[tab].classList.add("active");
+      this.$refs[`content-${tab}`].classList.add("active");
+    },
     fetchEventInfo: function() {
       console.log(`fetching event info ${this.event_id}`);
       this.event_data = getEvent(this.event_id);
@@ -68,6 +118,76 @@ export default {
 </script>
 
 <style scoped>
+.ticket-category {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.ticket-info .ticket-title {
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.ticket-info .ticket-price {
+  opacity: 0.8;
+}
+.ticket-info span {
+  display: block;
+}
+.return-arrow {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+.return-arrow a {
+  border-bottom: none;
+}
+.return-arrow .md-icon {
+  color: white;
+}
+.event-info-wrapper {
+  display: none;
+}
+.event-info-wrapper.active {
+  display: block;
+}
+.header-img {
+  min-height: 300px;
+  position: relative;
+}
+.header-img .event-header {
+  position: absolute;
+  top: 30%;
+  left: 20px;
+}
+.event-header span {
+  color: white;
+  display: block;
+}
+.event-header .event-cat {
+  opacity: 0.8;
+}
+.event-header .event-title {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+.header-img .nav-bar {
+  position: absolute;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+.nav-entry {
+  padding: 15px 25px;
+  color: white;
+  cursor: pointer;
+}
+.nav-entry.active {
+  border-bottom: 2px solid white;
+}
 .event-title {
   margin-top: 2rem;
   display: inline-block;
@@ -78,7 +198,10 @@ export default {
 .info-title {
   display: inline-block;
   color: var(--accent);
-  min-width: 100px;
+  min-width: 30px;
+}
+.info-title.md-icon {
+  color: var(--accent);
 }
 .info-value {
   display: inline-block;
@@ -92,12 +215,14 @@ export default {
   /* The image used */
 
   /* Set a specific height */
-  min-height: 300px;
 
   /* Create the parallax scrolling effect */
   background-attachment: fixed;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  filter: blur(4px);
+  min-height: 300px;
+  position: relative;
 }
 </style>

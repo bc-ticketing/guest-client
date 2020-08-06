@@ -1,13 +1,17 @@
 <template>
   <div class="events">
     <div class="search-filter-wrapper container-fluid" id="search-container">
-      <md-field>
+      <div class="search-field">
+        <md-icon>search</md-icon>
+        <md-input v-model="searchInput"></md-input>
+      </div>
+      <!--<md-field>
         <md-icon>search</md-icon>
         <label>Search</label>
         <md-input v-model="searchInput"></md-input>
-      </md-field>
+      </md-field> -->
     </div>
-    <div class="container">
+    <div class="container-fluid">
       <isotope
         ref="isotope"
         class="event-list"
@@ -16,11 +20,11 @@
         @filter="filterOption = arguments[0]"
         @sort="sortOption = arguments[0]"
       >
-        <EventCard
+        <EventEntry
           v-for="event in events"
           v-bind:key="event.id"
           v-bind:event_data="event"
-        ></EventCard>
+        ></EventEntry>
       </isotope>
     </div>
   </div>
@@ -28,14 +32,14 @@
 
 <script>
 // import Button from "./../components/basics/Button";
-import EventCard from "./../components/EventCard";
+import EventEntry from "./../components/EventEntry";
 import isotope from "vueisotope";
 //import func from "../../vue-temp/vue-editor-bridge";
 
 export default {
   name: "EventList",
   components: {
-    EventCard,
+    EventEntry,
     isotope,
   },
   data() {
@@ -50,6 +54,9 @@ export default {
           Type: "Concert",
           lowestPrice: "0.2",
           date: "15.12.20",
+          starttime: "18:30",
+          venue: "Hallenstadion",
+
           location: "Zurich",
           id: "1",
           organizer: "Events Gmbh",
@@ -63,6 +70,8 @@ export default {
           Type: "Arts",
           lowestPrice: "0.35",
           date: "03.05.20",
+          starttime: "20:30",
+          venue: "Hallenstadion",
           location: "Zurich",
           id: "2",
           organizer: "Sick Theaters",
@@ -76,7 +85,9 @@ export default {
           Type: "Concert",
           lowestPrice: "0.11",
           date: "04.05.20",
-          location: "Zurich",
+          starttime: "12:00",
+          venue: "Big Ben",
+          location: "London",
           id: "3",
           organizer: "GN",
           description: "",
@@ -109,7 +120,9 @@ export default {
     getOptions: function() {
       var _this = this;
       return {
-        layoutMode: "vertical",
+        masonry: {
+          columnWidth: 100,
+        },
         getSortData: {
           id: "id",
           name: function(itemElem) {
@@ -118,9 +131,14 @@ export default {
         },
         getFilterData: {
           filterByText: function(itemElem) {
-            return itemElem.name
-              .toLowerCase()
-              .includes(_this.filterText.toLowerCase());
+            return (
+              itemElem.name
+                .toLowerCase()
+                .includes(_this.filterText.toLowerCase()) ||
+              itemElem.location
+                .toLowerCase()
+                .includes(_this.filterText.toLowerCase())
+            );
           },
         },
       };
@@ -136,7 +154,8 @@ export default {
     },
     handleScroll: function() {
       var scrollTop = window.scrollY;
-      var nav_height = document.getElementById("nav").offsetHeight;
+      //var nav_height = document.getElementById("nav").offsetHeight;
+      var nav_height = 0;
       if (scrollTop > nav_height) {
         var scrollbox = document.getElementById("search-container");
         scrollbox.classList.add("sticky");
@@ -160,15 +179,30 @@ export default {
 </script>
 
 <style scoped>
+.events {
+  background-color: rgb(241, 235, 235);
+  min-height: 100vh;
+}
 .item {
   width: 100%;
-  padding-bottom: 20px;
+  margin-bottom: 7px;
 }
 .search-filter-wrapper {
   margin-bottom: 2rem;
   z-index: 6;
+  background-color: rgb(241, 235, 235);
+  padding: 5px;
+}
+.search-filter-wrapper .search-field {
   background-color: white;
-  padding: 10px;
+  border-radius: 12px;
+  padding: 5px;
+}
+.search-filter-wrapper .search-field input {
+  outline: none;
+  border: none;
+  width: 80%;
+  margin-left: 5px;
 }
 .search-filter-wrapper.sticky {
   position: sticky;

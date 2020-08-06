@@ -98,7 +98,7 @@ export default {
       this.$refs["card"].classList.toggle("flipped");
     },
     goToDetails: function() {
-      this.$router.push({ name: 'event', params: { id: this.event_data.id } });
+      this.$router.push({ name: "event", params: { id: this.event_data.id } });
     },
   },
   computed: {},

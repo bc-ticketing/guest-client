@@ -9,8 +9,8 @@
       "
     ></md-bottom-bar-item>
     <md-bottom-bar-item
-      md-label="Events"
-      md-icon="event_available"
+      md-label="Search"
+      md-icon="search"
       @click="
         theme = 'orange';
         navigateTo('event-list');
