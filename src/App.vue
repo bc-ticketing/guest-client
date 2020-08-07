@@ -53,17 +53,36 @@ export default {
     getNavHeight: function() {
       return this.$refs["nav"].getBoundingClientRect().height;
     },
+    loadEventAddresses: async function() {
+      await this.$store.dispatch("loadEventAddresses");
+      this.$root.$emit("loadedEventAddresses");
+    },
+    loadIpfsHashes: async function() {
+      await this.$store.dispatch("loadEvents");
+      this.$root.$emit("loadedEvents");
+    },
   },
-  beforeCreate() {
-    this.$store.dispatch("registerWeb3");
+  async beforeCreate() {
+    this.$root.$on("eventFactoryCreated", async () => {
+      this.loadEventAddresses();
+    });
+    this.$root.$on("loadedEventAddresses", async () => {
+      this.loadIpfsHashes();
+    });
+    await this.$store.dispatch("registerWeb3");
+    this.$root.$emit("web3Injected");
+    await this.$store.dispatch("createEventFactory");
+    this.$root.$emit("eventFactoryCreated");
   },
   mounted: async function() {
     setTimeout(() => {
       this.infoOpen = true;
     }, 1000);
-
-    //this.navHeight = this.getNavHeight();
-    //this.$refs["content"].style.paddingTop = this.navHeight + "px";
+    this.$root.$on("web3Injected", async () => {
+      setTimeout(() => {
+        this.infoOpen = false;
+      }, 3000);
+    });
   },
 };
 </script>

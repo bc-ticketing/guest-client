@@ -29,7 +29,6 @@
         ></EventEntry>
       </isotope>
     </div>
-    <div class="test" @click="loadEvents">Fetch events (click me)</div>
   </div>
 </template>
 
@@ -37,11 +36,7 @@
 // import Button from "./../components/basics/Button";
 import EventEntry from "./../components/EventEntry";
 import isotope from "vueisotope";
-import { EVENT_ABI, EVENT_FACTORY_ABI } from "./../util/constants/abi";
-import {
-  TEST_EVENT_ADDRESS,
-  EVENT_FACTORY_ADDRESS,
-} from "./../util/constants/addresses";
+import { events } from "./../util/mockData";
 //import func from "../../vue-temp/vue-editor-bridge";
 
 export default {
@@ -61,53 +56,7 @@ export default {
       sortOption: null,
       filterOption: null,
       filterText: "",
-      events: [
-        {
-          name: "Bastille",
-          Type: "Concert",
-          lowestPrice: "0.2",
-          date: "15.12.20",
-          starttime: "18:30",
-          venue: "Hallenstadion",
-
-          location: "Zurich",
-          id: "1",
-          organizer: "Events Gmbh",
-          description:
-            "This will be an awesome open air if covid-19 does not fuck it up and it will be super cool for sure",
-          approvers: "Idetix",
-          img_url: require("@/assets/event_img/event_1.jpg"),
-        },
-        {
-          name: "Theatre",
-          Type: "Arts",
-          lowestPrice: "0.35",
-          date: "03.05.20",
-          starttime: "20:30",
-          venue: "Hallenstadion",
-          location: "Zurich",
-          id: "2",
-          organizer: "Sick Theaters",
-          description:
-            "Sick Theaters will host this screening for the fist time since the covid outbreak and it will be super awesome so dont fucking miss it",
-          approvers: "SBB",
-          img_url: require("@/assets/event_img/event_2.jpg"),
-        },
-        {
-          name: "Robin Schulz",
-          Type: "Concert",
-          lowestPrice: "0.11",
-          date: "04.05.20",
-          starttime: "12:00",
-          venue: "Big Ben",
-          location: "London",
-          id: "3",
-          organizer: "GN",
-          description: "",
-          approvers: "Idetix",
-          img_url: require("@/assets/event_img/event_3.jpg"),
-        },
-      ],
+      events: [],
     };
   },
   watch: {
@@ -117,26 +66,32 @@ export default {
       this.$refs["isotope"].filter("filterByText");
     },
   },
+  /* On creation set the event handler for web3 injection to load all events from the blockchain
+    If web3 is already injected and the eventFactory has been loaded, directly load the events  
+  */
+  beforeCreate: function() {
+    this.$root.$on("loadedEvents", () => {
+      this.loadEvents();
+    });
+    if (
+      this.$store.state.web3.isInjected &&
+      this.$store.state.eventFactory != null
+    ) {
+      //this.loadEvents();
+    }
+  },
   mounted: function() {
-    window.addEventListener("scroll", this.handleScroll);
+    //window.addEventListener("scroll", this.handleScroll);
   },
   methods: {
     /* Load all event contract addresses from event factory */
     loadEvents: async function() {
-      const eventFactory = new this.web3.eth.Contract(
-        EVENT_FACTORY_ABI,
-        EVENT_FACTORY_ADDRESS
-      );
-      const eventAddresses = await eventFactory.methods.getEvents().call();
-      this.loadEventDetails(TEST_EVENT_ADDRESS);
-      console.log(eventAddresses);
+      //mock for now
+      this.events = events;
     },
     /* Load event details from event contract address and ipfs */
     loadEventDetails(event_address) {
-      const event = new this.web3.eth.Contract(EVENT_ABI, event_address);
-      console.log(event.proberties);
-      var result = event.methods.owner;
-      console.log(result);
+      console.log(`fetching data from ipfs for event ${event_address}`);
     },
     toggleDetails: function(event_id) {
       var event = `details_${event_id}`;

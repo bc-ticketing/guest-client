@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import getEvent from "./../util/mockData.js";
+import { getEvent } from "./../util/mockData.js";
 
 export default {
   name: "Event",
@@ -89,7 +89,9 @@ export default {
       tickets: [{ name: "fungible", price: 50 }],
     };
   },
-  props: {},
+  props: {
+    event_id: Number,
+  },
   methods: {
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {

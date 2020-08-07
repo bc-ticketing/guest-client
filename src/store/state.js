@@ -9,5 +9,7 @@ let state = {
     error: null,
   },
   eventAddresses: [],
+  events: [],
+  eventFactory: null,
 };
 export default state;

@@ -33,7 +33,10 @@ export default {
   },
   methods: {
     goToDetails: function() {
-      this.$router.push({ name: "event", params: { id: this.event_data.id } });
+      this.$router.push({
+        name: "event",
+        params: { data: this.event_data.id },
+      });
     },
   },
   computed: {
@@ -46,7 +49,6 @@ export default {
         this.event_data.date.split(".")[1] - 1,
         this.event_data.date.split(".")[0]
       );
-      console.log(d.getDay());
       return WEEKDAYS[d.getDay()];
     },
     month: function() {
@@ -55,7 +57,6 @@ export default {
         this.event_data.date.split(".")[1] - 1,
         this.event_data.date.split(".")[0]
       );
-      console.log(d.getMonth());
       return MONTHS[d.getMonth()];
     },
   },
