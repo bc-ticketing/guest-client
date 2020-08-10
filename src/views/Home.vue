@@ -32,8 +32,8 @@
           ref="map"
         >
           <GmapMarker
-            :key="index"
-            v-for="(e, index) in events"
+            :key="e.contractAddress"
+            v-for="e in events"
             :position="e.latlong"
             :icon="require('@/assets/location_white.png')"
             :clickable="true"
@@ -71,6 +71,14 @@ export default {
   },
 
   methods: {
+    updateEvents: function() {
+      console.log("updating events");
+      for (const a in this.$store.state.events) {
+        var e = this.$store.state.events[a];
+        e.contractAddress = a;
+        this.events.push(e);
+      }
+    },
     async getLocation() {
       return new Promise((resolve, reject) => {
         if (!("geolocation" in navigator)) {
@@ -105,13 +113,40 @@ export default {
       });
       infowindow.open(this.map);
     },
+    fetchLocations: function() {
+      this.events.forEach((event) => {
+        if (event.metadata) {
+          axios
+            .get(
+              `https://api.opencagedata.com/geocode/v1/json?q=${event.metadata.event.location}&key=9b5c0f0e97664b69baf8d617c4d0f1c6&language=en&pretty=1`
+            )
+            .then((response) => {
+              // handle success
+              console.log(response.data.results);
+              var first = response.data.results[0];
+              var latlong = {
+                lat: first.geometry.lat,
+                lng: first.geometry.lng,
+              };
+              event.latlong = latlong;
+            })
+            .catch((error) => {
+              // handle error
+              console.log(error);
+            });
+        }
+
+        //var test = this.getLatLong(event.location);
+        //console.log('test: '+ test.lat);
+        //event.latlong = this.getLatLong(event.location)
+      });
+    },
   },
   computed: {
     google: gmapApi,
   },
   watch: {
     location: function(newVal, oldVal) {
-      console.log(newVal);
       console.log(oldVal);
       this.map.panTo(newVal);
       //this.map.panTo({lat: 1.38, lng: 103.80})
@@ -120,39 +155,27 @@ export default {
   created: async function() {
     //this.location = await this.getLocation();
   },
-  mounted() {
-    this.$refs.map.$mapPromise.then((map) => {
-      this.map = map;
+  beforeCreate: async function() {
+    this.$root.$on("loadedEventMetadata", () => {
+      this.updateEvents();
+      this.fetchLocations();
     });
-    this.events.forEach((event) => {
-      axios
-        .get(
-          `https://api.opencagedata.com/geocode/v1/json?q=${event.location}&key=9b5c0f0e97664b69baf8d617c4d0f1c6&language=en&pretty=1`
-        )
-        .then((response) => {
-          // handle success
-          console.log(response.data.results);
-          var first = response.data.results[0];
-          var latlong = { lat: first.geometry.lat, lng: first.geometry.lng };
-          event.latlong = latlong;
-        })
-        .catch((error) => {
-          // handle error
-          console.log(error);
-        });
-      //var test = this.getLatLong(event.location);
-      //console.log('test: '+ test.lat);
-      //event.latlong = this.getLatLong(event.location)
+  },
+
+  beforeMount() {
+    this.updateEvents();
+    this.fetchLocations()
+  },
+  mounted() {
+this.$refs.map.$mapPromise.then((map) => {
+      this.map = map;
     });
   },
   data() {
     return {
       location: undefined,
       searchInput: "",
-      events: [
-        { name: "The Fray", location: "Zurich", latlong: undefined },
-        { name: "Calvin Harris", location: "Copenhagen", latlong: undefined },
-      ],
+      events: [],
       mapStyles: [
         {
           featureType: "all",

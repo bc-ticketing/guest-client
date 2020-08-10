@@ -8,10 +8,10 @@
         </div>
       </div>
       <div class="info-box">
-        <span class="time">{{ weekday }} - {{ event_data.starttime }}</span>
-        <span class="title">{{ event_data.name }}</span>
+        <span class="time">{{ weekday }} - 18:00</span>
+        <span class="title">{{ event_data.metadata.event.title }}</span>
         <span class="location"
-          >{{ event_data.venue }} - {{ event_data.location }}</span
+          >Hallenstadion - {{ event_data.metadata.event.location }}</span
         >
       </div>
       <div class="button-box" @click="goToDetails">
@@ -41,23 +41,30 @@ export default {
   },
   computed: {
     dayInMonth: function() {
-      return this.event_data.date.split(".")[0];
+      return 1;
+      //return this.event_data.date.split(".")[0];
     },
     weekday: function() {
+      /*
       var d = new Date(
         this.event_data.date.split(".")[2],
         this.event_data.date.split(".")[1] - 1,
         this.event_data.date.split(".")[0]
       );
-      return WEEKDAYS[d.getDay()];
+      */
+      return WEEKDAYS[1];
+      //return WEEKDAYS[d.getDay()];
     },
     month: function() {
+      /*
       var d = new Date(
         this.event_data.date.split(".")[2],
         this.event_data.date.split(".")[1] - 1,
         this.event_data.date.split(".")[0]
       );
-      return MONTHS[d.getMonth()];
+      */
+      return MONTHS[1];
+      //return MONTHS[d.getMonth()];
     },
   },
   mounted: function() {},

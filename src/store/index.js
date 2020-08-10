@@ -6,6 +6,7 @@ import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import { argsToCid } from "idetix-utils";
+import getIpfs from "./../util/ipfs/getIpfs";
 
 Vue.use(Vuex);
 
@@ -26,15 +27,54 @@ export default new Vuex.Store({
     },
     setEventAddresses(state, addresses) {
       console.log("setting event addresses");
-      state.events = addresses;
+      state.eventAddresses = addresses;
     },
     setEvents(state, events) {
       console.log("setting events");
       state.events = events;
     },
+    registerIpfsInstance(state, payload) {
+      console.log("setting ipfs instance")
+      state.ipfsInstance = payload;
+    },
+    addEventMetadata(state, event) {
+      console.log('setting event metadata')
+      console.log(event)
+      console.log(state.events)
+      state.events[event.contractAddress].metadata = event.metadata;
+    }
   },
   /* */
   actions: {
+    async loadIpfsMetadata( {commit}) {
+      console.log("dispatched loadIpfsMetadata Action");
+      for (const contract_address in state.events) {
+        const e = state.events[contract_address];
+        try {
+          var ipfsData = null;
+          for await (const chunk of state.ipfsInstance.cat(
+            e.ipfs_hash, {timeout: 2000}
+          )) {
+              ipfsData = Buffer(chunk, "utf8").toString();
+          }
+          var temp = {
+            ipfsHash: e.ipfs_hash,
+            contractAddress: contract_address,
+            metadata: JSON.parse(ipfsData)
+          }
+          commit('addEventMetadata', temp)
+        } catch (error) {
+          if (error.name  == 'TimeoutError') {
+            console.log('timeout while fetching ipfs metadata')
+          }
+        }
+      }
+    },
+    async registerIpfs({ commit }) {
+      console.log("dispatched registerIpfs Action");
+      const ipfs = await getIpfs();
+      commit("registerIpfsInstance", ipfs);
+    },
     registerWeb3: async function({ commit }) {
       console.log("dispatched registerWeb3 Action");
       const web3 = await getWeb3();
@@ -68,7 +108,7 @@ export default new Vuex.Store({
     },
     async loadEvents({ commit }) {
       console.log("dispatched loadEvents Action");
-      var ipfs_hashes = [];
+      var ipfs_hashes = {};
       for (let i = 0; i < state.eventAddresses.length; i++) {
         var a = state.eventAddresses[i];
         try {
@@ -80,14 +120,13 @@ export default new Vuex.Store({
             fromBlock: 1,
           });
           var metadataObject = eventMetadata[0].returnValues;
-          ipfs_hashes.push({
-            contract_address: a,
+          ipfs_hashes[a] = {
             ipfs_hash: argsToCid(
               metadataObject.hashFunction,
               metadataObject.size,
               metadataObject.digest
             ),
-          });
+          }
         } catch {
           console.log("could not get metadata for event");
         }

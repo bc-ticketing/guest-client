@@ -9,7 +9,8 @@ let state = {
     error: null,
   },
   eventAddresses: [],
-  events: [],
+  events: {},
   eventFactory: null,
+  ipfsInstance: null,
 };
 export default state;

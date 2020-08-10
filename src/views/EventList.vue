@@ -24,7 +24,7 @@
       >
         <EventEntry
           v-for="event in events"
-          v-bind:key="event.id"
+          v-bind:key="event.contractAddress"
           v-bind:event_data="event"
         ></EventEntry>
       </isotope>
@@ -36,7 +36,6 @@
 // import Button from "./../components/basics/Button";
 import EventEntry from "./../components/EventEntry";
 import isotope from "vueisotope";
-import { events } from "./../util/mockData";
 //import func from "../../vue-temp/vue-editor-bridge";
 
 export default {
@@ -66,32 +65,23 @@ export default {
       this.$refs["isotope"].filter("filterByText");
     },
   },
-  /* On creation set the event handler for web3 injection to load all events from the blockchain
-    If web3 is already injected and the eventFactory has been loaded, directly load the events  
-  */
-  beforeCreate: function() {
-    this.$root.$on("loadedEvents", () => {
-      this.loadEvents();
-    });
-    if (
-      this.$store.state.web3.isInjected &&
-      this.$store.state.eventFactory != null
-    ) {
-      //this.loadEvents();
-    }
+  beforeCreate: async function() {
+    this.$root.$on('loadedEventMetadata', () => {
+      this.updateEvents();
+    })
   },
-  mounted: function() {
-    //window.addEventListener("scroll", this.handleScroll);
+  beforeMount: function() {
+    this.updateEvents()
   },
   methods: {
-    /* Load all event contract addresses from event factory */
-    loadEvents: async function() {
-      //mock for now
-      this.events = events;
-    },
-    /* Load event details from event contract address and ipfs */
-    loadEventDetails(event_address) {
-      console.log(`fetching data from ipfs for event ${event_address}`);
+    updateEvents: function() {
+      for (const a in this.$store.state.events) {
+        var e = this.$store.state.events[a];
+        e.contractAddress = a;
+        this.events.push(
+          e
+        );
+      }
     },
     toggleDetails: function(event_id) {
       var event = `details_${event_id}`;
@@ -111,7 +101,7 @@ export default {
         getSortData: {
           id: "id",
           name: function(itemElem) {
-            return itemElem.name.toLowerCase();
+            return itemElem.metadata.event.title.toLowerCase();
           },
         },
         getFilterData: {
