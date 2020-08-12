@@ -10,7 +10,7 @@
         >
       </div>
       <div class="event-header">
-        <span class="event-title">{{ event_data.name }}</span>
+        <span class="event-title">{{ event_data.metadata.event.title }}</span>
         <span class="event-cat">Concert</span>
       </div>
       <div class="nav-bar">
@@ -34,14 +34,16 @@
     <div class="container">
       <div class="event-info-wrapper active" ref="content-about">
         <span class="event-title">
-          <h2>{{ event_data.name }}</h2>
+          <h2>{{ event_data.metadata.event.title }}</h2>
         </span>
         <div class="info-group description">
-          {{ event_data.description }}
+          {{ event_data.metadata.event.description }}
         </div>
         <div class="info-group">
           <md-icon class="info-title">location_on</md-icon>
-          <span class="info-value">{{ event_data.location }}</span>
+          <span class="info-value">{{
+            event_data.metadata.event.location
+          }}</span>
         </div>
         <div class="info-group">
           <md-icon class="info-title">home</md-icon>
@@ -49,11 +51,11 @@
         </div>
         <div class="info-group">
           <md-icon class="info-title">verified_user</md-icon>
-          <span class="info-value">{{ event_data.approvers }}</span>
+          <span class="info-value">approvers </span>
         </div>
         <div class="info-group">
           <md-icon class="info-title">local_offer</md-icon>
-          <span class="info-value">{{ event_data.lowestPrice }} ETH</span>
+          <span class="info-value">lowestPrice</span>
         </div>
       </div>
       <div class="event-info-wrapper" ref="content-tickets">
@@ -79,18 +81,38 @@
 </template>
 
 <script>
-import { getEvent } from "./../util/mockData.js";
-
 export default {
   name: "Event",
   data() {
     return {
+      event_id: Number,
+      event_data: { metadata: { event: {} } },
       tabs: ["about", "tickets"],
       tickets: [{ name: "fungible", price: 50 }],
     };
   },
-  props: {
-    event_id: Number,
+  props: {},
+  computed: {
+    eventStore() {
+      return this.$store.state.events;
+    },
+  },
+  beforeCreate() {
+    this.$root.$on("loadedEventMetadata", () => {
+      this.fetchEventInfo();
+    });
+  },
+  watch: {
+    eventStore(newEvents) {
+      console.log("event store changed");
+      console.log(newEvents[this.event_id]);
+      console.log(newEvents[this.event_id].ipfs_hash);
+      console.log(newEvents[this.event_id].metadata);
+      if (newEvents[this.event_id].metadata) {
+        console.log("fetching infos");
+        this.fetchEventInfo();
+      }
+    },
   },
   methods: {
     toggleTab: function(tab) {
@@ -103,19 +125,18 @@ export default {
     },
     fetchEventInfo: function() {
       console.log(`fetching event info ${this.event_id}`);
-      this.event_data = getEvent(this.event_id);
-      console.log(`got event: ${this.event_data.name}`);
+      this.event_data = this.$store.state.events[this.event_id];
+      this.$refs[
+        "parallax"
+      ].style.backgroundColor = `${this.event_data.metadata.event.color}`;
+      console.log(`got event: ${this.event_data.metadata.event.title}`);
     },
   },
   created() {
     this.event_id = this.$route.params.id;
-    this.fetchEventInfo();
+    //this.fetchEventInfo();
   },
-  mounted() {
-    this.$refs[
-      "parallax"
-    ].style.backgroundImage = `url(${this.event_data.img_url})`;
-  },
+  mounted() {},
 };
 </script>
 

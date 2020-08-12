@@ -34,38 +34,39 @@ export default new Vuex.Store({
       state.events = events;
     },
     registerIpfsInstance(state, payload) {
-      console.log("setting ipfs instance")
+      console.log("setting ipfs instance");
       state.ipfsInstance = payload;
     },
     addEventMetadata(state, event) {
-      console.log('setting event metadata')
-      console.log(event)
-      console.log(state.events)
+      console.log("setting event metadata");
+      console.log(event);
+      console.log(state.events);
       state.events[event.contractAddress].metadata = event.metadata;
-    }
+    },
   },
   /* */
   actions: {
-    async loadIpfsMetadata( {commit}) {
+    async loadIpfsMetadata({ commit }) {
       console.log("dispatched loadIpfsMetadata Action");
       for (const contract_address in state.events) {
         const e = state.events[contract_address];
+        console.log(e.ipfs_hash);
         try {
           var ipfsData = null;
-          for await (const chunk of state.ipfsInstance.cat(
-            e.ipfs_hash, {timeout: 2000}
-          )) {
-              ipfsData = Buffer(chunk, "utf8").toString();
+          for await (const chunk of state.ipfsInstance.cat(e.ipfs_hash, {
+            timeout: 2000,
+          })) {
+            ipfsData = Buffer(chunk, "utf8").toString();
           }
           var temp = {
             ipfsHash: e.ipfs_hash,
             contractAddress: contract_address,
-            metadata: JSON.parse(ipfsData)
-          }
-          commit('addEventMetadata', temp)
+            metadata: JSON.parse(ipfsData),
+          };
+          commit("addEventMetadata", temp);
         } catch (error) {
-          if (error.name  == 'TimeoutError') {
-            console.log('timeout while fetching ipfs metadata')
+          if (error.name == "TimeoutError") {
+            console.log("timeout while fetching ipfs metadata");
           }
         }
       }
@@ -126,7 +127,7 @@ export default new Vuex.Store({
               metadataObject.size,
               metadataObject.digest
             ),
-          }
+          };
         } catch {
           console.log("could not get metadata for event");
         }

@@ -35,7 +35,7 @@ export default {
     goToDetails: function() {
       this.$router.push({
         name: "event",
-        params: { data: this.event_data.id },
+        params: { id: this.event_data.contractAddress },
       });
     },
   },
