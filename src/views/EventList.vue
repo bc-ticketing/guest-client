@@ -33,10 +33,8 @@
 </template>
 
 <script>
-// import Button from "./../components/basics/Button";
 import EventEntry from "./../components/EventEntry";
 import isotope from "vueisotope";
-//import func from "../../vue-temp/vue-editor-bridge";
 
 export default {
   name: "EventList",
@@ -47,6 +45,11 @@ export default {
   computed: {
     web3() {
       return this.$store.state.web3.web3Instance;
+    },
+    eventsWithMetadata() {
+      console.log("events with metadata");
+      console.log(this.events.filter((e) => e.metadata != undefined));
+      return this.events.filter((e) => e.metadata != undefined);
     },
   },
   data() {
@@ -66,21 +69,21 @@ export default {
     },
   },
   beforeCreate: async function() {
-    this.$root.$on('loadedEventMetadata', () => {
+    this.$root.$on("loadedEventMetadata", () => {
       this.updateEvents();
-    })
+    });
   },
   beforeMount: function() {
-    this.updateEvents()
+    this.updateEvents();
   },
   methods: {
     updateEvents: function() {
       for (const a in this.$store.state.events) {
         var e = this.$store.state.events[a];
         e.contractAddress = a;
-        this.events.push(
-          e
-        );
+        if (e.metadata != undefined) {
+          this.events.push(e);
+        }
       }
     },
     toggleDetails: function(event_id) {

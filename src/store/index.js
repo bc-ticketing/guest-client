@@ -5,7 +5,7 @@ import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-import { argsToCid } from "idetix-utils";
+import { argsToCid, fungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
 
 Vue.use(Vuex);
@@ -42,6 +42,12 @@ export default new Vuex.Store({
       console.log(event);
       console.log(state.events);
       state.events[event.contractAddress].metadata = event.metadata;
+    },
+    setTickets(state, tickets) {
+      console.log("Setting event tickets");
+      for (var address in tickets) {
+        state.events[address].tickets = tickets[address];
+      }
     },
   },
   /* */
@@ -136,22 +142,35 @@ export default new Vuex.Store({
     },
     async loadTickets({ commit }) {
       console.log("dispatched loadTickets Action");
-      //var ipfs_hashes = {};
+      var ticket_types = {};
+      // loop over all events
       for (let i = 0; i < state.eventAddresses.length; i++) {
         var a = state.eventAddresses[i];
+        ticket_types[a] = [];
         try {
           const eventSC = new state.web3.web3Instance.eth.Contract(
             EVENT_MINTABLE_AFTERMARKET_ABI,
             a
           );
-          const ticketMapping = await eventSC.methods.ticketTypeMeta.call();
-          console.log(ticketMapping);
+          const nonce = await eventSC.methods.fNonce().call();
+          // nonce shows how many ticket types exist for this event
+          if (nonce > 0) {
+            for (let i = 0; i < nonce; i++) {
+              const ticketMapping = await eventSC.methods
+                .ticketTypeMeta(fungibleBaseId.plus(i))
+                .call();
+              ticketMapping.ticketTypeNr = i;
+              ticket_types[a].push(ticketMapping);
+            }
+          }
+
           //var metadataObject = eventMetadata[0].returnValues;
-        } catch {
+        } catch (error) {
           console.log("could not get tickets for event");
+          console.log(error);
         }
       }
-      commit();
+      commit("setTickets", ticket_types);
     },
   },
   modules: {},

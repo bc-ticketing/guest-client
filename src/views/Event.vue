@@ -67,11 +67,18 @@
             v-bind:key="index"
           >
             <div class="ticket-info">
-              <span class="ticket-title">{{ ticket.name }}</span>
               <span class="ticket-price">{{ ticket.price }} ETH</span>
+              <span class="ticket-available"
+                >{{ ticket.supply - ticket.ticketsSold }} left</span
+              >
             </div>
             <div class="ticket-select">
-              <md-button class="md-raised md-primary">Buy</md-button>
+              <md-button
+                class="md-raised md-primary"
+                v-bind:disabled="ticket.ticketsSold >= ticket.supply"
+                @click="buyTicket(ticket.ticketTypeNr, ticket.price)"
+                >Buy</md-button
+              >
             </div>
           </div>
         </div>
@@ -81,6 +88,9 @@
 </template>
 
 <script>
+import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
+import { fungibleBaseId } from "idetix-utils";
+
 export default {
   name: "Event",
   data() {
@@ -88,13 +98,20 @@ export default {
       event_id: Number,
       event_data: { metadata: { event: {} } },
       tabs: ["about", "tickets"],
-      tickets: [{ name: "fungible", price: 50 }],
+      //tickets: [{ name: "fungible", price: 50 }],
     };
   },
   props: {},
   computed: {
     eventStore() {
       return this.$store.state.events;
+    },
+    tickets() {
+      if (this.$store.state.events[this.event_id]) {
+        return this.$store.state.events[this.event_id].tickets;
+      } else {
+        return [];
+      }
     },
   },
   beforeCreate() {
@@ -112,6 +129,37 @@ export default {
     },
   },
   methods: {
+    buyTicket: async function(nr, price) {
+      console.log(`buying ticket nr ${nr} for event ${this.event_id}`);
+      const eventSC = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_ABI,
+        this.event_id
+      );
+      var type = fungibleBaseId.plus(nr);
+      var amount = "1";
+      console.log(
+        "buying from account: " +
+          this.$store.state.web3.account +
+          "for " +
+          price
+      );
+      const buy = await eventSC.methods.mintFungible(type, amount).send({
+        from: this.$store.state.web3.account,
+        value: price * this.$store.state.web3.web3Instance.utils.toWei(price),
+      });
+      console.log(buy);
+    },
+    loadTickets: async function(nr) {
+      const eventSC = new this.$store.state.web3.web3Instance.eth.Contract(
+        EVENT_MINTABLE_AFTERMARKET_ABI,
+        this.event_id
+      );
+      var type = fungibleBaseId.plus(nr);
+      var myTickets = await eventSC.methods
+        .tickets(type, this.$store.state.web3.account)
+        .call();
+      console.log(myTickets);
+    },
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {
         this.$refs[t].classList.remove("active");
@@ -133,7 +181,9 @@ export default {
     this.event_id = this.$route.params.id;
     //this.fetchEventInfo();
   },
-  mounted() {},
+  mounted() {
+    this.fetchEventInfo();
+  },
 };
 </script>
 
@@ -147,6 +197,9 @@ export default {
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 5px;
+}
+.ticket-available {
+  color: var(--accent);
 }
 .ticket-info .ticket-price {
   opacity: 0.8;
