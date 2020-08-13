@@ -134,6 +134,25 @@ export default new Vuex.Store({
       }
       commit("setEvents", ipfs_hashes);
     },
+    async loadTickets({ commit }) {
+      console.log("dispatched loadTickets Action");
+      //var ipfs_hashes = {};
+      for (let i = 0; i < state.eventAddresses.length; i++) {
+        var a = state.eventAddresses[i];
+        try {
+          const eventSC = new state.web3.web3Instance.eth.Contract(
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            a
+          );
+          const ticketMapping = await eventSC.methods.ticketTypeMeta.call();
+          console.log(ticketMapping);
+          //var metadataObject = eventMetadata[0].returnValues;
+        } catch {
+          console.log("could not get tickets for event");
+        }
+      }
+      commit();
+    },
   },
   modules: {},
 });

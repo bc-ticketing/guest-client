@@ -105,9 +105,6 @@ export default {
   watch: {
     eventStore(newEvents) {
       console.log("event store changed");
-      console.log(newEvents[this.event_id]);
-      console.log(newEvents[this.event_id].ipfs_hash);
-      console.log(newEvents[this.event_id].metadata);
       if (newEvents[this.event_id].metadata) {
         console.log("fetching infos");
         this.fetchEventInfo();

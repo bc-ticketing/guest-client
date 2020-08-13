@@ -61,10 +61,14 @@ export default {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
     },
+    loadTickets: async function() {
+      await this.$store.dispatch("loadTickets");
+      this.$root.$emit("loadedTickets");
+    },
     loadIpfsMetadata: async function() {
-    await this.$store.dispatch('loadIpfsMetadata');
-    this.$root.$emit('loadedEventMetadata')
-    }
+      await this.$store.dispatch("loadIpfsMetadata");
+      this.$root.$emit("loadedEventMetadata");
+    },
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
@@ -72,11 +76,12 @@ export default {
     });
     this.$root.$on("loadedEventAddresses", async () => {
       this.loadIpfsHashes();
+      this.loadTickets();
     });
-    this.$root.$on('loadedEvents', async () => {
+    this.$root.$on("loadedEvents", async () => {
       this.loadIpfsMetadata();
-    })
-    await this.$store.dispatch('registerIpfs');
+    });
+    await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
     await this.$store.dispatch("createEventFactory");
