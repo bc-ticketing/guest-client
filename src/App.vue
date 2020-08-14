@@ -65,6 +65,10 @@ export default {
       await this.$store.dispatch("loadTickets");
       this.$root.$emit("loadedTickets");
     },
+    loadUserTickets: async function() {
+      await this.$store.dispatch("loadUserTickets");
+      this.$root.$emit("loadedUserTickets");
+    },
     loadIpfsMetadata: async function() {
       await this.$store.dispatch("loadIpfsMetadata");
       this.$root.$emit("loadedEventMetadata");
@@ -77,6 +81,7 @@ export default {
     this.$root.$on("loadedEventAddresses", async () => {
       this.loadIpfsHashes();
       this.loadTickets();
+      this.loadUserTickets();
     });
     this.$root.$on("loadedEvents", async () => {
       this.loadIpfsMetadata();

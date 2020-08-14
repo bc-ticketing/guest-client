@@ -47,8 +47,6 @@ export default {
       return this.$store.state.web3.web3Instance;
     },
     eventsWithMetadata() {
-      console.log("events with metadata");
-      console.log(this.events.filter((e) => e.metadata != undefined));
       return this.events.filter((e) => e.metadata != undefined);
     },
   },

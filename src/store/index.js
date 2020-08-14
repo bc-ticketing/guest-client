@@ -49,6 +49,10 @@ export default new Vuex.Store({
         state.events[address].tickets = tickets[address];
       }
     },
+    setUserTickets(state, tickets) {
+      console.log("setting user tickets");
+      state.userTickets = tickets;
+    },
   },
   /* */
   actions: {
@@ -171,6 +175,41 @@ export default new Vuex.Store({
         }
       }
       commit("setTickets", ticket_types);
+    },
+    async loadUserTickets({ commit }) {
+      console.log("dispatchet loadUserTicketsAction");
+      var tickets = [];
+      for (let i = 0; i < state.eventAddresses.length; i++) {
+        var a = state.eventAddresses[i];
+        try {
+          const eventSC = new state.web3.web3Instance.eth.Contract(
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            a
+          );
+          const nonce = await eventSC.methods.fNonce().call();
+          // nonce shows how many ticket types exist for this event
+          if (nonce > 0) {
+            for (let i = 0; i < nonce; i++) {
+              var type = fungibleBaseId.plus(i);
+              var myTickets = await eventSC.methods
+                .tickets(type, state.web3.account)
+                .call();
+              if (myTickets > 0) {
+                tickets.push({
+                  amount: myTickets,
+                  eventAddress: a,
+                });
+              }
+            }
+          }
+
+          //var metadataObject = eventMetadata[0].returnValues;
+        } catch (error) {
+          console.log("could not get tickets for event");
+          console.log(error);
+        }
+      }
+      commit("setUserTickets", tickets);
     },
   },
   modules: {},

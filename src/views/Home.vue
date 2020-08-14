@@ -33,7 +33,7 @@
         >
           <GmapMarker
             :key="e.contractAddress"
-            v-for="e in events"
+            v-for="e in eventsWithLocations"
             :position="e.latlong"
             :icon="require('@/assets/location_white.png')"
             :clickable="true"
@@ -144,6 +144,9 @@ export default {
   },
   computed: {
     google: gmapApi,
+    eventsWithLocations: function() {
+      return this.events.filter((e) => e.latlong);
+    },
   },
   watch: {
     location: function(newVal, oldVal) {
@@ -164,10 +167,10 @@ export default {
 
   beforeMount() {
     this.updateEvents();
-    this.fetchLocations()
+    this.fetchLocations();
   },
   mounted() {
-this.$refs.map.$mapPromise.then((map) => {
+    this.$refs.map.$mapPromise.then((map) => {
       this.map = map;
     });
   },

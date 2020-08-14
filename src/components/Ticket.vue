@@ -2,13 +2,13 @@
   <div class="ticket-wrapper">
     <div
       class="ticket-img"
-      :style="{ backgroundImage: 'url(' + eventinfo.img_url + ')' }"
+      :style="{ backgroundColor: ticketData.eventMetadata.event.color }"
     ></div>
     <div class="ticket-content">
       <div class="event-title">
-        <h3>{{ eventinfo.name }}</h3>
+        <h3>{{ ticketData.eventMetadata.event.title }}</h3>
         <span class="date">
-          {{ eventinfo.date }}
+          Date (WIP)
         </span>
       </div>
     </div>
@@ -22,14 +22,17 @@ export default {
     return {};
   },
   props: {
-    eventinfo: Object,
+    ticketData: Object,
   },
   methods: {
     flipCard: function() {
       this.$refs["card"].classList.toggle("flipped");
     },
     goToDetails: function() {
-      this.$router.push({ name: "event", params: { id: this.event_data.id } });
+      this.$router.push({
+        name: "event",
+        params: { id: this.ticketData.eventAddress },
+      });
     },
   },
   computed: {},
@@ -65,6 +68,10 @@ export default {
   width: 100%;
 
   top: 0;
+}
+.ticket-img .nrTickets {
+  color: white;
+  font-size: 2rem;
 }
 .background-overlay {
   position: absolute;

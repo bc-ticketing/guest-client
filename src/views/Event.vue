@@ -149,17 +149,6 @@ export default {
       });
       console.log(buy);
     },
-    loadTickets: async function(nr) {
-      const eventSC = new this.$store.state.web3.web3Instance.eth.Contract(
-        EVENT_MINTABLE_AFTERMARKET_ABI,
-        this.event_id
-      );
-      var type = fungibleBaseId.plus(nr);
-      var myTickets = await eventSC.methods
-        .tickets(type, this.$store.state.web3.account)
-        .call();
-      console.log(myTickets);
-    },
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {
         this.$refs[t].classList.remove("active");

@@ -12,5 +12,6 @@ let state = {
   events: {},
   eventFactory: null,
   ipfsInstance: null,
+  userTickets: [],
 };
 export default state;

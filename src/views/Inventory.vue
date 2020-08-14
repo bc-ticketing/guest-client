@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid inventory">
     <div class="ticket-preview">
-      <Ticket v-bind:eventinfo="activeTicket" />
+      <Ticket v-bind:ticketData="activeTicket" v-if="activeTicket" />
     </div>
     <div class="ticket-swiper">
       <div class="swiper-container">
@@ -15,12 +15,16 @@
           >
             <div
               class="img"
-              :style="{ backgroundImage: 'url(' + ticket.img_url + ')' }"
-            ></div>
+              :style="{ backgroundColor: ticket.eventMetadata.event.color }"
+            >
+              <span class="nrTickets"> {{ ticket.amount }}</span>
+            </div>
             <div class="info">
-              <span class="title">{{ ticket.name }}</span>
-              <span class="date">{{ ticket.date }}</span>
-              <span class="location">{{ ticket.location }}</span>
+              <span class="title">{{ ticket.eventMetadata.event.title }}</span>
+              <span class="date"> Date (WIP)</span>
+              <span class="location">{{
+                ticket.eventMetadata.event.location
+              }}</span>
             </div>
           </div>
         </div>
@@ -41,44 +45,50 @@ export default {
   name: "Inventory",
   data() {
     return {
-      activeTicket: undefined,
       activeSlide: 0,
-      tickets: [
-        {
-          name: "Bastille",
-          Type: "Concert",
-          lowestPrice: "0.2",
-          date: "15.12.20",
-          location: "Zurich",
-          id: "1",
-          organizer: "Events Gmbh",
-          description:
-            "This will be an awesome open air if covid-19 does not fuck it up and it will be super cool for sure",
-          approvers: "Idetix",
-          img_url: require("@/assets/event_img/event_1.jpg"),
-        },
-        {
-          name: "Robin",
-          Type: "Concert",
-          lowestPrice: "0.2",
-          date: "15.12.20",
-          location: "Zurich",
-          id: "1",
-          organizer: "Events Gmbh",
-          description:
-            "This will be an awesome open air if covid-19 does not fuck it up and it will be super cool for sure",
-          approvers: "Idetix",
-          img_url: require("@/assets/event_img/event_1.jpg"),
-        },
-      ],
     };
   },
   components: {
     Ticket,
   },
-  methods: {},
+  computed: {
+    tickets: function() {
+      return this.$store.state.userTickets.map((ticket) => {
+        ticket.eventMetadata = this.$store.state.events[
+          ticket.eventAddress
+        ].metadata;
+        return ticket;
+      });
+    },
+    activeTicket: function() {
+      return this.tickets.length > 0
+        ? this.tickets[this.activeSlide]
+        : undefined;
+    },
+  },
+  methods: {
+    updateTickets: function() {
+      this.$store.state.userTickets.forEach((ticket) => {
+        console.log("ticket event add");
+        console.log(ticket);
+        var e = this.$store.state.events[ticket.eventAddress];
+        e.contractAddress = ticket.eventAddress;
+        if (e.metadata != undefined) {
+          this.tickets.push(e);
+        }
+      });
+    },
+  },
+  beforeCreate: async function() {
+    this.$root.$on("loadedUserTickets", () => {
+      //this.updateTickets();
+    });
+  },
+  beforeMount: function() {
+    //this.updateTickets();
+  },
   created: function() {
-    this.activeTicket = this.tickets[0];
+    //this.activeTicket = this.tickets[0];
   },
   mounted: function() {
     this.swiper = new Swiper(".swiper-container", {
@@ -92,13 +102,22 @@ export default {
     this.swiper.on("slideChange", () => {
       console.log("active slide = " + this.swiper.activeIndex);
       this.activeSlide = this.swiper.activeIndex;
-      this.activeTicket = this.tickets[this.activeSlide];
+      //this.activeTicket = this.tickets[this.activeSlide];
     });
   },
 };
 </script>
 
 <style>
+.img {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.img .nrTickets {
+  color: white;
+  font-size: 2rem;
+}
 .inventory {
   height: 90vh;
   position: relative;
