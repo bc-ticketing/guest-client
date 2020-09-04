@@ -50,5 +50,10 @@ export default new Router({
       name: "simple-storage",
       component: loadView("SimpleStorage"),
     },
+    {
+      path: "/seating-plan",
+      name: "seating-plan",
+      component: loadView("SeatingPlan"),
+    },
   ],
 });
