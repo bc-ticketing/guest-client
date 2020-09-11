@@ -5,7 +5,7 @@ import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-import { argsToCid, fungibleBaseId } from "idetix-utils";
+import { argsToCid, fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
 
 Vue.use(Vuex);
@@ -43,10 +43,10 @@ export default new Vuex.Store({
       console.log(state.events);
       state.events[event.contractAddress].metadata = event.metadata;
     },
-    setTickets(state, tickets) {
+    setFungibleTickets(state, tickets) {
       console.log("Setting event tickets");
       for (var address in tickets) {
-        state.events[address].tickets = tickets[address];
+        state.events[address].fungibleTickets = tickets[address];
       }
     },
     setUserTickets(state, tickets) {
@@ -144,7 +144,7 @@ export default new Vuex.Store({
       }
       commit("setEvents", ipfs_hashes);
     },
-    async loadTickets({ commit }) {
+    async loadFungibleTickets({ commit }) {
       console.log("dispatched loadTickets Action");
       var ticket_types = {};
       // loop over all events
@@ -174,7 +174,38 @@ export default new Vuex.Store({
           console.log(error);
         }
       }
-      commit("setTickets", ticket_types);
+      commit("setFungibleTickets", ticket_types);
+    },
+    async loadNonFungibleTickets({ commit }) {
+      console.log('dispatched loadNonFungibleTickets Action');
+      var ticket_types = {};
+      for (let i = 0; i < state.eventAddresses.length; i++) {
+        var a = state.eventAddresses[i];
+        ticket_types[a] = [];
+        try {
+          const eventSC = new state.web3.web3Instance.eth.Contract(
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            a
+          );
+          const nonce = await eventSC.methods.nfNonce().call();
+          // nonce shows how many ticket types exist for this event
+          if (nonce > 0) {
+            for (let i = 0; i < nonce; i++) {
+              const ticketMapping = await eventSC.methods
+                .ticketTypeMeta(nonFungibleBaseId.plus(i))
+                .call();
+              ticketMapping.ticketTypeNr = i;
+              ticket_types[a].push(ticketMapping);
+            }
+          }
+
+          //var metadataObject = eventMetadata[0].returnValues;
+        } catch (error) {
+          console.log("could not get tickets for event");
+          console.log(error);
+        }
+      }
+      commit('setNonFungibleTickets', ticket_types);
     },
     async loadUserTickets({ commit }) {
       console.log("dispatchet loadUserTicketsAction");

@@ -75,7 +75,7 @@
  */
 
 export default {
-  name: "Event",
+  name: "SeatingPlan",
   data() {
     return {
         nrFungible: 0,
@@ -106,6 +106,7 @@ export default {
             return this.fungible;
         }
   },
+  /* Watch over rows and cols to adjust grid size dynamically */
   watch: {
       rows: function(val) {
           this.rows = Number(val);
@@ -117,29 +118,22 @@ export default {
       }
     },
   methods: {
-      buildJson() {
-          this.seatingObject.rows = this.rows;
-          this.seatingObject.cols = this.cols;
-            for (let i = 1; i <= this.cols; i++) {
-                for (let j = 1; j <= this.rows; j++) {
-                    var seat = this.$refs[`seat_${col}_${row}`];
-
-                }
-            }
-
-      },
+      // Update styles for the grid
       updateGridSize() {
           this.$refs['cont'].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
             this.$refs['cont'].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
       },
+      // on mouse click release handler, if we are not on a tile we still want to act like we were on the previous tile
       disableMouseDown() {
           this.mouseUpOnTile(this.last_selected.x, this.last_selected.y);
       },
+      // on mouse down handler
       enableMouseDown(event) {
           event.preventDefault();
           this.mouseDown = true;
           
       },
+      // mouse down handler for when we are not on a tile
       mouseDownOnTile(col, row) {
           this.mouseDown = true;
           if(this.block_selection) {
@@ -148,6 +142,7 @@ export default {
             this.selectSeat(col, row);
           }
       },
+      // mouse release handler, check if we are doing block selection to select all tiles within the rectangle spaned by the starting and the releasing point
       mouseUpOnTile(col, row ){
           this.mouseDown = false;
           if(this.block_selection) {
@@ -163,6 +158,7 @@ export default {
               this.removeAllTempSelections();
           }
           },
+        // select a tile if we hover it while holding the mouse trigger 
         mouseEnter(col, row) {
             if(this.mouseDown) {
                 if(this.block_selection) {
@@ -182,6 +178,7 @@ export default {
             }
             
         },
+        // mark a specific seat for the ticket type
       selectSeat(col, row) {
             var seat = this.$refs[`seat_${col}_${row}`];
             if(seat[0].dataset.status != 'occupied') {
@@ -195,6 +192,7 @@ export default {
 
           this.last_selected = {x:col, y: row};
       },
+      // mark a specific seat for temporary selection in the block selection
       markForSelection(col, row) {
             var seat = this.$refs[`seat_${col}_${row}`];
             if(seat[0].dataset.status != 'occupied') {
@@ -203,6 +201,7 @@ export default {
           
           this.last_selected = {x:col, y: row};
       },
+      // clear all temporary selections
       removeAllTempSelections() {
           for (let i = 1; i <= this.cols; i++) {
               for (let j = 1; j <= this.rows; j++) {
@@ -213,16 +212,19 @@ export default {
               
           }
       },
+      // mouse grid leave handler
       leaveGrid() {
           this.mouseDown = false;
           if(this.block_selection) {
               this.mouseUpOnTile(this.last_selected.x, this.last_selected.y);
           }
       },
+      // returns seat status: 'free', 'occupied'
       getSeatStatus(col, row) {
             var seat = this.$refs[`seat_${col}_${row}`];
             return seat[0].dataset.status;
       },
+      // reset all selected but not yet assigned seats
       resetAll() {
         for (let i = 1; i <= this.cols; i++) {
             for (let j = 1; j <= this.rows; j++) {
@@ -235,6 +237,7 @@ export default {
               
           }
       },
+      // TODO Michael: finish implementations with SC calls and IPFS uploads for host client
       submit() {
           let selected_seats = [];
         for (let i = 1; i <= this.cols; i++) {
@@ -243,13 +246,14 @@ export default {
                     if(seat[0].dataset.status == 'selected') {
                         seat[0].dataset.status = 'occupied';
                         seat[0].style.backgroundColor = this.occupiedColor;
-                        selected_seats.push(`${x}/${y}`);
+                        selected_seats.push(`${i}/${j}`);
                     }
 
                 //this.last_selected = {x:col, y: row};
               }
               
           }
+          console.log(JSON.stringify(selected_seats));
           /*
           selected_seats is a list of x/y coordinates. it contains all seats in the venue that have been marked for the ticket to be created
           for NF tickets: create 1 ticket per selected seat, store on ipfs for each ticket: the x/y index in the grid, the ticket address itself

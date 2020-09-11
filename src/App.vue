@@ -62,7 +62,8 @@ export default {
       this.$root.$emit("loadedEvents");
     },
     loadTickets: async function() {
-      await this.$store.dispatch("loadTickets");
+      await this.$store.dispatch("loadFungibleTickets");
+      await this.$store.dispatch("loadNonFungibleTickets");
       this.$root.$emit("loadedTickets");
     },
     loadUserTickets: async function() {
