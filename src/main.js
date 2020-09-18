@@ -3,9 +3,11 @@ import App from "./App.vue";
 import "./registerServiceWorker";
 import router from "./router";
 import store from "./store";
+import VueTouch from 'vue-touch';
 
 Vue.config.productionTip = false;
 
+Vue.use(VueTouch);
 
 new Vue({
   router,

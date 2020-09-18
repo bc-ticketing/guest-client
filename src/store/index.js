@@ -160,10 +160,23 @@ export default new Vuex.Store({
           // nonce shows how many ticket types exist for this event
           if (nonce > 0) {
             for (let i = 0; i < nonce; i++) {
+              const ticketType = fungibleBaseId.plus(i); 
               const ticketMapping = await eventSC.methods
-                .ticketTypeMeta(fungibleBaseId.plus(i))
+                .ticketTypeMeta(ticketType)
                 .call();
+                ticketMapping.sellOrders = {};
+                const granularity = aftermarket.methods.granularity.call();
+                for (i = 1; i <= granularity.toNumber(); i++) {
+                  let percentage = (100 / granularity.toNumber()) * i;
+                  const queue = eventSC.methods.sellingQueue(ticketType, percentage);
+                  const numberSellingOrders = queue.numberTickets;
+                  if (numberSellingOrders > 0) {
+                    ticketMapping.sellOrders[String(percentage)] = numberSellingOrders
+                  }
+                }
+
               ticketMapping.ticketTypeNr = i;
+              const queues = eventSC.methods.buyingQueue().call();
               ticket_types[a].push(ticketMapping);
             }
           }
@@ -194,11 +207,21 @@ export default new Vuex.Store({
               const ticketMapping = await eventSC.methods
                 .ticketTypeMeta(nonFungibleBaseId.plus(i))
                 .call();
-              ticketMapping.ticketTypeNr = i;
+                ticketMapping.ticketTypeNr = i;
+                ticketMapping.tickets = {};
+                for(let j = 0; j < ticketMapping.supply; j++){
+                  const ticketId = nonFungibleBaseId.plus(i).plus(j);
+                  let ticket = {};
+                  const owner = await eventSC.methods.nfOwners(ticketId).call();
+                  ticket.isSold = owner != 0 ? true : false;
+                  const sellOrder = await eventSC.methods.nfTickets(ticketId).call();
+                  ticket.hasSellOrder = new BigNumber(sellOrder.userAddress).isZero() ? false : true;
+                  ticket.sellOrderPercentage = ticketMapping.hasSellOrder ? sellOrder.percentage : 0;
+                  ticketMapping.tickets[ticketId] = ticket;
+                }
               ticket_types[a].push(ticketMapping);
             }
           }
-
           //var metadataObject = eventMetadata[0].returnValues;
         } catch (error) {
           console.log("could not get tickets for event");
@@ -207,6 +230,7 @@ export default new Vuex.Store({
       }
       commit('setNonFungibleTickets', ticket_types);
     },
+    /* TODO: also non fungible */
     async loadUserTickets({ commit }) {
       console.log("dispatchet loadUserTicketsAction");
       var tickets = [];
@@ -242,6 +266,7 @@ export default new Vuex.Store({
       }
       commit("setUserTickets", tickets);
     },
+
   },
   modules: {},
 });

@@ -1,18 +1,6 @@
 <template>
   <div class="events">
-    <div class="search-filter-wrapper container-fluid" id="search-container">
-      <!--
-      <div class="search-field">
-        <md-icon>search</md-icon>
-        <md-input v-model="searchInput"></md-input>
-      </div>
-      -->
-      <!--<md-field>
-        <md-icon>search</md-icon>
-        <label>Search</label>
-        <md-input v-model="searchInput"></md-input>
-      </md-field> -->
-    </div>
+
     <div class="container-fluid">
       <isotope
         ref="isotope"
@@ -52,7 +40,6 @@ export default {
   },
   data() {
     return {
-      searchInput: "",
       sortOption: null,
       filterOption: null,
       filterText: "",
@@ -62,11 +49,12 @@ export default {
   watch: {
     searchInput: function() {
       console.log(`current search: ${this.searchInput}`);
-      this.filterText = this.searchInput;
-      this.$refs["isotope"].filter("filterByText");
     },
   },
   beforeCreate: async function() {
+    this.$root.$on("searchChange", (val) => {
+      this.updateFilters(val);
+    });
     this.$root.$on("loadedEventMetadata", () => {
       this.updateEvents();
     });
@@ -74,7 +62,14 @@ export default {
   beforeMount: function() {
     this.updateEvents();
   },
+  mounted: function() {
+    this.$root.$emit('openSearchBar');
+  },
   methods: {
+    updateFilters: function(value) {
+      this.filterText = value;
+      this.$refs["isotope"].filter("filterByText");
+    },
     updateEvents: function() {
       for (const a in this.$store.state.events) {
         var e = this.$store.state.events[a];
@@ -108,10 +103,10 @@ export default {
         getFilterData: {
           filterByText: function(itemElem) {
             return (
-              itemElem.name
+              itemElem.metadata.event.title
                 .toLowerCase()
                 .includes(_this.filterText.toLowerCase()) ||
-              itemElem.location
+              itemElem.metadata.event.location
                 .toLowerCase()
                 .includes(_this.filterText.toLowerCase())
             );

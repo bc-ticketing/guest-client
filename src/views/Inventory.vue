@@ -15,7 +15,7 @@
           >
             <div
               class="img"
-              :style="{ backgroundColor: ticket.eventMetadata.event.color }"
+              :style="{ backgroundImage: `url(${ticket.eventMetadata.event.img_url})` }"
             >
               <span class="nrTickets"> {{ ticket.amount }}</span>
             </div>
@@ -91,6 +91,7 @@ export default {
     //this.activeTicket = this.tickets[0];
   },
   mounted: function() {
+    this.$root.$emit('hideSearchBar');
     this.swiper = new Swiper(".swiper-container", {
       slidesPerView: 1,
       spaceBetween: 10,

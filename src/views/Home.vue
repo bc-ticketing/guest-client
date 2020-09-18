@@ -38,10 +38,19 @@
             :icon="require('@/assets/location_white.png')"
             :clickable="true"
             :draggable="true"
-            @click="toggleInfo(e)"
+            @click="showTooltip(e, $event)"
           >
           </GmapMarker>
         </GmapMap>
+        <div class="tooltip" v-bind:class="{ active: tooltipActive }" ref='tooltip'>
+          <div>
+          <h2> {{ selectedEvent.metadata.event.title}}</h2>
+          <span class="location">{{selectedEvent.metadata.event.location}}</span>
+          </div>
+          <div class='tt-icon' @click="hideTooltip()">
+            <md-icon>close</md-icon>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -71,6 +80,15 @@ export default {
   },
 
   methods: {
+    showTooltip: function(e, event) {
+      this.tooltipActive = true;
+      this.selectedEvent = e;
+      console.log(event)
+      //this.$refs['tooltip'].style.top = event.clientY;
+    },
+    hideTooltip: function() {
+      this.tooltipActive = false;
+    },
     updateEvents: function() {
       console.log("updating events");
       for (const a in this.$store.state.events) {
@@ -101,7 +119,7 @@ export default {
       return `
       <div class='info-container' style='margin-right:10px; margin-bottom:10px;'>
       <div>
-      <span style='color: #2a313a'>${event.name}</span> in <span style='color: #2a313a'> ${event.location}</span>
+      <span style='color: #2a313a'>${event.metadata.event.title}</span> in <span style='color: #2a313a'> ${event.metadata.event.location}</span>
       </div>
       <Button>see tickets</Button>
       </div>`;
@@ -170,6 +188,7 @@ export default {
     this.fetchLocations();
   },
   mounted() {
+    this.$root.$emit('hideSearchBar');
     this.$refs.map.$mapPromise.then((map) => {
       this.map = map;
     });
@@ -177,6 +196,8 @@ export default {
   data() {
     return {
       location: undefined,
+      selectedEvent: {metadata: {event: {}}},
+      tooltipActive: false,
       searchInput: "",
       events: [],
       mapStyles: [
@@ -550,6 +571,24 @@ export default {
 </script>
 
 <style scoped>
+.tooltip {
+  position: absolute;
+  padding: 1rem;
+  top: 0;
+  background-color: white;
+  transform: translateX(-100%);
+  transition: transform 0.4s ease-in-out;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tooltip.active {
+  transform: translateX(0);
+}
+.tt-icon {
+  cursor: pointer;
+}
 .content-container {
   height: 100vh;
 }

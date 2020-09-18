@@ -1,5 +1,6 @@
 <template>
   <md-bottom-bar class="bottom-bar" md-type="shift" :class="theme">
+  <div ref='wrapper'>
     <md-bottom-bar-item
       md-label="Home"
       md-icon="home"
@@ -32,6 +33,7 @@
         navigateTo('identification');
       "
     ></md-bottom-bar-item>
+    </div>
   </md-bottom-bar>
 </template>
 
@@ -49,7 +51,11 @@ export default {
       this.$router.push({ name: view, params: {} });
     },
   },
-  mounted: function() {},
+  mounted: function() {
+    this.$emit('height', this.$refs['wrapper'].getBoundingClientRect().top);
+    console.log(this.$refs['wrapper'].getBoundingClientRect().top)
+    console.log('emitttt  asfdasfasfasfd')
+  },
 };
 </script>
 

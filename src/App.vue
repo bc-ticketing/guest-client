@@ -19,7 +19,8 @@
     <div class="content" ref="content">
       <router-view />
     </div>
-    <bottomBar></bottomBar>
+    <searchBar v-bind:yPos="navHeight"></searchBar>
+    <bottomBar ref='nav' v-on:height="setNavHeight"></bottomBar>
   </div>
 </template>
 
@@ -29,6 +30,7 @@ import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
 // import Navigation from "./components/Navigation";
 import bottomBar from "./components/bottomBar";
+import searchBar from './components/searchBar';
 import walletInfo from "./components/walletInfo";
 import Vue from "vue";
 
@@ -41,6 +43,7 @@ export default {
   components: {
     //Navigation,
     bottomBar,
+    searchBar,
     walletInfo,
   },
   data() {
@@ -50,8 +53,9 @@ export default {
     };
   },
   methods: {
-    getNavHeight: function() {
-      return this.$refs["nav"].getBoundingClientRect().height;
+    setNavHeight: function(value) {
+      console.log(value);
+      this.navHeight = value;
     },
     loadEventAddresses: async function() {
       await this.$store.dispatch("loadEventAddresses");

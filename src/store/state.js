@@ -12,6 +12,11 @@ let state = {
   events: {
     '1': {metadata: {event: {location: 'Zuerich', title: 'Concert', img_url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'}},
           contractAddress: '1',
+          // let quese = amsc.get(buyqueue);
+          // queues.forEach(queue => {
+            // if (queue.numberOfTickets != 0 ) { show();}
+          //})
+          // get percentages from Aftermarket SC -> sellingQueue, which contains a list of addresses
           fungibleTickets: [
             {price: 50, supply: 50, ticketsSold: 26, metadata: {
               title: 'VIP balcony',
@@ -37,14 +42,34 @@ let state = {
                 color: '#a3be8c',
                 event: '1',
                 mapping: ["1/6","1/7","1/8","2/6","2/7","2/8","3/6","3/7","3/8","4/6","4/7","4/8","5/6","5/7","7/6","7/7","8/6","8/7","8/8","9/6","9/7","9/8","10/6","10/7","10/8","11/6","11/7","11/8","12/6","12/7","12/8"],
+                //TODO: get sold tickets by looping over nfOwners and check if 0 address, 
+                // for sold/not sold. and then check Aftermarket SC by looping over nfTickets
+                // and check for != 0 for sell orders, these contain the price percentage
+                //OR: just get the list nfsForSale, which should contain all the sellOrders.
                 soldIndexes: [1, 12,13,14, 20],
+                aftermarketIndexes: [],
               }
             }
           ],
         },
+        '2': {metadata: {event: {location: 'Warschau', title: 'Open Air', 'img_url': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1267&q=80'}},
+            contractAddress: '2',
+            fungibleTickets: [
+              {price: 30, supply: 200, ticketsSold: 150, metadata: {
+                title: 'Standard Pass',
+                description: 'Super cool open air',
+                event: '2',
+                color: '#fff',
+                mapping: []
+              }}
+            ]
+        }
   },
   eventFactory: null,
   ipfsInstance: null,
-  userTickets: [],
+  userTickets: [
+    {eventAddress: '1'},
+    {eventAddress: '2'},
+  ],
 };
 export default state;

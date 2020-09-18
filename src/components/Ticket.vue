@@ -2,7 +2,7 @@
   <div class="ticket-wrapper">
     <div
       class="ticket-img"
-      :style="{ backgroundColor: ticketData.eventMetadata.event.color }"
+      :style="{ backgroundImage: `url(${ticketData.eventMetadata.event.img_url})` }"
     ></div>
     <div class="ticket-content">
       <div class="event-title">

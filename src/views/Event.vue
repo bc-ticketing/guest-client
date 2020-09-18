@@ -108,10 +108,12 @@
 
           <div class="seating-container" :ref='"cont"' draggable="false">
             <div class="col" v-for="col in cols" v-bind:key="'col_'+col">
-              <div :ref='"seat_"+col+"_"+row' @click="purchaseTicket(col, row)" @mouseenter="showToolTip(col, row)" @mouseleave="hideToolTip(col, row)" data-status='' class="seat" v-for="row in rows" v-bind:key="'seat_'+row"> </div>
+              <div :ref='"seat_"+col+"_"+row' @click="selectTicket(col, row)" @mouseenter="showToolTip(col, row)" @mouseleave="hideToolTip(col, row)" data-status='' class="seat" v-for="row in rows" v-bind:key="'seat_'+row"> </div>
             </div>
   
           </div>
+            
+          <md-button v-if="selected_ticket" class="md-raised">Buy for {{selected_ticket.price}} ETH</md-button>
 
       </div>
     </div>
@@ -139,6 +141,7 @@ export default {
       tooltip_isNF: false,
       toolTipActive: false,
       navbarHeight: 0,
+      selected_ticket: undefined,
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
@@ -171,11 +174,13 @@ export default {
   },
   methods: {
     findTicketIndex(col, row) {
+      //console.log('searching for : '+col+'/'+row);
+      let found_ticket = false;
       this.event_data.fungibleTickets.forEach(function(ticketType, typeIndex) {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
-            return {'typeIndex': typeIndex,'index': index, 'isNF': false, 'price': ticketType.price}
+            found_ticket = {'typeIndex': typeIndex,'index': index, 'isNF': false, 'price': ticketType.price}
           }
         });
       });
@@ -183,18 +188,25 @@ export default {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
-            return {'typeIndex': typeIndex, 'index': index, 'isNF': true, 'price': ticketType.price}
+            found_ticket = {'typeIndex': typeIndex, 'index': index, 'isNF': true, 'price': ticketType.price}
           }
         });
       });
-      return false;
+      return found_ticket;
     },
-    purchaseTicket: async function(col, row) {
-      console.log('asdfasdfasfasdfasf')
+    selectTicket: async function(col, row) {
       const seat = this.$refs[`seat_${col}_${row}`];
-      seat[0].style.transform = 'translateX(500px)';
+      this.selected_ticket = this.findTicketIndex(col, row);
+      console.log(this.selected_ticket)
+      //seat[0].classList.add('bought');
+      if (!this.selected_ticket.isNF) {
+        console.log('fungible')
+      } else {
+        console.log('non fungible')
+        seat[0].classList.add('selected');
+      }
       return;
-      //let selected_ticket = this.findTicketIndex(col, row);
+      
 
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
@@ -269,7 +281,7 @@ export default {
       })
       this.rows = max_row;
       this.cols = max_col;
-      this.$refs['cont'].style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
+      this.$refs['cont'].style.gridTemplateColumns = `repeat(${this.cols},minmax(25px,1fr))`;
       this.$refs['cont'].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
     },
     markSeats: function() {
@@ -330,6 +342,7 @@ export default {
       return found_ticket;
     },
     showToolTip: function(col, row) {
+      console.log('show tooltip')
       let ticket = this.getTicketInfoForCoords(col, row);
       this.tooltip_title = ticket.metadata.title;
       this.tooltip_supply = ticket.supply - ticket.ticketsSold;
@@ -364,6 +377,7 @@ export default {
   },
   mounted() {
     this.fetchEventInfo();
+    this.$root.$emit('hideSearchBar');
     console.log(this.navbarHeight)
   },
 };
@@ -504,13 +518,14 @@ export default {
     /*grid-gap: 2px;*/
   position: relative;
   width: 100%;
+  overflow-x: scroll;
 }
 .seat {
     /*margin-bottom: 2px;*/
     background-color: #d8dee9;
     height: 100%;
     border: 2px solid #d8dee9;
-    transition: transform 0.8s linear;
+    transition: transform 0.8s linear, background-color 0.3s linear;
 }
 .seat.fungible {
   border:none;
@@ -527,13 +542,19 @@ export default {
 .seat.fungible[data-status='bad'] {
   background-color: #bf616a;
 }
-
+.seat.selected {
+  border: 1px solid black;
+}
 .seat[data-status='free'] {
   background-color: #a3be8c;
   cursor: pointer;
 }
 .seat[data-status='occupied'] {
   background-color: #bf616a;
+}
+.seat.bought {
+  background-color: #bf616a !important;
+
 }
 .tooltip {
   padding: 4px;
