@@ -98,7 +98,7 @@
             <div class="tooltip" ref='tooltip'>
               <span class="ticket-title">{{tooltip_title}}</span>
               <div style='display: flex; justify-content: space-between;'>
-              <span v-if="!tooltip_isNF" class="ticket-supply" ref='supply'> {{tooltip_supply}} tickets left</span>
+              <span v-bind:class="{ active: !tooltip_isNF }" class="ticket-supply" ref='supply'> {{tooltip_supply}} tickets left</span>
               <span v-if="tooltip_isNF" :data-status='tooltip_seat_status' class="ticket-status">{{tooltip_seat_status}}</span>
               <span v-if="tooltip_isNF" class="ticket-nr">Seat {{tooltip_seat}}</span>
               </div>
@@ -114,7 +114,22 @@
           </div>
             
           <md-button v-if="selected_ticket" class="md-raised">Buy for {{selected_ticket.price}} ETH</md-button>
+          <md-button v-if="selected_ticket" class="md-raised" @click="showDialog = !showDialog">Join Aftermarket</md-button>
+          <div class="buy-selection" v-bind:class="{ active: selected_ticket }">
+            <div class="fungible" v-bind:class="{ active: selectedIsFungible }">
+              <div class="selection-step amount" v-bind:class="{ active: selection_process_amount }">
+                <div class='icon-wrap' @click="changeAmount(-1)"><md-icon >remove_circle</md-icon></div>
+                <input type="number" v-model="amount">
+                <div class='icon-wrap' @click="changeAmount(1)"><md-icon >add_circle</md-icon></div>
+              </div>
+              <div class="selection-step price" v-bind:class="{ active: selection_process_price }">
+            <input type="range" :min='minAftermarketPrice' max='100' :step='stepSize' v-model.number="aftermarket_price"> {{actualPrice}}
+              </div>
+            </div>
+            <div class="nonfungible" v-bind:class="{ active: !selectedIsFungible }">
 
+            </div>
+          </div>
       </div>
     </div>
   </div>
@@ -124,10 +139,14 @@
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import { fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
 
+
 export default {
   name: "Event",
   data() {
     return {
+      amount: 0,
+      aftermarket_price: 0,
+      showDialog: false,
       event_id: Number,
       event_data: { metadata: { event: {} } },
       tabs: ["about", 'tickets-plan'],
@@ -142,11 +161,47 @@ export default {
       toolTipActive: false,
       navbarHeight: 0,
       selected_ticket: undefined,
+      selection_step: 0,
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
   props: {},
   computed: {
+    selection_process_amount() {
+      return this.selection_step == 0;
+    },
+    selection_process_price() {
+      return this.selection_step == 1;
+    },
+    selectedIsFungible() {
+      try {
+        return !this.selected_ticket.isNF;
+      } catch (error) {
+        return true;
+      }
+    },
+    actualPrice() {
+      try {
+        return this.aftermarket_price /100 * this.selected_ticket.price;
+      } catch (error) {
+        return '';
+      }
+    },
+    minAftermarketPrice() {
+      try {
+        return Math.floor(100/this.selected_ticket.granularity);
+      } catch (error) {
+        return 0;
+      }
+    },
+    stepSize() {
+      try {
+        return Math.floor(100/this.selected_ticket.granularity);
+      } catch (error) {
+        return 1;
+      }
+
+    },
     eventStore() {
       return this.$store.state.events;
     },
@@ -173,6 +228,9 @@ export default {
     },
   },
   methods: {
+    changeAmount(val) {
+      this.amount += val;
+    },
     findTicketIndex(col, row) {
       //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
@@ -180,7 +238,7 @@ export default {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
-            found_ticket = {'typeIndex': typeIndex,'index': index, 'isNF': false, 'price': ticketType.price}
+            found_ticket = {'typeIndex': typeIndex,'index': index, 'isNF': false, 'price': ticketType.price, 'granularity': ticketType.granularity}
           }
         });
       });
@@ -188,7 +246,7 @@ export default {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
-            found_ticket = {'typeIndex': typeIndex, 'index': index, 'isNF': true, 'price': ticketType.price}
+            found_ticket = {'typeIndex': typeIndex, 'index': index, 'isNF': true, 'price': ticketType.price, 'granularity': ticketType.granularity}
           }
         });
       });
@@ -342,7 +400,6 @@ export default {
       return found_ticket;
     },
     showToolTip: function(col, row) {
-      console.log('show tooltip')
       let ticket = this.getTicketInfoForCoords(col, row);
       this.tooltip_title = ticket.metadata.title;
       this.tooltip_supply = ticket.supply - ticket.ticketsSold;
@@ -571,7 +628,11 @@ export default {
   margin-bottom: 0.5rem;
   font-size: 1.3rem;
 }
+.ticket-supply.active {
+  display: block;
+}
 .ticket-supply {
+  display: none;
   font-weight: lighter;
 }
 .ticket-supply[data-status='good'] {
@@ -588,5 +649,21 @@ export default {
 }
 .ticket-status[data-status='sold'] {
   color: #bf616a;
+}
+
+.selection-step.amount input {
+  -moz-appearance: textfield;
+}
+.selection-step .icon-wrap {
+  display: inline-block;
+}
+.buy-selection, .selection-step {
+  display: none;
+}
+.buy-selection.active, .selection-step.active {
+  display: block;
+}
+.buy-selection .icon-wrap {
+  cursor: pointer;
 }
 </style>

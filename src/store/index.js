@@ -8,6 +8,8 @@ import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAfter
 import { argsToCid, fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
 
+const BigNumber = require("bignumber.js");
+
 Vue.use(Vuex);
 
 export default new Vuex.Store({
@@ -165,7 +167,8 @@ export default new Vuex.Store({
                 .ticketTypeMeta(ticketType)
                 .call();
                 ticketMapping.sellOrders = {};
-                const granularity = aftermarket.methods.granularity.call();
+                const granularity = eventSC.methods.granularity.call();
+                ticketMapping.granularity = granularity;
                 for (i = 1; i <= granularity.toNumber(); i++) {
                   let percentage = (100 / granularity.toNumber()) * i;
                   const queue = eventSC.methods.sellingQueue(ticketType, percentage);
@@ -176,7 +179,7 @@ export default new Vuex.Store({
                 }
 
               ticketMapping.ticketTypeNr = i;
-              const queues = eventSC.methods.buyingQueue().call();
+              //const queues = eventSC.methods.buyingQueue().call();
               ticket_types[a].push(ticketMapping);
             }
           }

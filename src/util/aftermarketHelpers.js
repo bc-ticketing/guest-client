@@ -37,7 +37,5 @@ export function NF_makeSellOrder(ticketId, aftermarket, percentage) {
 
 /* Check if there is a sell order for the specified ticketId */
 export function NF_fetchSellOrder(eventAddress, ticketId, aftermarket) {
-    const isSold = null;
-    /* sellOrder: {address, percentage} */
     const sellOrder = await aftermarket.methods.nfTickets(ticketId).call();
 }
