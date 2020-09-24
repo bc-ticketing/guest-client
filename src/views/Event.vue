@@ -1,8 +1,13 @@
 <template>
   <div class="event">
-    <div class="container-fluid header-img" ref='teaser'>
+    <div class="container-fluid header-img" ref="teaser">
       <!-- <div class="parallax" ref="parallax">  -->
-        <img ref="teaserImg" :src="event_data.metadata.event.img_url" alt="" class="img-fluid" />
+      <img
+        ref="teaserImg"
+        :src="event_data.metadata.event.img_url"
+        alt=""
+        class="img-fluid"
+      />
       <!-- </div> -->
       <div class="return-arrow">
         <router-link to="/event-list"
@@ -13,7 +18,7 @@
         <span class="event-title">{{ event_data.metadata.event.title }}</span>
         <span class="event-cat">Concert</span>
       </div>
-      <div class="nav-bar" ref='navigation'>
+      <div class="nav-bar" ref="navigation">
         <div
           class="nav-entry about active"
           ref="about"
@@ -36,6 +41,13 @@
           @click="toggleTab('tickets-plan')"
         >
           Tickets
+        </div>
+        <div
+          class="nav-entry checkout"
+          ref="checkout"
+          @click="toggleTab('checkout')"
+        >
+          Checkout
         </div>
       </div>
     </div>
@@ -93,43 +105,51 @@
         </div>
       </div>
       <div class="event-info-wrapper" ref="content-tickets-plan">
-
-          <div class="seat-info">
-            <div class="tooltip" ref='tooltip'>
-              <span class="ticket-title">{{tooltip_title}}</span>
-              <div style='display: flex; justify-content: space-between;'>
-              <span v-bind:class="{ active: !tooltip_isNF }" class="ticket-supply" ref='supply'> {{tooltip_supply}} tickets left</span>
-              <span v-if="tooltip_isNF" :data-status='tooltip_seat_status' class="ticket-status">{{tooltip_seat_status}}</span>
-              <span v-if="tooltip_isNF" class="ticket-nr">Seat {{tooltip_seat}}</span>
-              </div>
-              <span class="ticket-desc"> {{tooltip_desc}}</span>
+        <div class="seat-info">
+          <div class="tooltip" ref="tooltip">
+            <span class="ticket-title">{{ tooltip_title }}</span>
+            <div style="display: flex; justify-content: space-between;">
+              <span
+                v-bind:class="{ active: !tooltip_isNF }"
+                class="ticket-supply"
+                ref="supply"
+              >
+                {{ tooltip_supply }} tickets left</span
+              >
+              <span
+                v-if="tooltip_isNF"
+                :data-status="tooltip_seat_status"
+                class="ticket-status"
+                >{{ tooltip_seat_status }}</span
+              >
+              <span v-if="tooltip_isNF" class="ticket-nr"
+                >Seat {{ tooltip_seat }}</span
+              >
             </div>
+            <span class="ticket-desc"> {{ tooltip_desc }}</span>
           </div>
+        </div>
 
-          <div class="seating-container" :ref='"cont"' draggable="false">
-            <div class="col" v-for="col in cols" v-bind:key="'col_'+col">
-              <div :ref='"seat_"+col+"_"+row' @click="selectTicket(col, row)" @mouseenter="showToolTip(col, row)" @mouseleave="hideToolTip(col, row)" data-status='' class="seat" v-for="row in rows" v-bind:key="'seat_'+row"> </div>
-            </div>
-  
+        <div class="seating-container" :ref="'cont'" draggable="false">
+          <div class="col" v-for="col in cols" v-bind:key="'col_' + col">
+            <div
+              :ref="'seat_' + col + '_' + row"
+              @click="selectTicket(col, row)"
+              @mouseenter="showToolTip(col, row)"
+              @mouseleave="hideToolTip(col, row)"
+              data-status=""
+              class="seat"
+              v-for="row in rows"
+              v-bind:key="'seat_' + row"
+            ></div>
           </div>
-            
-          <md-button v-if="selected_ticket" class="md-raised">Buy for {{selected_ticket.price}} ETH</md-button>
-          <md-button v-if="selected_ticket" class="md-raised" @click="showDialog = !showDialog">Join Aftermarket</md-button>
-          <div class="buy-selection" v-bind:class="{ active: selected_ticket }">
-            <div class="fungible" v-bind:class="{ active: selectedIsFungible }">
-              <div class="selection-step amount" v-bind:class="{ active: selection_process_amount }">
-                <div class='icon-wrap' @click="changeAmount(-1)"><md-icon >remove_circle</md-icon></div>
-                <input type="number" v-model="amount">
-                <div class='icon-wrap' @click="changeAmount(1)"><md-icon >add_circle</md-icon></div>
-              </div>
-              <div class="selection-step price" v-bind:class="{ active: selection_process_price }">
-            <input type="range" :min='minAftermarketPrice' max='100' :step='stepSize' v-model.number="aftermarket_price"> {{actualPrice}}
-              </div>
-            </div>
-            <div class="nonfungible" v-bind:class="{ active: !selectedIsFungible }">
-
-            </div>
-          </div>
+        </div>
+      </div>
+      <div class="event-info-wrapper" ref="content-checkout">
+        <checkout
+          v-bind:fungibleTickets="selected_f_tickets"
+          v-bind:nonfungibleTickets="selected_nf_tickets"
+        ></checkout>
       </div>
     </div>
   </div>
@@ -138,41 +158,38 @@
 <script>
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import { fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
-
+import checkout from "./checkout";
 
 export default {
   name: "Event",
   data() {
     return {
-      amount: 0,
       aftermarket_price: 0,
       showDialog: false,
       event_id: Number,
       event_data: { metadata: { event: {} } },
-      tabs: ["about", 'tickets-plan'],
+      tabs: ["about", "tickets-plan", "checkout"],
       rows: 0,
       cols: 0,
-      tooltip_title: '',
-      tooltip_supply: '',
-      tooltip_desc: '',
+      tooltip_title: "",
+      tooltip_supply: "",
+      tooltip_desc: "",
       tooltip_seat: 0,
-      tooltip_seat_status: '',
+      tooltip_seat_status: "",
       tooltip_isNF: false,
       toolTipActive: false,
       navbarHeight: 0,
-      selected_ticket: undefined,
+      selected_f_tickets: [],
+      selected_nf_tickets: [],
       selection_step: 0,
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
+  components: {
+    checkout,
+  },
   props: {},
   computed: {
-    selection_process_amount() {
-      return this.selection_step == 0;
-    },
-    selection_process_price() {
-      return this.selection_step == 1;
-    },
     selectedIsFungible() {
       try {
         return !this.selected_ticket.isNF;
@@ -182,25 +199,24 @@ export default {
     },
     actualPrice() {
       try {
-        return this.aftermarket_price /100 * this.selected_ticket.price;
+        return (this.aftermarket_price / 100) * this.selected_ticket.price;
       } catch (error) {
-        return '';
+        return "";
       }
     },
     minAftermarketPrice() {
       try {
-        return Math.floor(100/this.selected_ticket.granularity);
+        return Math.floor(100 / this.selected_ticket.granularity);
       } catch (error) {
         return 0;
       }
     },
     stepSize() {
       try {
-        return Math.floor(100/this.selected_ticket.granularity);
+        return Math.floor(100 / this.selected_ticket.granularity);
       } catch (error) {
         return 1;
       }
-
     },
     eventStore() {
       return this.$store.state.events;
@@ -228,54 +244,95 @@ export default {
     },
   },
   methods: {
-    changeAmount(val) {
-      this.amount += val;
+    selectionPrice() {
+      this.selection_process_amount = false;
+      this.selection_process_price = true;
     },
+    selectionAmount() {
+      this.selection_process_amount = true;
+      this.selection_process_price = false;
+    },
+
     findTicketIndex(col, row) {
       //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
       this.event_data.fungibleTickets.forEach(function(ticketType, typeIndex) {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
-          if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
-            found_ticket = {'typeIndex': typeIndex,'index': index, 'isNF': false, 'price': ticketType.price, 'granularity': ticketType.granularity}
+          if (
+            Number(mapping.split("/")[0]) == col &&
+            Number(mapping.split("/")[1]) == row
+          ) {
+            found_ticket = {
+              typeIndex: typeIndex,
+              metadata: ticketType.metadata,
+              index: index,
+              selectedPrice: 0,
+              aftermarketAmount: 0,
+              isNF: false,
+              price: ticketType.price,
+              available: ticketType.supply - ticketType.ticketsSold,
+              granularity: ticketType.granularity,
+              amount: 1,
+            };
           }
         });
       });
-      this.event_data.nonFungibleTickets.forEach(function(ticketType, typeIndex) {
+      this.event_data.nonFungibleTickets.forEach(function(
+        ticketType,
+        typeIndex
+      ) {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
-          if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
-            found_ticket = {'typeIndex': typeIndex, 'index': index, 'isNF': true, 'price': ticketType.price, 'granularity': ticketType.granularity}
+          if (
+            Number(mapping.split("/")[0]) == col &&
+            Number(mapping.split("/")[1]) == row
+          ) {
+            found_ticket = {
+              typeIndex: typeIndex,
+              metadata: ticketType.metadata,
+              selectedPrice: 0,
+              index: index,
+              title: ticketType.metadata.title,
+              isNF: true,
+              price: ticketType.price,
+              isFree: false,
+              granularity: ticketType.granularity,
+            };
           }
         });
       });
       return found_ticket;
     },
     selectTicket: async function(col, row) {
+      this.selectionAmount();
       const seat = this.$refs[`seat_${col}_${row}`];
-      this.selected_ticket = this.findTicketIndex(col, row);
-      console.log(this.selected_ticket)
+      const selected_ticket = this.findTicketIndex(col, row);
+      console.log(selected_ticket);
       //seat[0].classList.add('bought');
-      if (!this.selected_ticket.isNF) {
-        console.log('fungible')
+      if (!selected_ticket.isNF) {
+        console.log("fungible");
+        this.selected_f_tickets.push(selected_ticket);
       } else {
-        console.log('non fungible')
-        seat[0].classList.add('selected');
+        console.log("non fungible");
+        seat[0].classList.add("selected");
+        this.selected_nf_tickets.push(selected_ticket);
       }
       return;
-      
 
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
+    addToCart: function() {},
     buyTicket: async function(typeIndex, ticketIndex, price, isNF) {
-      console.log(`buying ticket type ${typeIndex} for event ${this.event_id} - NF: ${isNF}`);
+      console.log(
+        `buying ticket type ${typeIndex} for event ${this.event_id} - NF: ${isNF}`
+      );
       const eventSC = new this.$store.state.web3.web3Instance.eth.Contract(
         EVENT_MINTABLE_AFTERMARKET_ABI,
         this.event_id
       );
       let type;
-      if(!isNF) {
+      if (!isNF) {
         type = fungibleBaseId.plus(typeIndex);
         var amount = "1";
         console.log(
@@ -297,7 +354,6 @@ export default {
         });
         console.log(buy);
       }
-      
     },
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {
@@ -306,26 +362,30 @@ export default {
       });
       this.$refs[tab].classList.add("active");
       this.$refs[`content-${tab}`].classList.add("active");
-      if(tab === 'tickets-plan') {
-            this.navbarHeight = this.$refs['navigation'].getBoundingClientRect().height + this.$refs['headerTitle'].getBoundingClientRect().height;
-        this.$refs['teaser'].style.minHeight = `${this.navbarHeight}px`;
-        this.$refs['headerTitle'].style.transform = `translateX(-120%)`;
+      if (tab === "tickets-plan" || tab === "checkout") {
+        this.navbarHeight =
+          this.$refs["navigation"].getBoundingClientRect().height +
+          this.$refs["headerTitle"].getBoundingClientRect().height;
+        this.$refs["teaser"].style.minHeight = `${this.navbarHeight}px`;
+        this.$refs["headerTitle"].style.transform = `translateX(-120%)`;
         //this.$refs['teaser'].style.alignItems = `start`;
         //this.$refs['parallax'].classList.add('hidden');
-        this.$refs['navigation'].classList.add('top');
+        this.$refs["navigation"].classList.add("top");
       } else {
-        this.$refs['teaser'].style.justifyContent = `start`;
-        this.$refs['headerTitle'].style.transform = `translateX(0)`;
+        this.$refs["teaser"].style.justifyContent = `start`;
+        this.$refs["headerTitle"].style.transform = `translateX(0)`;
 
-        this.$refs['teaser'].style.minHeight = '300px';
+        this.$refs["teaser"].style.minHeight = "300px";
         //this.$refs['parallax'].classList.remove('hidden');
-        this.$refs['navigation'].classList.remove('top');
+        this.$refs["navigation"].classList.remove("top");
       }
     },
     fetchEventInfo: function() {
       this.event_data = this.$store.state.events[this.event_id];
       this.setGridSizes();
-      setTimeout(() => {this.markSeats()}, 1000);
+      setTimeout(() => {
+        this.markSeats();
+      }, 1000);
       //this.markSeats();
     },
     setGridSizes: function() {
@@ -333,45 +393,53 @@ export default {
       let max_col = 0;
       this.event_data.fungibleTickets.forEach((ticket) => {
         ticket.metadata.mapping.forEach((mapping) => {
-          max_col = Number(mapping.split('/')[0]) > max_col ? Number(mapping.split('/')[0]) : max_col;
-          max_row = Number(mapping.split('/')[1]) > max_row ? Number(mapping.split('/')[1]) : max_row;
-        })
-      })
+          max_col =
+            Number(mapping.split("/")[0]) > max_col
+              ? Number(mapping.split("/")[0])
+              : max_col;
+          max_row =
+            Number(mapping.split("/")[1]) > max_row
+              ? Number(mapping.split("/")[1])
+              : max_row;
+        });
+      });
       this.rows = max_row;
       this.cols = max_col;
-      this.$refs['cont'].style.gridTemplateColumns = `repeat(${this.cols},minmax(25px,1fr))`;
-      this.$refs['cont'].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
+      this.$refs[
+        "cont"
+      ].style.gridTemplateColumns = `repeat(${this.cols},minmax(25px,1fr))`;
+      this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
     },
     markSeats: function() {
       this.event_data.fungibleTickets.forEach((ticket) => {
         ticket.metadata.mapping.forEach((mapping) => {
-          let x = Number(mapping.split('/')[0]);
-          let y = Number(mapping.split('/')[1]);
+          let x = Number(mapping.split("/")[0]);
+          let y = Number(mapping.split("/")[1]);
           // check if this fungible category still has seats available
           let nrFreeSeats = ticket.supply - ticket.ticketsSold;
-                  const seat = this.$refs[`seat_${x}_${y}`];
-          seat[0].classList.add('fungible');
-          if (nrFreeSeats > ticket.supply/2){
-            seat[0].dataset.status = 'good';
-          } else if (nrFreeSeats > ticket.supply/4) {
-            seat[0].dataset.status = 'neutral';
+          const seat = this.$refs[`seat_${x}_${y}`];
+          seat[0].classList.add("fungible");
+          if (nrFreeSeats > ticket.supply / 2) {
+            seat[0].dataset.status = "good";
+          } else if (nrFreeSeats > ticket.supply / 4) {
+            seat[0].dataset.status = "neutral";
           } else {
-            seat[0].dataset.status = 'bad';
+            seat[0].dataset.status = "bad";
           }
-        })
-      })
+        });
+      });
       this.event_data.nonFungibleTickets.forEach(function(ticket) {
         ticket.metadata.mapping.forEach(function(mapping, index) {
-          let x = Number(mapping.split('/')[0]);
-          let y = Number(mapping.split('/')[1]);
+          let x = Number(mapping.split("/")[0]);
+          let y = Number(mapping.split("/")[1]);
           //TODO: check if ticket is available
-          let isFree = ticket.metadata.soldIndexes.indexOf(index+1) == -1;
+          let isFree = ticket.metadata.soldIndexes.indexOf(index + 1) == -1;
 
           const seat = this.$refs[`seat_${x}_${y}`];
           if (isFree) {
-            seat[0].dataset.status = 'free';
+            seat[0].dataset.status = "free";
           } else {
-            seat[0].dataset.status = 'occupied';
+            seat[0].dataset.status = "occupied";
           }
         }, this);
       }, this);
@@ -381,16 +449,24 @@ export default {
       this.event_data.fungibleTickets.forEach((ticketType) => {
         ticketType.metadata.mapping.forEach((mapping) => {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
-          if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
+          if (
+            Number(mapping.split("/")[0]) == col &&
+            Number(mapping.split("/")[1]) == row
+          ) {
             found_ticket = ticketType;
           }
         });
       });
-      if (found_ticket) {return found_ticket};
+      if (found_ticket) {
+        return found_ticket;
+      }
       this.event_data.nonFungibleTickets.forEach((ticketType) => {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
-          if (Number(mapping.split('/')[0]) == col && Number(mapping.split('/')[1]) == row) {
+          if (
+            Number(mapping.split("/")[0]) == col &&
+            Number(mapping.split("/")[1]) == row
+          ) {
             found_ticket = ticketType;
             found_ticket.index = index;
             found_ticket.isNF = true;
@@ -404,28 +480,30 @@ export default {
       this.tooltip_title = ticket.metadata.title;
       this.tooltip_supply = ticket.supply - ticket.ticketsSold;
       this.tooltip_desc = ticket.metadata.description;
-      if(ticket.isNF) {
+      if (ticket.isNF) {
         this.tooltip_seat = ticket.index;
-        this.tooltip_seat_status = ticket.metadata.soldIndexes.indexOf(ticket.index+1) == -1 ? 'free' : 'sold';
+        this.tooltip_seat_status =
+          ticket.metadata.soldIndexes.indexOf(ticket.index + 1) == -1
+            ? "free"
+            : "sold";
         this.tooltip_isNF = true;
       } else {
         this.tooltip_isNF = false;
       }
-      
-      this.toolTipActive = true;
-      if (this.tooltip_supply > ticket.supply/2){
-        this.$refs['supply'].dataset.status = 'good';
-      } else if (this.tooltip_supply > ticket.supply/4) {
-        this.$refs['supply'].dataset.status = 'neutral';
-      } else {
-        this.$refs['supply'].dataset.status = 'bad';
-      }
-      
-      
 
+      this.toolTipActive = true;
+      if (this.tooltip_supply > ticket.supply / 2) {
+        this.$refs["supply"].dataset.status = "good";
+      } else if (this.tooltip_supply > ticket.supply / 4) {
+        this.$refs["supply"].dataset.status = "neutral";
+      } else {
+        this.$refs["supply"].dataset.status = "bad";
+      }
     },
     hideToolTip: function() {
-      setTimeout(() => {this.toolTipActive = false;}, 1000);      
+      setTimeout(() => {
+        this.toolTipActive = false;
+      }, 1000);
     },
   },
   created() {
@@ -434,8 +512,8 @@ export default {
   },
   mounted() {
     this.fetchEventInfo();
-    this.$root.$emit('hideSearchBar');
-    console.log(this.navbarHeight)
+    this.$root.$emit("hideSearchBar");
+    console.log(this.navbarHeight);
   },
 };
 </script>
@@ -483,19 +561,19 @@ export default {
   display: flex;
   align-items: center;
   transition: min-height 0.5s ease-in-out;
-  padding:1rem;
+  padding: 1rem;
   overflow-y: hidden;
 }
 .header-img .img-fluid {
   position: absolute;
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
   min-height: 100%;
   width: 100%;
 }
 .header-img .event-header {
   z-index: 999;
-  transition: transform 0.3s linear; 
+  transition: transform 0.3s linear;
 }
 .event-header span {
   color: white;
@@ -511,7 +589,7 @@ export default {
 .header-img .nav-bar {
   position: absolute;
   bottom: 0;
-  left:0;
+  left: 0;
   background-color: rgba(0, 0, 0, 0.8);
   width: 100%;
   display: flex;
@@ -567,51 +645,50 @@ export default {
 }
 
 .seating-container {
-  padding:5px;
+  padding: 5px;
   margin-top: 2rem;
-    width: max-content;
+  width: max-content;
   background-color: #d8dee9;
-    display: grid;
-    /*grid-gap: 2px;*/
+  display: grid;
+  /*grid-gap: 2px;*/
   position: relative;
   width: 100%;
   overflow-x: scroll;
 }
 .seat {
-    /*margin-bottom: 2px;*/
-    background-color: #d8dee9;
-    height: 100%;
-    border: 2px solid #d8dee9;
-    transition: transform 0.8s linear, background-color 0.3s linear;
+  /*margin-bottom: 2px;*/
+  background-color: #d8dee9;
+  height: 100%;
+  border: 2px solid #d8dee9;
+  transition: transform 0.8s linear, background-color 0.3s linear;
 }
 .seat.fungible {
-  border:none;
-    /*transform: scale(1.1);*/
+  border: none;
+  /*transform: scale(1.1);*/
 }
-.seat.fungible[data-status='good'] {
+.seat.fungible[data-status="good"] {
   background-color: #a3be8c;
   cursor: pointer;
 }
-.seat.fungible[data-status='neutral'] {
+.seat.fungible[data-status="neutral"] {
   background-color: #ebcb8b;
   cursor: pointer;
 }
-.seat.fungible[data-status='bad'] {
+.seat.fungible[data-status="bad"] {
   background-color: #bf616a;
 }
 .seat.selected {
   border: 1px solid black;
 }
-.seat[data-status='free'] {
+.seat[data-status="free"] {
   background-color: #a3be8c;
   cursor: pointer;
 }
-.seat[data-status='occupied'] {
+.seat[data-status="occupied"] {
   background-color: #bf616a;
 }
 .seat.bought {
   background-color: #bf616a !important;
-
 }
 .tooltip {
   padding: 4px;
@@ -635,32 +712,28 @@ export default {
   display: none;
   font-weight: lighter;
 }
-.ticket-supply[data-status='good'] {
-  color: #a3be8c
-}
-.ticket-supply[data-status='neutral'] {
-  color: #ebcb8b;
-}
-.ticket-supply[data-status='bad'] {
-  color: #bf616a;
-}
-.ticket-status[data-status='free'] {
+.ticket-supply[data-status="good"] {
   color: #a3be8c;
 }
-.ticket-status[data-status='sold'] {
+.ticket-supply[data-status="neutral"] {
+  color: #ebcb8b;
+}
+.ticket-supply[data-status="bad"] {
+  color: #bf616a;
+}
+.ticket-status[data-status="free"] {
+  color: #a3be8c;
+}
+.ticket-status[data-status="sold"] {
   color: #bf616a;
 }
 
-.selection-step.amount input {
-  -moz-appearance: textfield;
-}
-.selection-step .icon-wrap {
-  display: inline-block;
-}
-.buy-selection, .selection-step {
+.buy-selection,
+.selection-step {
   display: none;
 }
-.buy-selection.active, .selection-step.active {
+.buy-selection.active,
+.selection-step.active {
   display: block;
 }
 .buy-selection .icon-wrap {
