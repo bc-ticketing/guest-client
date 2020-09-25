@@ -6,12 +6,12 @@
         ref="isotope"
         class="event-list"
         :options="getOptions()"
-        :list="events"
+        :list="$store.state.events"
         @filter="filterOption = arguments[0]"
         @sort="sortOption = arguments[0]"
       >
         <EventEntry
-          v-for="event in events"
+          v-for="event in $store.state.events"
           v-bind:key="event.contractAddress"
           v-bind:event_data="event"
         ></EventEntry>
@@ -34,16 +34,12 @@ export default {
     web3() {
       return this.$store.state.web3.web3Instance;
     },
-    eventsWithMetadata() {
-      return this.events.filter((e) => e.metadata != undefined);
-    },
   },
   data() {
     return {
       sortOption: null,
       filterOption: null,
       filterText: "",
-      events: [],
     };
   },
   watch: {
@@ -55,12 +51,6 @@ export default {
     this.$root.$on("searchChange", (val) => {
       this.updateFilters(val);
     });
-    this.$root.$on("loadedEventMetadata", () => {
-      this.updateEvents();
-    });
-  },
-  beforeMount: function() {
-    this.updateEvents();
   },
   mounted: function() {
     this.$root.$emit('openSearchBar');
@@ -69,15 +59,6 @@ export default {
     updateFilters: function(value) {
       this.filterText = value;
       this.$refs["isotope"].filter("filterByText");
-    },
-    updateEvents: function() {
-      for (const a in this.$store.state.events) {
-        var e = this.$store.state.events[a];
-        e.contractAddress = a;
-        if (e.metadata != undefined) {
-          this.events.push(e);
-        }
-      }
     },
     toggleDetails: function(event_id) {
       var event = `details_${event_id}`;
@@ -97,16 +78,16 @@ export default {
         getSortData: {
           id: "id",
           name: function(itemElem) {
-            return itemElem.metadata.event.title.toLowerCase();
+            return itemElem.title.toLowerCase();
           },
         },
         getFilterData: {
           filterByText: function(itemElem) {
             return (
-              itemElem.metadata.event.title
+              itemElem.title
                 .toLowerCase()
                 .includes(_this.filterText.toLowerCase()) ||
-              itemElem.metadata.event.location
+              itemElem.location
                 .toLowerCase()
                 .includes(_this.filterText.toLowerCase())
             );

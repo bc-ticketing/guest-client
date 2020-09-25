@@ -57,11 +57,7 @@ export default {
       console.log(value);
       this.navHeight = value;
     },
-    loadEventAddresses: async function() {
-      await this.$store.dispatch("loadEventAddresses");
-      this.$root.$emit("loadedEventAddresses");
-    },
-    loadIpfsHashes: async function() {
+    loadEvents: async function() {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
     },
@@ -74,22 +70,14 @@ export default {
       await this.$store.dispatch("loadUserTickets");
       this.$root.$emit("loadedUserTickets");
     },
-    loadIpfsMetadata: async function() {
-      await this.$store.dispatch("loadIpfsMetadata");
-      this.$root.$emit("loadedEventMetadata");
-    },
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
-      this.loadEventAddresses();
-    });
-    this.$root.$on("loadedEventAddresses", async () => {
-      this.loadIpfsHashes();
-      this.loadTickets();
-      this.loadUserTickets();
+      this.loadEvents();
     });
     this.$root.$on("loadedEvents", async () => {
-      this.loadIpfsMetadata();
+      this.loadTickets();
+      this.loadUserTickets();
     });
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");

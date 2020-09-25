@@ -5,10 +5,9 @@ import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-import { argsToCid, fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
+import { argsToCid, fungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
-
-const BigNumber = require("bignumber.js");
+import {Event} from './../util/event';
 
 Vue.use(Vuex);
 
@@ -27,29 +26,13 @@ export default new Vuex.Store({
       console.log("setting event factory");
       state.eventFactory = factory;
     },
-    setEventAddresses(state, addresses) {
-      console.log("setting event addresses");
-      state.eventAddresses = addresses;
-    },
-    setEvents(state, events) {
+    updateEventStore(state, events) {
       console.log("setting events");
       state.events = events;
     },
     registerIpfsInstance(state, payload) {
       console.log("setting ipfs instance");
       state.ipfsInstance = payload;
-    },
-    addEventMetadata(state, event) {
-      console.log("setting event metadata");
-      console.log(event);
-      console.log(state.events);
-      state.events[event.contractAddress].metadata = event.metadata;
-    },
-    setFungibleTickets(state, tickets) {
-      console.log("Setting event tickets");
-      for (var address in tickets) {
-        state.events[address].fungibleTickets = tickets[address];
-      }
     },
     setUserTickets(state, tickets) {
       console.log("setting user tickets");
@@ -58,31 +41,6 @@ export default new Vuex.Store({
   },
   /* */
   actions: {
-    async loadIpfsMetadata({ commit }) {
-      console.log("dispatched loadIpfsMetadata Action");
-      for (const contract_address in state.events) {
-        const e = state.events[contract_address];
-        console.log(e.ipfs_hash);
-        try {
-          var ipfsData = null;
-          for await (const chunk of state.ipfsInstance.cat(e.ipfs_hash, {
-            timeout: 2000,
-          })) {
-            ipfsData = Buffer(chunk, "utf8").toString();
-          }
-          var temp = {
-            ipfsHash: e.ipfs_hash,
-            contractAddress: contract_address,
-            metadata: JSON.parse(ipfsData),
-          };
-          commit("addEventMetadata", temp);
-        } catch (error) {
-          if (error.name == "TimeoutError") {
-            console.log("timeout while fetching ipfs metadata");
-          }
-        }
-      }
-    },
     async registerIpfs({ commit }) {
       console.log("dispatched registerIpfs Action");
       const ipfs = await getIpfs();
@@ -99,11 +57,6 @@ export default new Vuex.Store({
       const web3 = await updateWeb3();
       commit("updateWeb3", web3);
     },
-    async fetchEventAddresses({ commit }) {
-      console.log("fetching event addresses");
-      commit();
-      // TODO
-    },
     async createEventFactory({ commit }) {
       console.log("dispatched createEventFactory Action");
       const eventFactory = new state.web3.web3Instance.eth.Contract(
@@ -112,18 +65,14 @@ export default new Vuex.Store({
       );
       commit("setEventFactory", eventFactory);
     },
-    async loadEventAddresses({ commit }) {
-      console.log("dispatched loadEventAddresses Action");
+    async loadEvents({ commit }) {
+      console.log("dispatched loadEvents Action");
       const eventAddresses = await state.eventFactory.methods
         .getEvents()
         .call();
-      commit("setEventAddresses", eventAddresses);
-    },
-    async loadEvents({ commit }) {
-      console.log("dispatched loadEvents Action");
-      var ipfs_hashes = {};
-      for (let i = 0; i < state.eventAddresses.length; i++) {
-        var a = state.eventAddresses[i];
+      var events = [];
+      for (let i = 0; i < eventAddresses.length; i++) {
+        var a = eventAddresses[i];
         try {
           const eventSC = new state.web3.web3Instance.eth.Contract(
             EVENT_MINTABLE_AFTERMARKET_ABI,
@@ -133,105 +82,47 @@ export default new Vuex.Store({
             fromBlock: 1,
           });
           var metadataObject = eventMetadata[0].returnValues;
-          ipfs_hashes[a] = {
-            ipfs_hash: argsToCid(
-              metadataObject.hashFunction,
-              metadataObject.size,
-              metadataObject.digest
-            ),
-          };
+          const ipfsHash = argsToCid(
+            metadataObject.hashFunction,
+            metadataObject.size,
+            metadataObject.digest
+          );
+          let event = new Event(a, ipfsHash);
+          try {
+            await event.loadIPFSMetadata(state.ipfsInstance);
+          } catch (error) {
+            if (error.name == "TimeoutError") {
+              console.log("timeout while fetching ipfs metadata");
+            }
+          }
+          events.push(event);
         } catch {
           console.log("could not get metadata for event");
         }
       }
-      commit("setEvents", ipfs_hashes);
+      commit("updateEventStore", events);
     },
     async loadFungibleTickets({ commit }) {
       console.log("dispatched loadTickets Action");
-      var ticket_types = {};
-      // loop over all events
-      for (let i = 0; i < state.eventAddresses.length; i++) {
-        var a = state.eventAddresses[i];
-        ticket_types[a] = [];
+      for (const event of state.events) {
         try {
-          const eventSC = new state.web3.web3Instance.eth.Contract(
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            a
-          );
-          const nonce = await eventSC.methods.fNonce().call();
-          // nonce shows how many ticket types exist for this event
-          if (nonce > 0) {
-            for (let i = 0; i < nonce; i++) {
-              const ticketType = fungibleBaseId.plus(i); 
-              const ticketMapping = await eventSC.methods
-                .ticketTypeMeta(ticketType)
-                .call();
-                ticketMapping.sellOrders = {};
-                const granularity = eventSC.methods.granularity.call();
-                ticketMapping.granularity = granularity;
-                for (i = 1; i <= granularity.toNumber(); i++) {
-                  let percentage = (100 / granularity.toNumber()) * i;
-                  const queue = eventSC.methods.sellingQueue(ticketType, percentage);
-                  const numberSellingOrders = queue.numberTickets;
-                  if (numberSellingOrders > 0) {
-                    ticketMapping.sellOrders[String(percentage)] = numberSellingOrders
-                  }
-                }
-
-              ticketMapping.ticketTypeNr = i;
-              //const queues = eventSC.methods.buyingQueue().call();
-              ticket_types[a].push(ticketMapping);
-            }
-          }
-
-          //var metadataObject = eventMetadata[0].returnValues;
+          await event.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance);
         } catch (error) {
-          console.log("could not get tickets for event");
           console.log(error);
         }
-      }
-      commit("setFungibleTickets", ticket_types);
+      };
+      commit("updateEventStore", state.events);
     },
     async loadNonFungibleTickets({ commit }) {
-      console.log('dispatched loadNonFungibleTickets Action');
-      var ticket_types = {};
-      for (let i = 0; i < state.eventAddresses.length; i++) {
-        var a = state.eventAddresses[i];
-        ticket_types[a] = [];
+      console.log("dispatched loadNonFungibleTickets Action");
+        for (const event of state.events) {
         try {
-          const eventSC = new state.web3.web3Instance.eth.Contract(
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            a
-          );
-          const nonce = await eventSC.methods.nfNonce().call();
-          // nonce shows how many ticket types exist for this event
-          if (nonce > 0) {
-            for (let i = 0; i < nonce; i++) {
-              const ticketMapping = await eventSC.methods
-                .ticketTypeMeta(nonFungibleBaseId.plus(i))
-                .call();
-                ticketMapping.ticketTypeNr = i;
-                ticketMapping.tickets = {};
-                for(let j = 0; j < ticketMapping.supply; j++){
-                  const ticketId = nonFungibleBaseId.plus(i).plus(j);
-                  let ticket = {};
-                  const owner = await eventSC.methods.nfOwners(ticketId).call();
-                  ticket.isSold = owner != 0 ? true : false;
-                  const sellOrder = await eventSC.methods.nfTickets(ticketId).call();
-                  ticket.hasSellOrder = new BigNumber(sellOrder.userAddress).isZero() ? false : true;
-                  ticket.sellOrderPercentage = ticketMapping.hasSellOrder ? sellOrder.percentage : 0;
-                  ticketMapping.tickets[ticketId] = ticket;
-                }
-              ticket_types[a].push(ticketMapping);
-            }
-          }
-          //var metadataObject = eventMetadata[0].returnValues;
+        await event.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance);
         } catch (error) {
-          console.log("could not get tickets for event");
           console.log(error);
         }
-      }
-      commit('setNonFungibleTickets', ticket_types);
+      };
+      commit("updateEventStore", state.events);
     },
     /* TODO: also non fungible */
     async loadUserTickets({ commit }) {
@@ -269,7 +160,6 @@ export default new Vuex.Store({
       }
       commit("setUserTickets", tickets);
     },
-
   },
   modules: {},
 });

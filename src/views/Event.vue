@@ -4,7 +4,7 @@
       <!-- <div class="parallax" ref="parallax">  -->
       <img
         ref="teaserImg"
-        :src="event_data.metadata.event.img_url"
+        :src="event.img_url"
         alt=""
         class="img-fluid"
       />
@@ -15,7 +15,7 @@
         >
       </div>
       <div class="event-header" ref="headerTitle">
-        <span class="event-title">{{ event_data.metadata.event.title }}</span>
+        <span class="event-title">{{ event.title }}</span>
         <span class="event-cat">Concert</span>
       </div>
       <div class="nav-bar" ref="navigation">
@@ -26,15 +26,6 @@
         >
           About
         </div>
-        <!--
-        <div
-          class="nav-entry tickets"
-          ref="tickets"
-          @click="toggleTab('tickets')"
-        >
-          Tickets
-        </div>
-        -->
         <div
           class="nav-entry tickets"
           ref="tickets-plan"
@@ -55,15 +46,15 @@
     <div class="container">
       <div class="event-info-wrapper active" ref="content-about">
         <span class="event-title">
-          <h2>{{ event_data.metadata.event.title }}</h2>
+          <h2>{{ event.title }}</h2>
         </span>
         <div class="info-group description">
-          {{ event_data.metadata.event.description }}
+          {{ event.description }}
         </div>
         <div class="info-group">
           <md-icon class="info-title">location_on</md-icon>
           <span class="info-value">{{
-            event_data.metadata.event.location
+            event.location
           }}</span>
         </div>
         <div class="info-group">
@@ -79,31 +70,7 @@
           <span class="info-value">lowestPrice</span>
         </div>
       </div>
-      <div class="event-info-wrapper" ref="content-tickets">
-        <span class="event-title"><h2>Tickets</h2></span>
-        <div class="ticket-container">
-          <div
-            class="ticket-category"
-            v-for="(ticket, index) in tickets"
-            v-bind:key="index"
-          >
-            <div class="ticket-info">
-              <span class="ticket-price">{{ ticket.price }} ETH</span>
-              <span class="ticket-available"
-                >{{ ticket.supply - ticket.ticketsSold }} left</span
-              >
-            </div>
-            <div class="ticket-select">
-              <md-button
-                class="md-raised md-primary"
-                v-bind:disabled="ticket.ticketsSold >= ticket.supply"
-                @click="buyTicket(ticket.ticketTypeNr, ticket.price)"
-                >Buy</md-button
-              >
-            </div>
-          </div>
-        </div>
-      </div>
+
       <div class="event-info-wrapper" ref="content-tickets-plan">
         <div class="seat-info">
           <div class="tooltip" ref="tooltip">
@@ -164,10 +131,10 @@ export default {
   name: "Event",
   data() {
     return {
+      event: {},
       aftermarket_price: 0,
       showDialog: false,
-      event_id: Number,
-      event_data: { metadata: { event: {} } },
+      contractAddress: Number,
       tabs: ["about", "tickets-plan", "checkout"],
       rows: 0,
       cols: 0,
@@ -181,7 +148,6 @@ export default {
       navbarHeight: 0,
       selected_f_tickets: [],
       selected_nf_tickets: [],
-      selection_step: 0,
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
@@ -190,37 +156,6 @@ export default {
   },
   props: {},
   computed: {
-    selectedIsFungible() {
-      try {
-        return !this.selected_ticket.isNF;
-      } catch (error) {
-        return true;
-      }
-    },
-    actualPrice() {
-      try {
-        return (this.aftermarket_price / 100) * this.selected_ticket.price;
-      } catch (error) {
-        return "";
-      }
-    },
-    minAftermarketPrice() {
-      try {
-        return Math.floor(100 / this.selected_ticket.granularity);
-      } catch (error) {
-        return 0;
-      }
-    },
-    stepSize() {
-      try {
-        return Math.floor(100 / this.selected_ticket.granularity);
-      } catch (error) {
-        return 1;
-      }
-    },
-    eventStore() {
-      return this.$store.state.events;
-    },
     tickets() {
       if (this.$store.state.events[this.event_id]) {
         return this.$store.state.events[this.event_id].tickets;
@@ -229,34 +164,12 @@ export default {
       }
     },
   },
-  beforeCreate() {
-    this.$root.$on("loadedEventMetadata", () => {
-      this.fetchEventInfo();
-    });
-  },
-  watch: {
-    eventStore(newEvents) {
-      console.log("event store changed");
-      if (newEvents[this.event_id].metadata) {
-        console.log("fetching infos");
-        this.fetchEventInfo();
-      }
-    },
-  },
+  watch: {},
   methods: {
-    selectionPrice() {
-      this.selection_process_amount = false;
-      this.selection_process_price = true;
-    },
-    selectionAmount() {
-      this.selection_process_amount = true;
-      this.selection_process_price = false;
-    },
-
     findTicketIndex(col, row) {
       //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
-      this.event_data.fungibleTickets.forEach(function(ticketType, typeIndex) {
+      this.event.fungibleTickets.forEach(function(ticketType, typeIndex) {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
@@ -278,7 +191,7 @@ export default {
           }
         });
       });
-      this.event_data.nonFungibleTickets.forEach(function(
+      this.event.nonFungibleTickets.forEach(function(
         ticketType,
         typeIndex
       ) {
@@ -322,7 +235,6 @@ export default {
 
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
-    addToCart: function() {},
     buyTicket: async function(typeIndex, ticketIndex, price, isNF) {
       console.log(
         `buying ticket type ${typeIndex} for event ${this.event_id} - NF: ${isNF}`
@@ -381,18 +293,22 @@ export default {
       }
     },
     fetchEventInfo: function() {
-      this.event_data = this.$store.state.events[this.event_id];
+      this.event = this.$store.state.events.filter(event => event.contractAddress == this.contractAddress)[0];
+      //this.markSeats();
+    },
+    fetchTicketInfo: function() {
       this.setGridSizes();
-      setTimeout(() => {
+        setTimeout(() => {
         this.markSeats();
       }, 1000);
-      //this.markSeats();
     },
     setGridSizes: function() {
       let max_row = 0;
       let max_col = 0;
-      this.event_data.fungibleTickets.forEach((ticket) => {
-        ticket.metadata.mapping.forEach((mapping) => {
+      console.log(this.event.fungibleTickets.length)
+      this.event.fungibleTickets.forEach((ticket) => {
+        console.log('ticket');
+        ticket.seatMapping.forEach((mapping) => {
           max_col =
             Number(mapping.split("/")[0]) > max_col
               ? Number(mapping.split("/")[0])
@@ -403,21 +319,30 @@ export default {
               : max_row;
         });
       });
+      this.event.nonFungibleTickets.forEach((nfticketType) => {
+        nfticketType.tickets.forEach((ticket) => {
+          max_row = max_row > ticket.seatMapping.split('/')[1] ? max_row : ticket.seatMapping.split('/')[1];
+          max_row = max_col > ticket.seatMapping.split('/')[0] ? max_col : ticket.seatMapping.split('/')[0];
+        })
+      })
       this.rows = max_row;
       this.cols = max_col;
+      console.log(this.rows);
+      console.log(this.cols);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols},minmax(25px,1fr))`;
       this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
     },
     markSeats: function() {
-      this.event_data.fungibleTickets.forEach((ticket) => {
-        ticket.metadata.mapping.forEach((mapping) => {
+      this.event.fungibleTickets.forEach((ticket) => {
+        ticket.seatMapping.forEach((mapping) => {
           let x = Number(mapping.split("/")[0]);
           let y = Number(mapping.split("/")[1]);
           // check if this fungible category still has seats available
           let nrFreeSeats = ticket.supply - ticket.ticketsSold;
           const seat = this.$refs[`seat_${x}_${y}`];
+          console.log(seat);
           seat[0].classList.add("fungible");
           if (nrFreeSeats > ticket.supply / 2) {
             seat[0].dataset.status = "good";
@@ -428,15 +353,13 @@ export default {
           }
         });
       });
-      this.event_data.nonFungibleTickets.forEach(function(ticket) {
-        ticket.metadata.mapping.forEach(function(mapping, index) {
-          let x = Number(mapping.split("/")[0]);
-          let y = Number(mapping.split("/")[1]);
-          //TODO: check if ticket is available
-          let isFree = ticket.metadata.soldIndexes.indexOf(index + 1) == -1;
+      this.event.nonFungibleTickets.forEach(function(ticketType) {
+        ticketType.tickets.forEach(function(ticket) {
+          let x = Number(ticket.seatMapping.split("/")[0]);
+          let y = Number(ticket.seatMapping.split("/")[1]);
 
           const seat = this.$refs[`seat_${x}_${y}`];
-          if (isFree) {
+          if (ticket.isFree()) {
             seat[0].dataset.status = "free";
           } else {
             seat[0].dataset.status = "occupied";
@@ -446,8 +369,8 @@ export default {
     },
     getTicketInfoForCoords: function(col, row) {
       let found_ticket = false;
-      this.event_data.fungibleTickets.forEach((ticketType) => {
-        ticketType.metadata.mapping.forEach((mapping) => {
+      this.event.fungibleTickets.forEach((ticketType) => {
+        ticketType.seatMapping.forEach((mapping) => {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(mapping.split("/")[0]) == col &&
@@ -460,7 +383,7 @@ export default {
       if (found_ticket) {
         return found_ticket;
       }
-      this.event_data.nonFungibleTickets.forEach((ticketType) => {
+      this.event.nonFungibleTickets.forEach((ticketType) => {
         ticketType.metadata.mapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
@@ -507,11 +430,15 @@ export default {
     },
   },
   created() {
-    this.event_id = this.$route.params.id;
-    //this.fetchEventInfo();
+    this.contractAddress = this.$route.params.id;
+    this.$root.$on('loadedEvents', () => {
+      this.fetchEventInfo();
+    })
+    this.$root.$on('loadedTickets', () => {
+      this.fetchTicketInfo();
+    })
   },
   mounted() {
-    this.fetchEventInfo();
     this.$root.$emit("hideSearchBar");
     console.log(this.navbarHeight);
   },

@@ -9,9 +9,9 @@
       </div>
       <div class="info-box">
         <span class="time">{{ weekday }} - 18:00</span>
-        <span class="title">{{ event_data.metadata.event.title }}</span>
+        <span class="title">{{ event_data.title }}</span>
         <span class="location"
-          >Hallenstadion - {{ event_data.metadata.event.location }}</span
+          >Hallenstadion - {{ event_data.location }}</span
         >
       </div>
       <div class="button-box" @click="goToDetails">
