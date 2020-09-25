@@ -123,8 +123,6 @@
 </template>
 
 <script>
-import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-import { fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
 import checkout from "./checkout";
 
 export default {
@@ -170,24 +168,13 @@ export default {
       //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
       this.event.fungibleTickets.forEach(function(ticketType, typeIndex) {
-        ticketType.metadata.mapping.forEach(function(mapping, index) {
+        ticketType.seatMapping.forEach(function(mapping, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(mapping.split("/")[0]) == col &&
             Number(mapping.split("/")[1]) == row
           ) {
-            found_ticket = {
-              typeIndex: typeIndex,
-              metadata: ticketType.metadata,
-              index: index,
-              selectedPrice: 0,
-              aftermarketAmount: 0,
-              isNF: false,
-              price: ticketType.price,
-              available: ticketType.supply - ticketType.ticketsSold,
-              granularity: ticketType.granularity,
-              amount: 1,
-            };
+            found_ticket = ticketType;
           }
         });
       });
@@ -195,77 +182,36 @@ export default {
         ticketType,
         typeIndex
       ) {
-        ticketType.metadata.mapping.forEach(function(mapping, index) {
+        ticketType.tickets.forEach(function(ticket, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
-            Number(mapping.split("/")[0]) == col &&
-            Number(mapping.split("/")[1]) == row
+            Number(ticket.seatMapping.split("/")[0]) == col &&
+            Number(ticket.seatMapping.split("/")[1]) == row
           ) {
-            found_ticket = {
-              typeIndex: typeIndex,
-              metadata: ticketType.metadata,
-              selectedPrice: 0,
-              index: index,
-              title: ticketType.metadata.title,
-              isNF: true,
-              price: ticketType.price,
-              isFree: false,
-              granularity: ticketType.granularity,
-            };
+            found_ticket = ticket;
           }
         });
       });
       return found_ticket;
     },
     selectTicket: async function(col, row) {
-      this.selectionAmount();
       const seat = this.$refs[`seat_${col}_${row}`];
-      const selected_ticket = this.findTicketIndex(col, row);
-      console.log(selected_ticket);
-      //seat[0].classList.add('bought');
-      if (!selected_ticket.isNF) {
-        console.log("fungible");
-        this.selected_f_tickets.push(selected_ticket);
-      } else {
-        console.log("non fungible");
-        seat[0].classList.add("selected");
-        this.selected_nf_tickets.push(selected_ticket);
-      }
-      return;
-
+      const ticket = this.findTicketIndex(col, row);
+      this.$store.state.user.shoppingCart.add(ticket.isNf)
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
-    buyTicket: async function(typeIndex, ticketIndex, price, isNF) {
-      console.log(
-        `buying ticket type ${typeIndex} for event ${this.event_id} - NF: ${isNF}`
-      );
-      const eventSC = new this.$store.state.web3.web3Instance.eth.Contract(
-        EVENT_MINTABLE_AFTERMARKET_ABI,
-        this.event_id
-      );
-      let type;
-      if (!isNF) {
-        type = fungibleBaseId.plus(typeIndex);
-        var amount = "1";
-        console.log(
-          "buying from account: " +
-            this.$store.state.web3.account +
-            "for " +
-            price
-        );
+    checkout: async function() {
+      this.$store.state.user.checkout();
+        /*
         const buy = await eventSC.methods.mintFungible(type, amount).send({
           from: this.$store.state.web3.account,
           value: price * this.$store.state.web3.web3Instance.utils.toWei(price),
         });
-        console.log(buy);
-      } else {
-        type = nonFungibleBaseId.plus(typeIndex).plus(ticketIndex);
-        const buy = await eventSC.methods.mintNonFungibles([type]).send({
+        */
+        /* const buy = await eventSC.methods.mintNonFungibles([type]).send({
           from: this.$store.state.web3.account,
           value: price * this.$store.state.web3.web3Instance.utils.toWei(price),
-        });
-        console.log(buy);
-      }
+        }); */
     },
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {
@@ -321,8 +267,8 @@ export default {
       });
       this.event.nonFungibleTickets.forEach((nfticketType) => {
         nfticketType.tickets.forEach((ticket) => {
-          max_row = max_row > ticket.seatMapping.split('/')[1] ? max_row : ticket.seatMapping.split('/')[1];
-          max_row = max_col > ticket.seatMapping.split('/')[0] ? max_col : ticket.seatMapping.split('/')[0];
+          max_row = max_row > ticket.seatMapping.split('/')[1] ? max_row : Number(ticket.seatMapping.split('/')[1]);
+          max_row = max_col > ticket.seatMapping.split('/')[0] ? max_col : Number(ticket.seatMapping.split('/')[0]);
         })
       })
       this.rows = max_row;
@@ -340,13 +286,11 @@ export default {
           let x = Number(mapping.split("/")[0]);
           let y = Number(mapping.split("/")[1]);
           // check if this fungible category still has seats available
-          let nrFreeSeats = ticket.supply - ticket.ticketsSold;
           const seat = this.$refs[`seat_${x}_${y}`];
-          console.log(seat);
           seat[0].classList.add("fungible");
-          if (nrFreeSeats > ticket.supply / 2) {
+          if (ticket.numberFreeSeats() > ticket.supply / 2) {
             seat[0].dataset.status = "good";
-          } else if (nrFreeSeats > ticket.supply / 4) {
+          } else if (ticket.numberFreeSeats() > ticket.supply / 4) {
             seat[0].dataset.status = "neutral";
           } else {
             seat[0].dataset.status = "bad";
@@ -368,7 +312,7 @@ export default {
       }, this);
     },
     getTicketInfoForCoords: function(col, row) {
-      let found_ticket = false;
+      let foundTicketType = false;
       this.event.fungibleTickets.forEach((ticketType) => {
         ticketType.seatMapping.forEach((mapping) => {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
@@ -376,48 +320,44 @@ export default {
             Number(mapping.split("/")[0]) == col &&
             Number(mapping.split("/")[1]) == row
           ) {
-            found_ticket = ticketType;
+            foundTicketType = ticketType;
           }
         });
       });
-      if (found_ticket) {
-        return found_ticket;
+      if (foundTicketType) {
+        return foundTicketType;
       }
       this.event.nonFungibleTickets.forEach((ticketType) => {
-        ticketType.metadata.mapping.forEach(function(mapping, index) {
+        ticketType.tickets.forEach(function(ticket, index) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
-            Number(mapping.split("/")[0]) == col &&
-            Number(mapping.split("/")[1]) == row
+            Number(ticket.seatMapping.split("/")[0]) == col &&
+            Number(ticket.seatMapping.split("/")[1]) == row
           ) {
-            found_ticket = ticketType;
-            found_ticket.index = index;
-            found_ticket.isNF = true;
+            foundTicketType = ticketType;
+            foundTicketType.ticket = ticket;
           }
         });
       });
-      return found_ticket;
+      return foundTicketType;
     },
     showToolTip: function(col, row) {
-      let ticket = this.getTicketInfoForCoords(col, row);
-      this.tooltip_title = ticket.metadata.title;
-      this.tooltip_supply = ticket.supply - ticket.ticketsSold;
-      this.tooltip_desc = ticket.metadata.description;
-      if (ticket.isNF) {
-        this.tooltip_seat = ticket.index;
-        this.tooltip_seat_status =
-          ticket.metadata.soldIndexes.indexOf(ticket.index + 1) == -1
-            ? "free"
-            : "sold";
+      let ticketType = this.getTicketInfoForCoords(col, row);
+      this.tooltip_title = ticketType.title;
+      this.tooltip_supply = ticketType.numberFreeSeats();
+      this.tooltip_desc = ticketType.description;
+      if (ticketType.isNf) {
+        this.tooltip_seat = ticketType.ticket.ticketId;
+        this.tooltip_seat_status = ticketType.ticket.isFree();
         this.tooltip_isNF = true;
       } else {
         this.tooltip_isNF = false;
       }
 
       this.toolTipActive = true;
-      if (this.tooltip_supply > ticket.supply / 2) {
+      if (this.tooltip_supply > ticketType.supply / 2) {
         this.$refs["supply"].dataset.status = "good";
-      } else if (this.tooltip_supply > ticket.supply / 4) {
+      } else if (this.tooltip_supply > ticketType.supply / 4) {
         this.$refs["supply"].dataset.status = "neutral";
       } else {
         this.$refs["supply"].dataset.status = "bad";

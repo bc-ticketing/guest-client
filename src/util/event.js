@@ -53,7 +53,9 @@ export class Event {
         ticketType.ticketsSold = ticketMapping.ticketsSold;
         ticketType.supply = ticketMapping.supply;
         await ticketType.fetchIpfsHash(web3Instance, ABI);
-        await ticketType.loadIPFSMetadata(ipfsInstance)
+        await ticketType.loadIPFSMetadata(ipfsInstance);
+        await ticketType.loadSellOrders(web3Instance, ABI);
+        await ticketType.loadBuyOrders(web3Instance, ABI)
         const granularity = await eventSC.methods.granularity.call();
         ticketType.aftermarketGranularity = granularity;
         for (i = 1; i <= new BigNumber(granularity).toNumber(); i++) {
@@ -91,7 +93,7 @@ export class Event {
         ticketType.supply = ticketMapping.supply;
         for (let j = 0; j < ticketType.supply; j++) {
           const ticketId = nonFungibleBaseId.plus(i).plus(j);
-          let ticket = new NonFungibleTicket(j);
+          let ticket = new NonFungibleTicket(i, j);
           const owner = await eventSC.methods.nfOwners(ticketId).call();
           ticket.owner = owner;
           const sellOrder = await eventSC.methods.nfTickets(ticketId).call();

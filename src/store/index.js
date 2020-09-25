@@ -8,6 +8,7 @@ import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAfter
 import { argsToCid, fungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
 import {Event} from './../util/event';
+import {User} from './../util/User';
 
 Vue.use(Vuex);
 
@@ -21,6 +22,7 @@ export default new Vuex.Store({
       state.web3.networkId = web3.networkId;
       state.web3.balance = parseInt(web3.balance, 10);
       state.web3.isInjected = true;
+      state.user = new User(web3.account, state.web3.balance);
     },
     setEventFactory(state, factory) {
       console.log("setting event factory");

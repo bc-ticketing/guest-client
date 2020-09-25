@@ -1,4 +1,4 @@
-import { argsToCid, fungibleBaseId } from "idetix-utils";
+import { argsToCid, fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
 
 const BigNumber = require("bignumber.js");
 
@@ -16,9 +16,94 @@ class TicketType {
         this.ipfsHash = '';
     }
 
-        async fetchIpfsHash(web3Instance, ABI) {
+    numberFreeSeats() {
+        return this.supply - this.ticketsSold;
+    }
+
+}
+
+export class FungibleTicketType extends TicketType {
+    constructor(eventContractAddress, typeId) {
+        super(eventContractAddress, typeId);
+        this.sellOrders = {};
+        this.buyOrders = {};
+        this.seatMapping = [];
+        this.isNf = false;
+    }
+
+    getFullTicketId() {
+        return fungibleBaseId.plus(new BigNumber(this.typeId))
+    }
+
+    async loadIPFSMetadata(ipfsInstance) {
+        if (this.ipfsHash === '') {return;}
+        var ipfsData = null;
+        for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
+          timeout: 2000,
+        })) {
+          ipfsData = Buffer(chunk, "utf8").toString();
+        }
+        const metadata = JSON.parse(ipfsData);
+        this.description = metadata.ticket.description;
+        this.seatMapping = metadata.ticket.mapping;
+        this.title = metadata.ticket.title;
+    }
+
+    async fetchIpfsHash(web3Instance, ABI) {
         const eventSC = new web3Instance.eth.Contract(ABI,this.eventContractAddress);
-        let longId = fungibleBaseId.plus(new BigNumber(this.typeId));
+        const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
+            filter: {ticketTypeId: this.getFullTicketId()},
+            fromBlock: 1,
+          });
+          if (ticketMetadata.length < 1) {
+              return;
+          }
+          var metadataObject = ticketMetadata[0].returnValues;
+          const ipfsHash = argsToCid(
+            metadataObject.hashFunction,
+            metadataObject.size,
+            metadataObject.digest
+          );
+            this.ipfsHash = ipfsHash;
+    }
+
+    async loadSellOrders(web3Instance, ABI) {
+        const aftermarket = new web3Instance.eth.Contract(ABI, this.contractAddress);
+        for (let i = this.aftermarketGranularity; i >= 1; i--) {
+            const percentage = (100 / this.aftermarketGranularity) * i;
+            const sellingQueue = await aftermarket.methods.sellingQueue(this.getFullTicketId(), percentage).call();
+            const numSellOrders = sellingQueue.numberTickets;
+            if (numbSellOrders > 0) {
+                this.sellOrders[percentage] = numSellOrders;
+            }
+        }
+    }
+
+    async loadBuyOrders(web3Instance, ABI) {
+        const aftermarket = new web3Instance.eth.Contract(ABI, this.contractAddress);
+        for (let i = this.aftermarketGranularity; i >= 1; i--) {
+            const percentage = (100 / this.aftermarketGranularity) * i;
+            const buyingQueue = await aftermarket.methods.buyingQueue(this.getFullTicketId(), percentage).call();
+            const numBuyingOrders = buyingQueue.numberTickets;
+            if (numbBuyingOrders > 0) {
+                this.buyOrders[percentage] = numBuyingOrders;
+            }
+        }
+
+    }
+    
+}
+
+export class NonFungibleTicketType extends TicketType {
+    constructor(eventContractAddress, typeId) {
+        super(eventContractAddress, typeId);
+        this.tickets = [];
+        this.isNf = true;
+    }
+
+    async fetchIpfsHash(web3Instance, ABI) {
+        const eventSC = new web3Instance.eth.Contract(ABI,this.eventContractAddress);
+        let longId = nonFungibleBaseId.plus(new BigNumber(this.typeId));
         const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
             filter: {ticketTypeId: longId},
             fromBlock: 1,
@@ -35,16 +120,6 @@ class TicketType {
             this.ipfsHash = ipfsHash;
     }
 
-}
-
-export class FungibleTicketType extends TicketType {
-    constructor(eventContractAddress, typeId) {
-        super(eventContractAddress, typeId);
-        this.sellOrders = [];
-        this.buyOrders = [];
-        this.seatMapping = [];
-    }
-
     async loadIPFSMetadata(ipfsInstance) {
         if (this.ipfsHash === '') {return;}
         var ipfsData = null;
@@ -56,28 +131,7 @@ export class FungibleTicketType extends TicketType {
         const metadata = JSON.parse(ipfsData);
         this.description = metadata.ticket.description;
         this.seatMapping = metadata.ticket.mapping;
-        this.title = metadata.ticket.title;
-    }
-    
-}
 
-export class NonFungibleTicketType extends TicketType {
-    constructor(eventContractAddress, typeId) {
-        super(eventContractAddress, typeId);
-        this.tickets = [];
-    }
-
-    async loadIPFSMetadata(ipfsInstance) {
-        if (this.ipfsHash === '') {return;}
-        var ipfsData = null;
-        for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-          timeout: 2000,
-        })) {
-          ipfsData = Buffer(chunk, "utf8").toString();
-        }
-        const metadata = JSON.parse(ipfsData);
-        this.description = metadata.ticket.description;
-        this.seatMapping = metadata.ticket.mapping;
         this.title = metadata.ticket.title;
         console.log(this.tickets.length);
         console.log(metadata.ticket.mapping.length);
@@ -89,13 +143,19 @@ export class NonFungibleTicketType extends TicketType {
 }
 
 export class NonFungibleTicket {
-    constructor(ticketId) {
+    constructor(ticketTypeID, ticketId) {
+        this.ticketTypeId = ticketTypeID;
         this.ticketId = ticketId;
         this.buyOrder = undefined;
         this.sellOrder = undefined;
         this.seatMapping = undefined;
         this.owner = undefined;
     }
+
+    getFullTicketId() {
+        return fungibleBaseId.plus(new BigNumber(this.ticketTypeId).plus(this.ticketId))
+    }
+
     isFree() {
         return this.owner == 0;
     }

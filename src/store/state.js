@@ -1,3 +1,4 @@
+
 let state = {
   web3: {
     isInjected: false,
@@ -12,9 +13,6 @@ let state = {
   events: [],
   eventFactory: null,
   ipfsInstance: null,
-  userTickets: [
-    {eventAddress: '1'},
-    {eventAddress: '2'},
-  ],
+  user: null,
 };
 export default state;
