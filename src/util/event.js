@@ -93,7 +93,7 @@ export class Event {
         ticketType.supply = ticketMapping.supply;
         for (let j = 0; j < ticketType.supply; j++) {
           const ticketId = nonFungibleBaseId.plus(i).plus(j);
-          let ticket = new NonFungibleTicket(i, j);
+          let ticket = new NonFungibleTicket(ticketType, j);
           const owner = await eventSC.methods.nfOwners(ticketId).call();
           ticket.owner = owner;
           const sellOrder = await eventSC.methods.nfTickets(ticketId).call();

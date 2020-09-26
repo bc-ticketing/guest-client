@@ -1,3 +1,4 @@
+import { ShoppingCart } from "../util/shoppingCart";
 
 let state = {
   web3: {
@@ -13,6 +14,7 @@ let state = {
   events: [],
   eventFactory: null,
   ipfsInstance: null,
-  user: null,
+  user: {},
+  shoppingCart: new ShoppingCart(),
 };
 export default state;

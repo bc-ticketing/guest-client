@@ -4,42 +4,18 @@
       <h2>Fungible Tickets</h2>
       <div
         class="ticket"
-        v-for="(category, index) in fungibleTickets"
+        v-for="(selection, index) in $store.state.shoppingCart.fungibleTickets"
         v-bind:key="'fungible_' + index"
       >
         <div class="direct-buy">
           <div class="header-line">
-            <span class="title">{{ category.metadata.title }}</span>
-            <span class="price">{{ category.price }} ETH</span>
-            <span class="free">{{ category.available }} available</span>
+            <span class="title">{{ selection.ticket.title }}</span>
+            <span class="price">{{ selection.ticket.price }} ETH</span>
+            <span class="amount">{{ selection.amount}} Tickets</span>
           </div>
-          <div class="amount-selection">
-            <div class="icon-wrap" @click="changeAmount(index, -1)">
-              <md-icon>remove_circle</md-icon>
-            </div>
-            <input type="number" v-model="category.amount" />
-            <div class="icon-wrap" @click="changeAmount(index, 1)">
-              <md-icon>add_circle</md-icon>
-            </div>
-          </div>
+
         </div>
-        <div class="createdOffers">
-          <div
-            class="offer"
-            v-for="(offering, oIndex) in getOfferingsForIndex(index)"
-            v-bind:key="'offering_' + oIndex"
-          >
-            <div class="infos">
-              <span>Buy offering</span>
-              <span
-                >{{ offering.amount }} tickets for {{ offering.queue }}%</span
-              >
-            </div>
-            <md-button class="md-raised" @click="removeAftermarketOrder(index)"
-              >remove</md-button
-            >
-          </div>
-        </div>
+        <!--
         <div class="create-buy-order">
           <md-button class="md-raised" @click="toggleBuyOffering(index)"
             >Create buy offering</md-button
@@ -69,22 +45,23 @@
               >confirm</md-button
             >
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
     <div class="buy-category nonfungibles">
       <h2>Non Fungible Tickets</h2>
       <div
         class="ticket"
-        v-for="(seat, index) in nonfungibleTickets"
+        v-for="(selection, index) in $store.state.shoppingCart.nonfungibleTickets"
         v-bind:key="'nonfungible_' + index"
       >
         <div class="direct-buy">
           <div class="header-line">
-            <span class="title">{{ seat.metadata.title }}</span>
-            <span class="price">{{ seat.price }} ETH</span>
-            <span class="status">{{ isFree(index) }}</span>
+            <span class="title">{{ selection.ticket.ticketType.title }}</span>
+            <span class="price">{{ selection.ticket.ticketType.price }} ETH</span>
+            <span class="status">{{ selection.ticket.isFree() }}</span>
           </div>
+          <!--
           <div class="buttons">
             <md-button v-if="seat.isFree" class="md-raised">confirm</md-button>
             <md-button
@@ -94,8 +71,9 @@
               >Create buy offering</md-button
             >
           </div>
+          -->
         </div>
-
+        <!--
         <div class="createdOffers">
           <div
             class="offer"
@@ -113,7 +91,8 @@
             >
           </div>
         </div>
-
+        -->
+        <!--
         <div class="percentage-selection" :ref="'nfaftermarketConfig' + index">
           <input
             type="range"
@@ -128,12 +107,13 @@
             >confirm</md-button
           >
         </div>
+        -->
       </div>
     </div>
 
     <div class="total">
-      <div class="price">Cheapest Price: {{ bestSelection.price }} ETH</div>
-      <md-button class="md-raised" @click="makePurchase">Purchase</md-button>
+      <span class="total"> {{totalPrice}}</span>
+      <md-button class="md-raised" @click="checkout">Purchase</md-button>
     </div>
 
     <!--
@@ -182,7 +162,7 @@
 
 <script>
 export default {
-  name: "Checkout",
+  name: "ShoppingCart",
   components: {},
   data() {
     return {
@@ -190,18 +170,26 @@ export default {
         fungibleTickets: [],
         nonfungibleTickets: [],
       },
+      totalPrice: 0,
     };
   },
   props: {
     fungibleTickets: Array,
     nonfungibleTickets: Array,
   },
-  mounted: function() {},
+  beforeCreate: function() {
+    this.$root.$on('shoppingCartChanged', async () => {
+      this.calculateTotalPrice();
+    })
+  },
+  mounted: function() {
+
+  },
   computed: {
     bestSelection() {
       let totalPrice = 0;
       let selection = [];
-      this.fungibleTickets.forEach((ticket) => {
+      this.$store.state.shoppingCart.fungibleTickets.forEach((ticket) => {
         let selected_tickets = 0;
         for (const [queue, amount] of Object.entries(
           ticket.metadata.sellOrders
@@ -242,7 +230,7 @@ export default {
           });
         }
       });
-      this.nonfungibleTickets.forEach((ticket) => {
+      this.$store.state.shoppingCart.nonfungibleTickets.forEach((ticket) => {
         if(ticket.isFree) {
           totalPrice += ticket.price;
           selection.push({
@@ -277,6 +265,19 @@ export default {
     },
   },
   methods: {
+    checkout() {
+      this.$store.state.shoppingCart.checkout(this.$store.state.web3.web3Instance, this.$store.state.user.account);
+    },
+    calculateTotalPrice() {
+      let totalPrice = 0;
+      this.$store.state.shoppingCart.fungibleTickets.forEach((selection) => {
+        totalPrice += selection.ticket.price * selection.amount;
+      })
+      this.$store.state.shoppingCart.nonFungibleTickets.forEach((selection) => {
+        totalPrice += selection.ticket.ticketType.price;
+      })
+      this.totalPrice = totalPrice;
+    },
     f_getPriceByIndex(index) {
       return this.fungibleTickets[index].price;
     },
@@ -338,7 +339,6 @@ export default {
     changeAftermarketAmount(index, val) {
       this.fungibleTickets[index].aftermarketAmount += val;
     },
-    makePurchase() {},
   },
 };
 </script>

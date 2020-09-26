@@ -9,6 +9,7 @@ import { argsToCid, fungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
 import {Event} from './../util/event';
 import {User} from './../util/User';
+import {ShoppingCart} from './../util/shoppingCart';
 
 Vue.use(Vuex);
 
@@ -22,7 +23,6 @@ export default new Vuex.Store({
       state.web3.networkId = web3.networkId;
       state.web3.balance = parseInt(web3.balance, 10);
       state.web3.isInjected = true;
-      state.user = new User(web3.account, state.web3.balance);
     },
     setEventFactory(state, factory) {
       console.log("setting event factory");
@@ -31,6 +31,12 @@ export default new Vuex.Store({
     updateEventStore(state, events) {
       console.log("setting events");
       state.events = events;
+    },
+    updateUserStore(state, user) {
+      state.user = user;
+    },
+    updateShoppingCartStore(state, cart) {
+      state.shoppingCart = cart;
     },
     registerIpfsInstance(state, payload) {
       console.log("setting ipfs instance");
@@ -43,6 +49,12 @@ export default new Vuex.Store({
   },
   /* */
   actions: {
+    async registerUser({commit}) {
+      commit('updateUserStore', new User(state.web3.account, state.web3.balance));
+    },
+    async createShoppingCart({commit}) {
+      commit('updateShoppingCartStore', new ShoppingCart());
+    },
     async registerIpfs({ commit }) {
       console.log("dispatched registerIpfs Action");
       const ipfs = await getIpfs();
@@ -126,41 +138,17 @@ export default new Vuex.Store({
       };
       commit("updateEventStore", state.events);
     },
+    async addTicketToCart({ commit}, selection) {
+      state.shoppingCart.add(selection);
+      commit('updateShoppingCartStore', state.shoppingCart);
+    },
     /* TODO: also non fungible */
     async loadUserTickets({ commit }) {
       console.log("dispatchet loadUserTicketsAction");
-      var tickets = [];
-      for (let i = 0; i < state.eventAddresses.length; i++) {
-        var a = state.eventAddresses[i];
-        try {
-          const eventSC = new state.web3.web3Instance.eth.Contract(
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            a
-          );
-          const nonce = await eventSC.methods.fNonce().call();
-          // nonce shows how many ticket types exist for this event
-          if (nonce > 0) {
-            for (let i = 0; i < nonce; i++) {
-              var type = fungibleBaseId.plus(i);
-              var myTickets = await eventSC.methods
-                .tickets(type, state.web3.account)
-                .call();
-              if (myTickets > 0) {
-                tickets.push({
-                  amount: myTickets,
-                  eventAddress: a,
-                });
-              }
-            }
-          }
-
-          //var metadataObject = eventMetadata[0].returnValues;
-        } catch (error) {
-          console.log("could not get tickets for event");
-          console.log(error);
-        }
+      for (const event of state.events) {
+        await state.user.loadTicketsForEvent(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, event);
       }
-      commit("setUserTickets", tickets);
+      commit("updateUserStore", state.user);
     },
   },
   modules: {},

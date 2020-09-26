@@ -76,11 +76,13 @@ export default {
       this.loadEvents();
     });
     this.$root.$on("loadedEvents", async () => {
-      this.loadTickets();
-      this.loadUserTickets();
+      await this.loadTickets();
+      await this.loadUserTickets();
     });
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
+    await this.$store.dispatch('registerUser');
+    await this.$store.dispatch('createShoppingCart');
     this.$root.$emit("web3Injected");
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");

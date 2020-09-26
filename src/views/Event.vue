@@ -2,12 +2,7 @@
   <div class="event">
     <div class="container-fluid header-img" ref="teaser">
       <!-- <div class="parallax" ref="parallax">  -->
-      <img
-        ref="teaserImg"
-        :src="event.img_url"
-        alt=""
-        class="img-fluid"
-      />
+      <img ref="teaserImg" :src="event.img_url" alt="" class="img-fluid" />
       <!-- </div> -->
       <div class="return-arrow">
         <router-link to="/event-list"
@@ -53,9 +48,7 @@
         </div>
         <div class="info-group">
           <md-icon class="info-title">location_on</md-icon>
-          <span class="info-value">{{
-            event.location
-          }}</span>
+          <span class="info-value">{{ event.location }}</span>
         </div>
         <div class="info-group">
           <md-icon class="info-title">home</md-icon>
@@ -111,19 +104,29 @@
             ></div>
           </div>
         </div>
+        <div class="selection" v-if="selection.active">
+          <h3>{{ selection.ticket.title }}</h3>
+          <div class="amount-selection">
+            <div class="icon-wrap" @click="changeSelectionAmount(-1)">
+              <md-icon>remove_circle</md-icon>
+            </div>
+            <input type="number" v-model="selection.amount" />
+            <div class="icon-wrap" @click="changeSelectionAmount(1)">
+              <md-icon>add_circle</md-icon>
+            </div>
+          </div>
+          <md-button class="md-raised" @click="addToCart">Add To Cart</md-button>
+        </div>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
-        <checkout
-          v-bind:fungibleTickets="selected_f_tickets"
-          v-bind:nonfungibleTickets="selected_nf_tickets"
-        ></checkout>
+        <ShoppingCart></ShoppingCart>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import checkout from "./checkout";
+import ShoppingCart from './ShoppingCart';
 
 export default {
   name: "Event",
@@ -144,13 +147,16 @@ export default {
       tooltip_isNF: false,
       toolTipActive: false,
       navbarHeight: 0,
-      selected_f_tickets: [],
-      selected_nf_tickets: [],
+      selection: {
+        active: false,
+        ticket: {},
+        amount: 1,
+      },
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
   components: {
-    checkout,
+    ShoppingCart,
   },
   props: {},
   computed: {
@@ -164,11 +170,15 @@ export default {
   },
   watch: {},
   methods: {
+    changeSelectionAmount(amount) {
+      this.selection.amount += amount;
+    },
+
     findTicketIndex(col, row) {
       //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
-      this.event.fungibleTickets.forEach(function(ticketType, typeIndex) {
-        ticketType.seatMapping.forEach(function(mapping, index) {
+      this.event.fungibleTickets.forEach(function(ticketType) {
+        ticketType.seatMapping.forEach(function(mapping) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(mapping.split("/")[0]) == col &&
@@ -178,11 +188,8 @@ export default {
           }
         });
       });
-      this.event.nonFungibleTickets.forEach(function(
-        ticketType,
-        typeIndex
-      ) {
-        ticketType.tickets.forEach(function(ticket, index) {
+      this.event.nonFungibleTickets.forEach(function(ticketType) {
+        ticketType.tickets.forEach(function(ticket) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(ticket.seatMapping.split("/")[0]) == col &&
@@ -195,20 +202,21 @@ export default {
       return found_ticket;
     },
     selectTicket: async function(col, row) {
-      const seat = this.$refs[`seat_${col}_${row}`];
+      //const seat = this.$refs[`seat_${col}_${row}`];
       const ticket = this.findTicketIndex(col, row);
-      this.$store.state.user.shoppingCart.add(ticket.isNf)
+      this.selection.ticket = ticket;
+      this.selection.active = true;
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
-    checkout: async function() {
-      this.$store.state.user.checkout();
-        /*
-        const buy = await eventSC.methods.mintFungible(type, amount).send({
-          from: this.$store.state.web3.account,
-          value: price * this.$store.state.web3.web3Instance.utils.toWei(price),
-        });
+    addToCart: async function() {
+      //this.$store.state.user.shoppingCart.add(ticket.isNf)
+      await this.$store.dispatch("addTicketToCart", this.selection);
+      this.$root.$emit('shoppingCartChanged');
+      //this.$store.state.user.checkout();
+      /*
+        
         */
-        /* const buy = await eventSC.methods.mintNonFungibles([type]).send({
+      /* const buy = await eventSC.methods.mintNonFungibles([type]).send({
           from: this.$store.state.web3.account,
           value: price * this.$store.state.web3.web3Instance.utils.toWei(price),
         }); */
@@ -239,21 +247,23 @@ export default {
       }
     },
     fetchEventInfo: function() {
-      this.event = this.$store.state.events.filter(event => event.contractAddress == this.contractAddress)[0];
+      this.event = this.$store.state.events.filter(
+        (event) => event.contractAddress == this.contractAddress
+      )[0];
       //this.markSeats();
     },
     fetchTicketInfo: function() {
       this.setGridSizes();
-        setTimeout(() => {
+      setTimeout(() => {
         this.markSeats();
       }, 1000);
     },
     setGridSizes: function() {
       let max_row = 0;
       let max_col = 0;
-      console.log(this.event.fungibleTickets.length)
+      console.log(this.event.fungibleTickets.length);
       this.event.fungibleTickets.forEach((ticket) => {
-        console.log('ticket');
+        console.log("ticket");
         ticket.seatMapping.forEach((mapping) => {
           max_col =
             Number(mapping.split("/")[0]) > max_col
@@ -267,10 +277,16 @@ export default {
       });
       this.event.nonFungibleTickets.forEach((nfticketType) => {
         nfticketType.tickets.forEach((ticket) => {
-          max_row = max_row > ticket.seatMapping.split('/')[1] ? max_row : Number(ticket.seatMapping.split('/')[1]);
-          max_row = max_col > ticket.seatMapping.split('/')[0] ? max_col : Number(ticket.seatMapping.split('/')[0]);
-        })
-      })
+          max_row =
+            max_row > ticket.seatMapping.split("/")[1]
+              ? max_row
+              : Number(ticket.seatMapping.split("/")[1]);
+          max_row =
+            max_col > ticket.seatMapping.split("/")[0]
+              ? max_col
+              : Number(ticket.seatMapping.split("/")[0]);
+        });
+      });
       this.rows = max_row;
       this.cols = max_col;
       console.log(this.rows);
@@ -328,7 +344,7 @@ export default {
         return foundTicketType;
       }
       this.event.nonFungibleTickets.forEach((ticketType) => {
-        ticketType.tickets.forEach(function(ticket, index) {
+        ticketType.tickets.forEach(function(ticket) {
           //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(ticket.seatMapping.split("/")[0]) == col &&
@@ -371,12 +387,12 @@ export default {
   },
   created() {
     this.contractAddress = this.$route.params.id;
-    this.$root.$on('loadedEvents', () => {
+    this.$root.$on("loadedEvents", () => {
       this.fetchEventInfo();
-    })
-    this.$root.$on('loadedTickets', () => {
+    });
+    this.$root.$on("loadedTickets", () => {
       this.fetchTicketInfo();
-    })
+    });
   },
   mounted() {
     this.$root.$emit("hideSearchBar");
@@ -605,5 +621,15 @@ export default {
 }
 .buy-selection .icon-wrap {
   cursor: pointer;
+}
+.amount-selection {
+  display: inline-block;
+}
+.amount-selection input {
+  -moz-appearance: textfield;
+  width: 2rem;
+}
+.amount-selection .icon-wrap {
+  display: inline-block;
 }
 </style>

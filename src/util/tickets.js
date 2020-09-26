@@ -1,4 +1,5 @@
 import { argsToCid, fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
+import { NULL_ADDRESS } from "./constants/constants";
 
 const BigNumber = require("bignumber.js");
 
@@ -31,8 +32,25 @@ export class FungibleTicketType extends TicketType {
         this.isNf = false;
     }
 
+    async buy(amount, web3Instance, ABI, account) {
+        console.log(`buying ticket \n
+        from account: ${account}\n
+        ticketType: ${this.typeId} \n
+        full ticket id: ${this.getFullTicketId()}\n
+        amount: ${amount}\n
+        price per ticket: ${this.price}\n
+        total price: ${amount * this.price}\n
+        price in wei: ${amount * web3Instance.utils.toWei(this.price)}`);
+        const eventSC = new web3Instance.eth.Contract(ABI, this.eventContractAddress);
+        const result = await eventSC.methods.mintFungible(this.getFullTicketId(), amount).send({
+            from: account,
+            value: amount * web3Instance.utils.toWei(this.price),
+          });
+        console.log(result);
+    }
+
     getFullTicketId() {
-        return fungibleBaseId.plus(new BigNumber(this.typeId))
+        return fungibleBaseId.plus(this.typeId);
     }
 
     async loadIPFSMetadata(ipfsInstance) {
@@ -143,21 +161,39 @@ export class NonFungibleTicketType extends TicketType {
 }
 
 export class NonFungibleTicket {
-    constructor(ticketTypeID, ticketId) {
-        this.ticketTypeId = ticketTypeID;
+    constructor(ticketType, ticketId) {
+        this.ticketType = ticketType;
+        this.ticketTypeId = ticketType.typeId;
         this.ticketId = ticketId;
         this.buyOrder = undefined;
         this.sellOrder = undefined;
         this.seatMapping = undefined;
         this.owner = undefined;
+        this.isNf = true;
+    }
+
+    async buy(web3Instance, ABI, account) {
+        console.log(`buying ticket \n
+        from account: ${account}\n
+        ticketType: ${this.ticketTypeId} \n
+        ticketId: ${this.ticketId}\n
+        full ticket id: ${this.getFullTicketId()}\n
+        price: ${this.price}\n
+        price in wei: ${web3Instance.utils.toWei(String(this.ticketType.price))}`);
+        const eventSC = new web3Instance.eth.Contract(ABI, this.ticketType.eventContractAddress);
+        const result = await eventSC.methods.mintNonFungibles([this.getFullTicketId()]).send({
+            from: account,
+            value: web3Instance.utils.toWei(String(this.ticketType.price)),
+          });
+        console.log(result);
     }
 
     getFullTicketId() {
-        return fungibleBaseId.plus(new BigNumber(this.ticketTypeId).plus(this.ticketId))
+        return nonFungibleBaseId.plus(this.ticketTypeId).plus(this.ticketId)
     }
 
     isFree() {
-        return this.owner == 0;
+        return this.owner === NULL_ADDRESS;
     }
     hasSellOrder() {
         return new BigNumber(this.sellOrder.userAddress).isZero() ? false : true;

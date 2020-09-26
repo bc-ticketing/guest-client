@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid inventory">
     <div class="ticket-preview">
-      <Ticket v-bind:ticketData="activeTicket" v-if="activeTicket" />
+      <Ticket v-bind:ticket="activeTicket" v-if="activeTicket" />
     </div>
     <div class="ticket-swiper">
       <div class="swiper-container">
@@ -10,20 +10,20 @@
           <!-- Slides -->
           <div
             class="swiper-slide"
-            v-for="(ticket, index) in tickets"
-            v-bind:key="index"
+            v-for="(ticket, index) in $store.state.user.fungibleTickets"
+            v-bind:key="'fungible_'+index"
           >
             <div
               class="img"
-              :style="{ backgroundImage: `url(${ticket.eventMetadata.event.img_url})` }"
+              :style="{ backgroundImage: `url(${getEventForTicket(ticket.ticketType).img_url})` }"
             >
               <span class="nrTickets"> {{ ticket.amount }}</span>
             </div>
             <div class="info">
-              <span class="title">{{ ticket.eventMetadata.event.title }}</span>
-              <span class="date"> Date (WIP)</span>
+              <span class="title">{{ getEventForTicket(ticket.ticketType).title }}</span>
+              <span class="date"> {{getEventForTicket(ticket.ticketType).date}}</span>
               <span class="location">{{
-                ticket.eventMetadata.event.location
+                getEventForTicket(ticket.ticketType).location
               }}</span>
             </div>
           </div>
@@ -46,49 +46,23 @@ export default {
   data() {
     return {
       activeSlide: 0,
+      activeTicket: {},
     };
   },
   components: {
     Ticket,
   },
-  computed: {
-    tickets: function() {
-      return this.$store.state.userTickets.map((ticket) => {
-        ticket.eventMetadata = this.$store.state.events[
-          ticket.eventAddress
-        ].metadata;
-        return ticket;
-      });
-    },
-    activeTicket: function() {
-      return this.tickets.length > 0
-        ? this.tickets[this.activeSlide]
-        : undefined;
-    },
-  },
   methods: {
-    updateTickets: function() {
-      this.$store.state.userTickets.forEach((ticket) => {
-        console.log("ticket event add");
-        console.log(ticket);
-        var e = this.$store.state.events[ticket.eventAddress];
-        e.contractAddress = ticket.eventAddress;
-        if (e.metadata != undefined) {
-          this.tickets.push(e);
-        }
-      });
+    getEventForTicket: function(ticket) {
+      return this.$store.events.filter(event => event.contractAddress === ticket.eventContractAddress)[0];
     },
   },
   beforeCreate: async function() {
     this.$root.$on("loadedUserTickets", () => {
-      //this.updateTickets();
+      this.activeTicket = this.$store.state.user.fungibleTickets.length > 0
+        ? this.$store.state.user.fungibleTickets[0]
+        : {};
     });
-  },
-  beforeMount: function() {
-    //this.updateTickets();
-  },
-  created: function() {
-    //this.activeTicket = this.tickets[0];
   },
   mounted: function() {
     this.$root.$emit('hideSearchBar');

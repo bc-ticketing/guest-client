@@ -2,11 +2,11 @@
   <div class="ticket-wrapper">
     <div
       class="ticket-img"
-      :style="{ backgroundImage: `url(${ticketData.eventMetadata.event.img_url})` }"
+      :style="{ backgroundImage: `url(${getEventForTicket(ticket.ticketType).img_url})` }"
     ></div>
     <div class="ticket-content">
       <div class="event-title">
-        <h3>{{ ticketData.eventMetadata.event.title }}</h3>
+        <h3>{{ getEventForTicket(ticket.ticketType).title }}</h3>
         <span class="date">
           Date (WIP)
         </span>
@@ -22,9 +22,13 @@ export default {
     return {};
   },
   props: {
-    ticketData: Object,
+    ticket: Object,
   },
   methods: {
+    getEventForTicket: function(ticket) {
+      const event = this.$store.state.events.filter(event => event.contractAddress === ticket.eventContractAddress)[0];
+      return event === undefined ? {} : event;
+    },
     flipCard: function() {
       this.$refs["card"].classList.toggle("flipped");
     },

@@ -32,3 +32,5 @@ export const MONTHS = {
   "10": "Nov",
   "11": "Dec",
 }; // --> OFF
+
+export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
