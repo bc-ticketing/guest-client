@@ -112,7 +112,7 @@
     </div>
 
     <div class="total">
-      <span class="total"> {{totalPrice}}</span>
+      <span class="total"> Total: {{totalPrice}} ETH</span>
       <md-button class="md-raised" @click="checkout">Purchase</md-button>
     </div>
 
@@ -271,10 +271,10 @@ export default {
     calculateTotalPrice() {
       let totalPrice = 0;
       this.$store.state.shoppingCart.fungibleTickets.forEach((selection) => {
-        totalPrice += selection.ticket.price * selection.amount;
+        totalPrice += Number(selection.ticket.price * selection.amount);
       })
       this.$store.state.shoppingCart.nonFungibleTickets.forEach((selection) => {
-        totalPrice += selection.ticket.ticketType.price;
+        totalPrice += Number(selection.ticket.ticketType.price);
       })
       this.totalPrice = totalPrice;
     },
@@ -352,8 +352,7 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
-.header-line {
-}
+
 .header-line span {
   display: block;
 }

@@ -5,7 +5,6 @@ import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-import { argsToCid, fungibleBaseId } from "idetix-utils";
 import getIpfs from "./../util/ipfs/getIpfs";
 import {Event} from './../util/event';
 import {User} from './../util/User';
@@ -88,27 +87,8 @@ export default new Vuex.Store({
       for (let i = 0; i < eventAddresses.length; i++) {
         var a = eventAddresses[i];
         try {
-          const eventSC = new state.web3.web3Instance.eth.Contract(
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            a
-          );
-          const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
-            fromBlock: 1,
-          });
-          var metadataObject = eventMetadata[0].returnValues;
-          const ipfsHash = argsToCid(
-            metadataObject.hashFunction,
-            metadataObject.size,
-            metadataObject.digest
-          );
-          let event = new Event(a, ipfsHash);
-          try {
-            await event.loadIPFSMetadata(state.ipfsInstance);
-          } catch (error) {
-            if (error.name == "TimeoutError") {
-              console.log("timeout while fetching ipfs metadata");
-            }
-          }
+          let event = new Event(a);
+          await event.loadData(EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance, state.web3.web3Instance);
           events.push(event);
         } catch {
           console.log("could not get metadata for event");

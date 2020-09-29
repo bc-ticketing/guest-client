@@ -1,4 +1,4 @@
-import { fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
+import { getIdAsBigNumber, argsToCid } from "idetix-utils";
 import {
   NonFungibleTicket,
   NonFungibleTicketType,
@@ -7,7 +7,7 @@ import {
 const BigNumber = require("bignumber.js");
 
 export class Event {
-  constructor(contractAddress, ipfsHash) {
+  constructor(contractAddress) {
     console.log('creating event')
     this.contractAddress = contractAddress;
     this.fungibleTickets = [];
@@ -15,7 +15,29 @@ export class Event {
     this.location = "";
     this.title = "";
     this.img_url = "";
-    this.ipfsHash = ipfsHash;
+    this.ipfsHash = "";  
+  }
+
+  async loadData(ABI, ipfsInstance, web3Instance) {
+    await this.fetchIPFSHash(ABI, web3Instance);
+    await this.loadIPFSMetadata(ipfsInstance)
+  }
+
+  async fetchIPFSHash(ABI, web3Instance) {
+    const eventSC = new web3Instance.eth.Contract(
+      ABI,
+      this.contractAddress
+    );
+    const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
+      fromBlock: 1,
+    });
+    var metadataObject = eventMetadata[0].returnValues;
+    this.ipfsHash = argsToCid(
+      metadataObject.hashFunction,
+      metadataObject.size,
+      metadataObject.digest
+    );
+    return true;
   }
 
   async loadIPFSMetadata(ipfsInstance) {
@@ -39,13 +61,15 @@ export class Event {
   }
 
   async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
+    console.log('loading fungible tickets')
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
-      for (let i = 0; i < nonce; i++) {
+      for (let i = 1; i <= nonce; i++) {
+        console.log('loadingticket type: '+i);
         let ticketType = new FungibleTicketType(this.contractAddress, i);
-        const typeIdentifier = fungibleBaseId.plus(i);
+        const typeIdentifier = getIdAsBigNumber(false, i);
         const ticketMapping = await eventSC.methods
           .ticketTypeMeta(typeIdentifier)
           .call();
@@ -58,8 +82,8 @@ export class Event {
         await ticketType.loadBuyOrders(web3Instance, ABI)
         const granularity = await eventSC.methods.granularity.call();
         ticketType.aftermarketGranularity = granularity;
-        for (i = 1; i <= new BigNumber(granularity).toNumber(); i++) {
-          let percentage = (100 / new BigNumber(granularity).toNumber()) * i;
+        for (let j = 1; j <= new BigNumber(granularity).toNumber(); j++) {
+          let percentage = (100 / new BigNumber(granularity).toNumber()) * j;
           const queue = eventSC.methods.sellingQueue(ticketType, percentage);
           const numberSellingOrders = queue.numberTickets;
           if (numberSellingOrders > 0) {
@@ -83,16 +107,16 @@ export class Event {
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
-      for (let i = 0; i < nonce; i++) {
+      for (let i = 1; i <= nonce; i++) {
         let ticketType = new NonFungibleTicketType(this.contractAddress, i);
         const ticketMapping = await eventSC.methods
-          .ticketTypeMeta(nonFungibleBaseId.plus(i))
+          .ticketTypeMeta(getIdAsBigNumber(true, i).toFixed())
           .call();
         ticketType.price = ticketMapping.price;
         ticketType.ticketsSold = ticketMapping.ticketsSold;
         ticketType.supply = ticketMapping.supply;
-        for (let j = 0; j < ticketType.supply; j++) {
-          const ticketId = nonFungibleBaseId.plus(i).plus(j);
+        for (let j = 1; j <= ticketType.supply; j++) {
+          const ticketId = getIdAsBigNumber(true, i, j).toFixed();
           let ticket = new NonFungibleTicket(ticketType, j);
           const owner = await eventSC.methods.nfOwners(ticketId).call();
           ticket.owner = owner;

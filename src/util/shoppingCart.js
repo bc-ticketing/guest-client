@@ -6,12 +6,16 @@ export class ShoppingCart {
     this.nonFungibleTickets = [];
   }
 
+  getAmountOfItems() {
+    return this.fungibleTickets.length + this.nonFungibleTickets.length;
+  }
+
   fungibleAlreadySelected(type) {
-    return this.fungibleTickets.filter((t) => t.typeId == type).length > 0;
+    return this.fungibleTickets.filter((t) => t.ticket.typeId == type).length > 0;
   }
 
   increaseSelection(type, amount) {
-    this.fungibleTickets.filter((t) => t.typeId == type)[0] += amount;
+    this.fungibleTickets.filter((t) => t.ticket.typeId == type)[0].amount += amount;
   }
 
   add(selection) {

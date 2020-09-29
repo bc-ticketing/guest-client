@@ -29,11 +29,19 @@ export class User {
                 .nfOwners(ticket.getFullTicketId())
                 .call();
                 if(owner === this.account) {
-                    this.fungibleTickets.push(ticket);
+                    this.nonFungibleTickets.push(ticket);
                 }
             }
         }
 
+    }
+
+    ownsFungibles(ticketType, amount) {
+        return this.fungibleTickets.filter(t => t.ticketType.typeId === ticketType && t.amount >= amount).length > 0;
+    }
+
+    ownsNonFungible(ticketType, ticketNr) {
+        return this.nonFungibleTickets.filter(t => t.ticketTypeId === ticketType && t.ticketId === ticketNr).length > 0;
     }
 
     async makeBuyOrderFungible(ticketTypeId, percentage, amount, aftermarket) {
@@ -42,10 +50,12 @@ export class User {
     async makeBuyOrderNonFungible() {}
 
     async makeSellOrderFungible(ticketTypeId, percentage, amount, aftermarket) {
+        if (!this.ownsFungibles(ticketTypeId, amount)) {return false;}
         await aftermarket.methods.makeSellOrderFungibles(ticketTypeId, amount, percentage).call();
 
     }
     async makeSellOrderNonFungible(ticketIds, percentages, aftermarket) {
+        //if (!this.ownsNonFungible(ticketTypeId, amount)) {return false;}
         await aftermarket.methods.makeSellOrderNonFungibles(ticketIds, percentages).call();
     }
 

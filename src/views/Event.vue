@@ -33,7 +33,10 @@
           ref="checkout"
           @click="toggleTab('checkout')"
         >
-          Checkout
+        <md-badge :md-content="shoppingCartItems">
+          <md-icon class="shopping-cart">shopping_cart</md-icon>
+        </md-badge>
+          
         </div>
       </div>
     </div>
@@ -160,6 +163,9 @@ export default {
   },
   props: {},
   computed: {
+    shoppingCartItems() {
+      return this.$store.state.shoppingCart.getAmountOfItems();
+    },
     tickets() {
       if (this.$store.state.events[this.event_id]) {
         return this.$store.state.events[this.event_id].tickets;
@@ -396,7 +402,8 @@ export default {
   },
   mounted() {
     this.$root.$emit("hideSearchBar");
-    console.log(this.navbarHeight);
+    this.fetchEventInfo();
+    this.fetchTicketInfo();
   },
 };
 </script>
@@ -631,5 +638,12 @@ export default {
 }
 .amount-selection .icon-wrap {
   display: inline-block;
+}
+.shopping-cart {
+  padding-right: 1rem;
+  color: white;
+}
+i.shopping-cart {
+  color: white !important;
 }
 </style>

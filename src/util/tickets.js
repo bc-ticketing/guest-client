@@ -1,4 +1,4 @@
-import { argsToCid, fungibleBaseId, nonFungibleBaseId } from "idetix-utils";
+import { argsToCid, getIdAsBigNumber } from "idetix-utils";
 import { NULL_ADDRESS } from "./constants/constants";
 
 const BigNumber = require("bignumber.js");
@@ -50,7 +50,7 @@ export class FungibleTicketType extends TicketType {
     }
 
     getFullTicketId() {
-        return fungibleBaseId.plus(this.typeId);
+        return getIdAsBigNumber(false, this.typeId).toFixed();
     }
 
     async loadIPFSMetadata(ipfsInstance) {
@@ -91,7 +91,7 @@ export class FungibleTicketType extends TicketType {
             const percentage = (100 / this.aftermarketGranularity) * i;
             const sellingQueue = await aftermarket.methods.sellingQueue(this.getFullTicketId(), percentage).call();
             const numSellOrders = sellingQueue.numberTickets;
-            if (numbSellOrders > 0) {
+            if (numSellOrders > 0) {
                 this.sellOrders[percentage] = numSellOrders;
             }
         }
@@ -103,7 +103,7 @@ export class FungibleTicketType extends TicketType {
             const percentage = (100 / this.aftermarketGranularity) * i;
             const buyingQueue = await aftermarket.methods.buyingQueue(this.getFullTicketId(), percentage).call();
             const numBuyingOrders = buyingQueue.numberTickets;
-            if (numbBuyingOrders > 0) {
+            if (numBuyingOrders > 0) {
                 this.buyOrders[percentage] = numBuyingOrders;
             }
         }
@@ -119,11 +119,14 @@ export class NonFungibleTicketType extends TicketType {
         this.isNf = true;
     }
 
+    getFullTicketId() {
+        return getIdAsBigNumber(true, this.typeId).toFixed();
+    }
+
     async fetchIpfsHash(web3Instance, ABI) {
         const eventSC = new web3Instance.eth.Contract(ABI,this.eventContractAddress);
-        let longId = nonFungibleBaseId.plus(new BigNumber(this.typeId));
         const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
-            filter: {ticketTypeId: longId},
+            filter: {ticketTypeId: this.getFullTicketId()},
             fromBlock: 1,
           });
           if (ticketMetadata.length < 1) {
@@ -189,12 +192,14 @@ export class NonFungibleTicket {
     }
 
     getFullTicketId() {
-        return nonFungibleBaseId.plus(this.ticketTypeId).plus(this.ticketId)
+        // return nonFungibleBaseId.plus(this.ticketTypeId).plus(this.ticketId)
+        return getIdAsBigNumber(true, this.ticketTypeId, this.ticketId).toFixed();
     }
 
     isFree() {
         return this.owner === NULL_ADDRESS;
     }
+    
     hasSellOrder() {
         return new BigNumber(this.sellOrder.userAddress).isZero() ? false : true;
     }
