@@ -97,7 +97,7 @@ export default new Vuex.Store({
       commit("updateEventStore", events);
     },
     async loadFungibleTickets({ commit }) {
-      console.log("dispatched loadTickets Action");
+      console.log("dispatched loadFungibleTickets Action");
       for (const event of state.events) {
         try {
           await event.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance);

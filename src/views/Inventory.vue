@@ -3,6 +3,14 @@
     <div class="ticket-preview">
       <Ticket v-bind:ticket="activeTicket" v-if="activeTicket" />
     </div>
+
+    <div class="ticket-sell">
+      <md-button class="md-raised" @click="sellTicket">Create Sell Order</md-button>
+      <md-button 
+      v-if="hasBuyOrder"
+      class="md-raised" @click="fillBuyOrder">Sell for {{highestBuyOrder}}%</md-button>
+    </div>
+
     <div class="ticket-swiper">
       <div class="swiper-container">
         <!-- Additional required wrapper -->
@@ -52,9 +60,26 @@ export default {
   components: {
     Ticket,
   },
+  computed: {
+    highestBuyOrder() {
+      if (!this.activeTicket.ticketType) {return 0;}
+      return this.activeTicket.ticketType.getHighestBuyOrder();
+    },
+    hasBuyOrder() {
+      if (!this.activeTicket.ticketType) {return false;}
+      return Object.getOwnPropertyNames(this.activeTicket.ticketType.buyOrders).length > 1;
+    }
+  },
   methods: {
+    sellTicket: function() {
+      this.activeTicket.ticketType.makeSellOrder(this.$store.state.web3.web3Instance, 1, 100, this.$store.state.user.account);
+      //this.$store.state.user.makeSellOrderFungible(this.$store.state.web3.web3Instance, this.activeTicket.ticketType, 100, 1);
+    },
+    fillBuyOrder: function() {
+      this.activeTicket.ticketType.fillBuyOrder(this.$store.state.web3.web3Instance, 1, 100)
+    },
     getEventForTicket: function(ticket) {
-      return this.$store.events.filter(event => event.contractAddress === ticket.eventContractAddress)[0];
+      return this.$store.state.events.filter(event => event.contractAddress === ticket.eventContractAddress)[0];
     },
   },
   beforeCreate: async function() {
@@ -77,7 +102,7 @@ export default {
     this.swiper.on("slideChange", () => {
       console.log("active slide = " + this.swiper.activeIndex);
       this.activeSlide = this.swiper.activeIndex;
-      //this.activeTicket = this.tickets[this.activeSlide];
+      this.activeTicket = this.$store.state.user.fungibleTickets[this.activeSlide];
     });
   },
 };

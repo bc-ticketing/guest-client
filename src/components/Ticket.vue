@@ -2,11 +2,11 @@
   <div class="ticket-wrapper">
     <div
       class="ticket-img"
-      :style="{ backgroundImage: `url(${getEventForTicket(ticket.ticketType).img_url})` }"
+      :style="{ backgroundImage: `url(${event.img_url})`, backgroundColor: 'gray' }"
     ></div>
     <div class="ticket-content">
       <div class="event-title">
-        <h3>{{ getEventForTicket(ticket.ticketType).title }}</h3>
+        <h3>{{ event.title }}</h3>
         <span class="date">
           Date (WIP)
         </span>
@@ -19,15 +19,24 @@
 export default {
   name: "Ticket",
   data() {
-    return {};
+    return {
+      event: {}
+    };
   },
   props: {
     ticket: Object,
   },
+  watch: {
+    ticket: function() {
+      this.getEvent();
+    }
+  },
   methods: {
-    getEventForTicket: function(ticket) {
-      const event = this.$store.state.events.filter(event => event.contractAddress === ticket.eventContractAddress)[0];
-      return event === undefined ? {} : event;
+    getEvent: function() {
+      console.log(this.ticket)
+      const event = this.$store.state.events.filter(event => event.contractAddress === this.ticket.ticketType.eventContractAddress)[0];
+      console.log(this.ticket.ticketType.eventContractAddress);
+      this.event = event === undefined ? {} : event;
     },
     flipCard: function() {
       this.$refs["card"].classList.toggle("flipped");
@@ -40,7 +49,14 @@ export default {
     },
   },
   computed: {},
-  mounted: function() {},
+  mounted: function() {
+    console.log(this.ticket);
+  },
+  created: function() {
+    //this.$root.$on('loadedUserTickets', () => {
+      //this.getEvent();
+    //});
+  }
 };
 </script>
 

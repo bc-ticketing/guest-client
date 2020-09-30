@@ -44,35 +44,5 @@ export class User {
         return this.nonFungibleTickets.filter(t => t.ticketTypeId === ticketType && t.ticketId === ticketNr).length > 0;
     }
 
-    async makeBuyOrderFungible(ticketTypeId, percentage, amount, aftermarket) {
-        await aftermarket.methods.makeBuyOrder(ticketTypeId, amount, percentage).call();
-    }
-    async makeBuyOrderNonFungible() {}
-
-    async makeSellOrderFungible(ticketTypeId, percentage, amount, aftermarket) {
-        if (!this.ownsFungibles(ticketTypeId, amount)) {return false;}
-        await aftermarket.methods.makeSellOrderFungibles(ticketTypeId, amount, percentage).call();
-
-    }
-    async makeSellOrderNonFungible(ticketIds, percentages, aftermarket) {
-        //if (!this.ownsNonFungible(ticketTypeId, amount)) {return false;}
-        await aftermarket.methods.makeSellOrderNonFungibles(ticketIds, percentages).call();
-    }
-
-    async fillBuyOrderFungible(ticketTypeId, percentage, amount, aftermarket) {
-        await aftermarket.methods.fillBuyOrderFungibles(ticketTypeId, amount, percentage).call();
-    }
-
-    async fillBuyOrderNonFungible(ticketIds, percentages, aftermarket) {
-        await aftermarket.methods.fillBuyOrderFungibles(ticketIds, percentages).call();
-    }
-
-    async fillSellOrderFungible(ticketTypeId, percentage, amount, aftermarket) {
-        await aftermarket.methods.fillSellOrderFungibles(ticketTypeId, amount, percentage).call();
-    }
-    async fillSellOrderNonFungible(ticketIds, percentages, aftermarket) {
-        await aftermarket.methods.fillSellOrderFungibles(ticketIds, percentages).call();
-
-    }
 
 }

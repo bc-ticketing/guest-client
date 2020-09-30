@@ -107,19 +107,9 @@
             ></div>
           </div>
         </div>
-        <div class="selection" v-if="selection.active">
-          <h3>{{ selection.ticket.title }}</h3>
-          <div class="amount-selection">
-            <div class="icon-wrap" @click="changeSelectionAmount(-1)">
-              <md-icon>remove_circle</md-icon>
-            </div>
-            <input type="number" v-model="selection.amount" />
-            <div class="icon-wrap" @click="changeSelectionAmount(1)">
-              <md-icon>add_circle</md-icon>
-            </div>
-          </div>
-          <md-button class="md-raised" @click="addToCart">Add To Cart</md-button>
-        </div>
+ 
+          <SelectionView v-bind:selection="selection" v-bind:open="selection.active"
+          v-on:close="clearSelection"></SelectionView>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
         <ShoppingCart></ShoppingCart>
@@ -130,6 +120,7 @@
 
 <script>
 import ShoppingCart from './ShoppingCart';
+import SelectionView from './SelectionView';
 
 export default {
   name: "Event",
@@ -153,13 +144,13 @@ export default {
       selection: {
         active: false,
         ticket: {},
-        amount: 1,
       },
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
   components: {
     ShoppingCart,
+    SelectionView
   },
   props: {},
   computed: {
@@ -176,10 +167,13 @@ export default {
   },
   watch: {},
   methods: {
-    changeSelectionAmount(amount) {
-      this.selection.amount += amount;
+    clearSelection() {
+      this.selection = {
+        active: false,
+        ticket: {},
+        amount: 1,
+      }
     },
-
     findTicketIndex(col, row) {
       //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
@@ -213,19 +207,6 @@ export default {
       this.selection.ticket = ticket;
       this.selection.active = true;
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
-    },
-    addToCart: async function() {
-      //this.$store.state.user.shoppingCart.add(ticket.isNf)
-      await this.$store.dispatch("addTicketToCart", this.selection);
-      this.$root.$emit('shoppingCartChanged');
-      //this.$store.state.user.checkout();
-      /*
-        
-        */
-      /* const buy = await eventSC.methods.mintNonFungibles([type]).send({
-          from: this.$store.state.web3.account,
-          value: price * this.$store.state.web3.web3Instance.utils.toWei(price),
-        }); */
     },
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {
@@ -267,9 +248,7 @@ export default {
     setGridSizes: function() {
       let max_row = 0;
       let max_col = 0;
-      console.log(this.event.fungibleTickets.length);
       this.event.fungibleTickets.forEach((ticket) => {
-        console.log("ticket");
         ticket.seatMapping.forEach((mapping) => {
           max_col =
             Number(mapping.split("/")[0]) > max_col
@@ -295,8 +274,6 @@ export default {
       });
       this.rows = max_row;
       this.cols = max_col;
-      console.log(this.rows);
-      console.log(this.cols);
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols},minmax(25px,1fr))`;
@@ -333,53 +310,25 @@ export default {
         }, this);
       }, this);
     },
-    getTicketInfoForCoords: function(col, row) {
-      let foundTicketType = false;
-      this.event.fungibleTickets.forEach((ticketType) => {
-        ticketType.seatMapping.forEach((mapping) => {
-          //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
-          if (
-            Number(mapping.split("/")[0]) == col &&
-            Number(mapping.split("/")[1]) == row
-          ) {
-            foundTicketType = ticketType;
-          }
-        });
-      });
-      if (foundTicketType) {
-        return foundTicketType;
-      }
-      this.event.nonFungibleTickets.forEach((ticketType) => {
-        ticketType.tickets.forEach(function(ticket) {
-          //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
-          if (
-            Number(ticket.seatMapping.split("/")[0]) == col &&
-            Number(ticket.seatMapping.split("/")[1]) == row
-          ) {
-            foundTicketType = ticketType;
-            foundTicketType.ticket = ticket;
-          }
-        });
-      });
-      return foundTicketType;
-    },
     showToolTip: function(col, row) {
-      let ticketType = this.getTicketInfoForCoords(col, row);
-      this.tooltip_title = ticketType.title;
-      this.tooltip_supply = ticketType.numberFreeSeats();
-      this.tooltip_desc = ticketType.description;
-      if (ticketType.isNf) {
-        this.tooltip_seat = ticketType.ticket.ticketId;
-        this.tooltip_seat_status = ticketType.ticket.isFree();
+      console.log('show tooltip');
+      const ticket = this.findTicketIndex(col, row);
+      this.tooltip_title = ticket.isNf ? ticket.ticketType.title : ticket.title;
+      const total_supply = ticket.isNf ? ticket.ticketType.supply : ticket.supply;
+      this.tooltip_supply = ticket.isNf ? ticket.ticketType.numberFreeSeats() : ticket.numberFreeSeats();
+      this.tooltip_desc = ticket.isNf ? ticket.ticketType.description : ticket.description;
+      if (ticket.isNf) {
+        this.tooltip_seat = ticket.ticketId;
+        this.tooltip_seat_status = ticket.isFree() ? 'free' : 'occupied';
         this.tooltip_isNF = true;
       } else {
         this.tooltip_isNF = false;
       }
 
       this.toolTipActive = true;
-      if (this.tooltip_supply > ticketType.supply / 2) {
+      if (this.tooltip_supply > total_supply / 2) {
         this.$refs["supply"].dataset.status = "good";
-      } else if (this.tooltip_supply > ticketType.supply / 4) {
+      } else if (this.tooltip_supply > total_supply / 4) {
         this.$refs["supply"].dataset.status = "neutral";
       } else {
         this.$refs["supply"].dataset.status = "bad";
@@ -629,16 +578,7 @@ export default {
 .buy-selection .icon-wrap {
   cursor: pointer;
 }
-.amount-selection {
-  display: inline-block;
-}
-.amount-selection input {
-  -moz-appearance: textfield;
-  width: 2rem;
-}
-.amount-selection .icon-wrap {
-  display: inline-block;
-}
+
 .shopping-cart {
   padding-right: 1rem;
   color: white;
