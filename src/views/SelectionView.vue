@@ -18,7 +18,7 @@
             <md-icon>add_circle</md-icon>
           </div>
         </div>
-        <div v-if="nfSold">
+        <div v-if="nfSold && !nfForSale">
           This Ticket has already been sold, you can create an aftermarket listing if you want to queue up for it.
         </div>
         <div v-if="fSoldOut">
@@ -45,6 +45,7 @@
       </div>
       <hr />
       <div class="group" v-if="hasSellOrders">
+        <p>{{lowestSellOrderAmount}} Available on the aftermarket for {{lowestSellOrder}}%</p>
         <md-button class="md-raised" @click="fillSellOrder"
           >Buy from Aftermarket</md-button
         >
@@ -75,10 +76,29 @@ export default {
     },
     hasSellOrders() {
       if (!this.selection.active) {return false;}
+      if (this.selection.ticket.isNf) {
+        return this.selection.ticket.hasSellOrder();
+      }
       return Object.getOwnPropertyNames(this.selection.ticket.sellOrders).length > 1;
+    },
+    lowestSellOrder() {
+      if (!this.selection.active) {return 0;}
+      if (this.selection.ticket.isNf) {
+        if (this.selection.ticket.hasSellOrder()) { return this.selection.ticket.sellOrder.percentage;}
+        return 0;
+      }
+      return this.selection.ticket.getLowestSellOrder().queue;
+    },
+    lowestSellOrderAmount() {
+      if (!this.selection.active) {return 0;}
+      if (this.selection.ticket.isNf) {return 1;}
+      return this.selection.ticket.getLowestSellOrder().amount;
     },
     nfSold() {
       return this.selection.active && this.selection.ticket.isNf && !this.selection.ticket.isFree();
+    },
+    nfForSale() {
+      return this.selection.active && this.selection.ticket.hasSellOrder();
     },
     fSoldOut() {
       return this.selection.active && !this.selection.ticket.isNf && !this.selection.ticket.isFree();
@@ -102,8 +122,9 @@ export default {
     },
     createBuyOrder: async function() {
       if (this.selection.ticket.isNf) {
-        await this.selection.ticket.makeBuyOrder(
+        await this.selection.ticket.ticketType.makeBuyOrder(
           this.$store.state.web3.web3Instance,
+          this.amount,
           this.percentage,
           this.$store.state.user.account
         );
@@ -117,7 +138,12 @@ export default {
       }
     },
     fillSellOrder: async function() {
-      await this.selection.ticket.fillSellOrder();
+      await this.selection.ticket.fillSellOrder(
+          this.$store.state.web3.web3Instance,
+          this.amount,
+          this.lowestSellOrder,
+          this.$store.state.user.account
+      );
     },
     close: function() {
       this.$emit("close");
@@ -135,7 +161,6 @@ export default {
   width: 100vw;
   background-color: aliceblue;
   z-index: 9999;
-  padding: 1rem;
 }
 
 .selection.open {
@@ -144,6 +169,9 @@ export default {
 
 .wrapper {
   position: relative;
+  padding: 2rem;
+  padding-bottom: 4rem;
+
 }
 
 .amount-selection {

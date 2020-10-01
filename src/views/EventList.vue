@@ -13,7 +13,7 @@
         <EventEntry
           v-for="event in $store.state.events"
           v-bind:key="event.contractAddress"
-          v-bind:event_data="event"
+          v-bind:event="event"
         ></EventEntry>
       </isotope>
     </div>

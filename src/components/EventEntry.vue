@@ -3,15 +3,15 @@
     <div class="event-wrapper">
       <div class="date-box">
         <div class="wrapper">
-          <span class="month">{{ month }}</span>
-          <span class="day">{{ dayInMonth }}</span>
+          <span class="month">{{ monthName }}</span>
+          <span class="day">{{ event.getDay() }}</span>
         </div>
       </div>
       <div class="info-box">
-        <span class="time">{{ weekday }} - 18:00</span>
-        <span class="title">{{ event_data.title }}</span>
+        <span class="time">{{ weekday }} - {{event.getTime()}}</span>
+        <span class="title">{{ event.title }}</span>
         <span class="location"
-          >Hallenstadion - {{ event_data.location }}</span
+          >{{ event.location }}</span
         >
       </div>
       <div class="button-box" @click="goToDetails">
@@ -29,42 +29,22 @@ export default {
     return {};
   },
   props: {
-    event_data: Object,
+    event: Object,
   },
   methods: {
     goToDetails: function() {
       this.$router.push({
         name: "event",
-        params: { id: this.event_data.contractAddress },
+        params: { id: this.event.contractAddress },
       });
     },
   },
   computed: {
-    dayInMonth: function() {
-      return 1;
-      //return this.event_data.date.split(".")[0];
-    },
     weekday: function() {
-      /*
-      var d = new Date(
-        this.event_data.date.split(".")[2],
-        this.event_data.date.split(".")[1] - 1,
-        this.event_data.date.split(".")[0]
-      );
-      */
-      return WEEKDAYS[1];
-      //return WEEKDAYS[d.getDay()];
+      return WEEKDAYS[this.event.getDay()];
     },
-    month: function() {
-      /*
-      var d = new Date(
-        this.event_data.date.split(".")[2],
-        this.event_data.date.split(".")[1] - 1,
-        this.event_data.date.split(".")[0]
-      );
-      */
-      return MONTHS[1];
-      //return MONTHS[d.getMonth()];
+    monthName: function() {
+      return MONTHS[this.event.getMonth()];
     },
   },
   mounted: function() {},

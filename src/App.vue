@@ -54,7 +54,6 @@ export default {
   },
   methods: {
     setNavHeight: function(value) {
-      console.log(value);
       this.navHeight = value;
     },
     loadEvents: async function() {
@@ -161,12 +160,11 @@ p {
 }
 a {
   text-decoration: none;
-  border-bottom: 2px solid var(--accent);
   padding-bottom: 2px;
-  color: var(--fg);
+  color: #0f5e59 !important;
 }
 a:hover {
-  text-decoration: none;
+  text-decoration: none !important;
 }
 .container {
   width: 90%;

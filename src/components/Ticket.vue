@@ -2,14 +2,24 @@
   <div class="ticket-wrapper">
     <div
       class="ticket-img"
-      :style="{ backgroundImage: `url(${event.img_url})`, backgroundColor: 'gray' }"
+      :style="{
+        backgroundImage: `url(${event.img_url})`,
+        backgroundColor: `${event.color}`,
+      }"
     ></div>
     <div class="ticket-content">
       <div class="event-title">
         <h3>{{ event.title }}</h3>
         <span class="date">
-          Date (WIP)
+          {{ timeAndDate }}
         </span>
+      </div>
+      <div class="ticket-info">
+        <h3>{{ title }}</h3>
+        <p v-if="isNf">Non Fungible</p>
+        <p v-if="!isNf">Fungible</p>
+        <p v-if="isNf">Seat Number: {{ seat }}</p>
+        <p v-if="!isNf">Number of tickets: {{ amount }}</p>
       </div>
     </div>
   </div>
@@ -20,27 +30,14 @@ export default {
   name: "Ticket",
   data() {
     return {
-      event: {}
     };
   },
   props: {
     ticket: Object,
   },
   watch: {
-    ticket: function() {
-      this.getEvent();
-    }
   },
   methods: {
-    getEvent: function() {
-      console.log(this.ticket)
-      const event = this.$store.state.events.filter(event => event.contractAddress === this.ticket.ticketType.eventContractAddress)[0];
-      console.log(this.ticket.ticketType.eventContractAddress);
-      this.event = event === undefined ? {} : event;
-    },
-    flipCard: function() {
-      this.$refs["card"].classList.toggle("flipped");
-    },
     goToDetails: function() {
       this.$router.push({
         name: "event",
@@ -48,15 +45,56 @@ export default {
       });
     },
   },
-  computed: {},
-  mounted: function() {
-    console.log(this.ticket);
+  computed: {
+    event() {
+       if (
+        Object.keys(this.ticket).length === 0 &&
+        this.ticket.constructor === Object
+      ) {
+        return {};
+      }
+      const event = this.$store.state.events.filter(
+        (event) =>
+          event.contractAddress === this.ticket.ticketType.eventContractAddress
+      )[0];
+      return event === undefined ? {} : event;
+    },
+    timeAndDate() {
+      try {
+        return event.getTimeAndDate();
+      } catch (error) {
+        return "";
+      }
+    },
+    title() {
+      if (
+        Object.keys(this.ticket).length === 0 &&
+        this.ticket.constructor === Object
+      ) {
+        return "";
+      }
+      return this.ticket.ticketType.getTitle();
+    },
+    isNf() {
+      if (
+        Object.keys(this.ticket).length === 0 &&
+        this.ticket.constructor === Object
+      ) {
+        return false;
+      }
+      return !this.ticket.isNf ? this.ticket.ticketType.isNf : this.ticket.isNf;
+    },
+    amount() {
+      if(Object.keys(this.ticket).length === 0 && this.ticket.constructor === Object) {return 0;}
+      return !this.ticket.isNf ? this.ticket.amount : 1;
+    },
+    seat() {
+      if(Object.keys(this.ticket).length === 0 && this.ticket.constructor === Object) {return 0;}
+      return !this.ticket.isNf ? 0 : this.ticket.ticketId;
+    },
   },
-  created: function() {
-    //this.$root.$on('loadedUserTickets', () => {
-      //this.getEvent();
-    //});
-  }
+  mounted: function() {
+  },
 };
 </script>
 

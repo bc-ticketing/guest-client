@@ -16,7 +16,6 @@ export default new Vuex.Store({
   state,
   mutations: {
     updateWeb3(state, web3) {
-      console.log("Updating store with new version of web3");
       state.web3.web3Instance = web3.web3Instance;
       state.web3.account = web3.account;
       state.web3.networkId = web3.networkId;
@@ -24,7 +23,6 @@ export default new Vuex.Store({
       state.web3.isInjected = true;
     },
     setEventFactory(state, factory) {
-      console.log("setting event factory");
       state.eventFactory = factory;
     },
     updateEventStore(state, events) {
@@ -55,23 +53,19 @@ export default new Vuex.Store({
       commit('updateShoppingCartStore', new ShoppingCart());
     },
     async registerIpfs({ commit }) {
-      console.log("dispatched registerIpfs Action");
       const ipfs = await getIpfs();
       commit("registerIpfsInstance", ipfs);
     },
     registerWeb3: async function({ commit }) {
-      console.log("dispatched registerWeb3 Action");
       const web3 = await getWeb3();
       commit("updateWeb3", web3);
     },
     /* pulls the current web3 object and updates the store with it */
     async updateWeb3({ commit }) {
-      console.log("dispatched updateWeb3 Action");
       const web3 = await updateWeb3();
       commit("updateWeb3", web3);
     },
     async createEventFactory({ commit }) {
-      console.log("dispatched createEventFactory Action");
       const eventFactory = new state.web3.web3Instance.eth.Contract(
         EVENT_FACTORY_ABI,
         EVENT_FACTORY_ADDRESS
@@ -89,6 +83,7 @@ export default new Vuex.Store({
         try {
           let event = new Event(a);
           await event.loadData(EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance, state.web3.web3Instance);
+          await event.fetchPosition();
           events.push(event);
         } catch {
           console.log("could not get metadata for event");

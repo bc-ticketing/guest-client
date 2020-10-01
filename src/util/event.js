@@ -4,9 +4,10 @@ import {
   NonFungibleTicketType,
   FungibleTicketType,
 } from "./tickets";
+import axios from "axios";
 
 
-const BigNumber = require("bignumber.js");
+//const BigNumber = require("bignumber.js");
 
 export class Event {
   constructor(contractAddress) {
@@ -16,7 +17,48 @@ export class Event {
     this.location = "";
     this.title = "";
     this.img_url = "";
-    this.ipfsHash = "";  
+    this.ipfsHash = "";
+  }
+
+  parseTimeStamp() {
+    this.date = new Date(this.timestamp * 1000);
+    this.hours = this.date.getHours();
+    this.minutes = "0" + this.date.getMinutes();
+    this.seconds = "0" + this.date.getSeconds();
+  }
+
+  getTime() {
+    return this.hours + ':' + this.minutes.substr(-2);
+  }
+
+  getDay() {
+    return this.date.getDay();
+  }
+
+  getMonth() {
+    return this.date.getMonth();
+  }
+
+  async fetchPosition() {
+    let response = await axios.get(
+      `https://api.opencagedata.com/geocode/v1/json?q=${this.location}&key=9b5c0f0e97664b69baf8d617c4d0f1c6&language=en&pretty=1`
+    );
+    var first = response.data.results[0];
+    var latlong = {
+      lat: first.geometry.lat,
+      lng: first.geometry.lng,
+    };
+    this.latlong = latlong;
+  }
+
+  getTimeAndDate() {
+    return `${this.date.getDay()}/${this.date.getMonth()}/${this.date.getFullYear()} - ${this.getTime()}`
+  }
+
+  getLowestPrice() {
+    let lowestFungible = Math.min(this.fungibleTickets.map(ticket => Number(ticket.price)));
+    let lowestNonFungible = Math.min(this.nonFungibleTickets.map(ticket => Number(ticket.price)));
+    return Math.min(lowestFungible, lowestNonFungible);
   }
 
   async loadData(ABI, ipfsInstance, web3Instance) {
@@ -59,6 +101,8 @@ export class Event {
     this.url = metadata.event.url;
     this.timestamp = metadata.event.time;
     this.color = metadata.event.color;
+    this.timestamp = metadata.event.time;
+    this.parseTimeStamp();
   }
 
   async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
@@ -80,23 +124,8 @@ export class Event {
         await ticketType.fetchIpfsHash(web3Instance, ABI);
         await ticketType.loadIPFSMetadata(ipfsInstance);
         await ticketType.loadSellOrders(web3Instance, ABI);
-        await ticketType.loadBuyOrders(web3Instance, ABI)
+        await ticketType.loadBuyOrders(web3Instance, ABI);
 
-        for (let j = 1; j <= new BigNumber(granularity).toNumber(); j++) {
-          let percentage = (100 / new BigNumber(granularity).toNumber()) * j;
-          const queue = eventSC.methods.sellingQueue(ticketType, percentage);
-          const numberSellingOrders = queue.numberTickets;
-          if (numberSellingOrders > 0) {
-            ticketType.sellOrders.push({
-              queue: percentage,
-              amount: numberSellingOrders,
-            });
-            //ticketMapping.sellOrders[String(percentage)] = numberSellingOrders
-          }
-        }
-
-        //ticketMapping.ticketTypeNr = i;
-        //const queues = eventSC.methods.buyingQueue().call();
         this.fungibleTickets.push(ticketType);
       }
     }
@@ -128,6 +157,9 @@ export class Event {
         }
         await ticketType.fetchIpfsHash(web3Instance, ABI);
         await ticketType.loadIPFSMetadata(ipfsInstance);
+
+        await ticketType.loadSellOrders(web3Instance, ABI);
+        await ticketType.loadBuyOrders(web3Instance, ABI);
         this.nonFungibleTickets.push(ticketType);
       }
     }

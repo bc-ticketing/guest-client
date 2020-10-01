@@ -16,10 +16,55 @@ class TicketType {
         this.description = '';
         this.color = '';
         this.ipfsHash = '';
+        this.sellOrders = {};
+        this.buyOrders = {};
     }
 
     numberFreeSeats() {
         return this.supply - this.ticketsSold;
+    }
+
+    async loadSellOrders(web3Instance, ABI) {
+        const aftermarket = new web3Instance.eth.Contract(ABI, this.eventContractAddress);
+        for (let i = this.aftermarketGranularity; i >= 1; i--) {
+            const percentage = (100 / this.aftermarketGranularity) * i;
+            const sellingQueue = await aftermarket.methods.sellingQueue(this.getFullTicketId(), percentage).call();
+            const numSellOrders = sellingQueue.numberTickets;
+            if (numSellOrders > 0) {
+                this.sellOrders[percentage] = numSellOrders;
+            }
+        }
+    }
+
+    async loadBuyOrders(web3Instance, ABI) {
+        const aftermarket = new web3Instance.eth.Contract(ABI, this.eventContractAddress);
+        for (let i = this.aftermarketGranularity; i >= 1; i--) {
+            const percentage = (100 / this.aftermarketGranularity) * i;
+            const buyingQueue = await aftermarket.methods.buyingQueue(this.getFullTicketId(), percentage).call();
+            const numBuyingOrders = buyingQueue.numberTickets;
+            if (numBuyingOrders > 0) {
+                this.buyOrders[percentage] = numBuyingOrders;
+            }
+        }
+
+    }
+
+    getHighestBuyOrder() {
+        for (const [key, value] of Object.entries(this.buyOrders)) {
+            if (value > 0) {return key;}
+        }
+        return 0;
+    }
+
+    getLowestSellOrder() {
+        for (const [key, value] of Object.entries(this.sellOrders).reverse()) {
+            if (value > 0) {return {queue: key, amount: value};}
+        }
+        return 0;
+    }
+
+    getTitle() {
+        return this.title;
     }
 
 }
@@ -27,8 +72,6 @@ class TicketType {
 export class FungibleTicketType extends TicketType {
     constructor(eventContractAddress, typeId) {
         super(eventContractAddress, typeId);
-        this.sellOrders = {};
-        this.buyOrders = {};
         this.seatMapping = [];
         this.isNf = false;
     }
@@ -52,30 +95,47 @@ export class FungibleTicketType extends TicketType {
         console.log(result);
     }
 
-    async fillBuyOrder(web3Instance, amount, percentage) {
+    async fillBuyOrder(web3Instance, amount, percentage, account) {
+        console.log(`Filling buy order: \n
+        Event: ${this.eventContractAddress}\n
+        Ticket: ${this.getFullTicketId()}\n
+        Amount: ${amount}\n
+        Percentage: ${percentage}\n
+        Price: ${amount * web3Instance.utils.toWei(String(Math.floor(this.price* (percentage/100))))}`);
         const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
-        const result = await contract.methods.fillBuyOrderFungibles(this.getFullTicketId(), amount, percentage).call();
+        const result = await contract.methods.fillBuyOrderFungibles(this.getFullTicketId(), amount, percentage).send({
+            from: account
+        });
         console.log(result);
     }
 
     async makeSellOrder(web3Instance, amount, percentage, account) {
-        console.log(`creating sell order: \n
+        console.log(`Making sell order: \n
         Event: ${this.eventContractAddress}\n
         Ticket: ${this.getFullTicketId()}\n
         Amount: ${amount}\n
         Percentage: ${percentage}<n
         From Account: ${account}`);
         const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
-        var myTickets = await contract.methods
-                .tickets(this.getFullTicketId(), account)
-                .call();
-        console.log(`Ì own ${myTickets} tickets of this type`);
-        const result = await contract.methods.makeSellOrderFungibles(this.getFullTicketId(), amount, percentage).call();
+        const result = await contract.methods.makeSellOrderFungibles(this.getFullTicketId(), amount, percentage).send({
+            from: account,
+        });
         console.log(result);
     }
 
-    async fillSellOrder(percentage, amount, contract) {
-        await contract.methods.fillSellOrderFungibles(this.getFullTicketId(), amount, percentage).call();
+    async fillSellOrder(web3Instance, amount, percentage, account) {
+        console.log(`Filling sell order: \n
+        Event: ${this.eventContractAddress}\n
+        Ticket: ${this.getFullTicketId()}\n
+        Amount: ${amount}\n
+        Percentage: ${percentage}<n
+        From Account: ${account}`);
+        const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
+        var result = await contract.methods.fillSellOrderFungibles(this.getFullTicketId(), amount, percentage).send({
+            from: account,
+            value: amount * web3Instance.utils.toWei(String(Math.floor(this.price * (percentage/100)))),
+        });
+        console.log(result);
     }
 
     async buy(amount, web3Instance, ABI, account) {
@@ -131,37 +191,9 @@ export class FungibleTicketType extends TicketType {
             this.ipfsHash = ipfsHash;
     }
 
-    async loadSellOrders(web3Instance, ABI) {
-        const aftermarket = new web3Instance.eth.Contract(ABI, this.eventContractAddress);
-        for (let i = this.aftermarketGranularity; i >= 1; i--) {
-            const percentage = (100 / this.aftermarketGranularity) * i;
-            const sellingQueue = await aftermarket.methods.sellingQueue(this.getFullTicketId(), percentage).call();
-            const numSellOrders = sellingQueue.numberTickets;
-            if (numSellOrders > 0) {
-                this.sellOrders[percentage] = numSellOrders;
-            }
-        }
-    }
+    
 
-    async loadBuyOrders(web3Instance, ABI) {
-        const aftermarket = new web3Instance.eth.Contract(ABI, this.eventContractAddress);
-        for (let i = this.aftermarketGranularity; i >= 1; i--) {
-            const percentage = (100 / this.aftermarketGranularity) * i;
-            const buyingQueue = await aftermarket.methods.buyingQueue(this.getFullTicketId(), percentage).call();
-            const numBuyingOrders = buyingQueue.numberTickets;
-            if (numBuyingOrders > 0) {
-                this.buyOrders[percentage] = numBuyingOrders;
-            }
-        }
 
-    }
-
-    getHighestBuyOrder() {
-        for (const [key, value] of Object.entries(this.buyOrders)) {
-            if (value > 0) {return key;}
-        }
-        return 0;
-    }
     
 }
 
@@ -171,6 +203,8 @@ export class NonFungibleTicketType extends TicketType {
         this.tickets = [];
         this.isNf = true;
     }
+
+    
 
     getFullTicketId() {
         return getIdAsBigNumber(true, this.typeId).toFixed();
@@ -212,6 +246,67 @@ export class NonFungibleTicketType extends TicketType {
             this.tickets[index].seatMapping = mapping;
         }, this);
     }
+
+    /* Creating a buy order for non fungible tickets happens via the ticket type, instead
+    of via the ticket itself because we cant have separate queues for each individual ticket */
+    async makeBuyOrder(web3Instance, amount, percentage, account) {
+        console.log(`creating buy order: \n
+        Event: ${this.eventContractAddress}\n
+        Ticket: ${this.getFullTicketId()}\n
+        Amount: ${amount}\n
+        Percentage: ${percentage}\n
+        Price: ${amount * web3Instance.utils.toWei(String(Math.floor(this.price* (percentage/100))))}`);
+        const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
+        const result = await contract.methods.makeBuyOrder(this.getFullTicketId(), amount, percentage).send({
+            from: account,
+            value: amount * web3Instance.utils.toWei(String(Math.floor(this.price* (percentage/100)))),
+          });
+        console.log(result);
+    }
+
+    async fillBuyOrder(web3Instance, tickets, percentages, account) {
+        console.log(`Filling buy order: \n
+        Event: ${this.eventContractAddress}\n
+        Tickets: ${tickets}\n
+        Percentage: ${percentages}`);
+        const ticketIds = tickets.map(ticket => ticket.getFullTicketId());
+        const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
+        const result = await contract.methods.fillBuyOrderNonFungibles(ticketIds, percentages).send({
+            from: account
+        });
+        console.log(result);
+    }
+
+    async makeSellOrder(web3Instance, tickets, percentages, account) {
+        console.log(`Making sell order: \n
+        Event: ${this.eventContractAddress}\n
+        Tickets: ${tickets}\n
+        Percentages: ${percentages}\n
+        From Account: ${account}`);
+        const ticketIds = tickets.map(ticket => ticket.getFullTicketId());
+        const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
+        const result = await contract.methods.makeSellOrderNonFungibles(ticketIds, percentages).send({
+            from: account,
+        });
+        console.log(result);
+    }
+
+    async fillSellOrder(web3Instance, tickets, percentages, account) {
+        console.log(`Filling sell order: \n
+        Event: ${this.eventContractAddress}\n
+        Tickets: ${tickets}\n
+        Percentages: ${percentages}\n
+        From Account: ${account}`);
+        const reducer = (total, ticket, index) => total + Math.floor(ticket.ticketType.price* percentages[index]);
+        const total = web3Instance.urils.toWei(String(tickets.reduce(reducer)));
+        const ticketIds = tickets.map(ticket => ticket.getFullTicketId());
+        const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.eventContractAddress);
+        var result = await contract.methods.fillSellOrderFungibles(ticketIds, percentages).send({
+            from: account,
+            value: total,
+        });
+        console.log(result);
+    }
 }
 
 export class NonFungibleTicket {
@@ -219,12 +314,13 @@ export class NonFungibleTicket {
         this.ticketType = ticketType;
         this.ticketTypeId = ticketType.typeId;
         this.ticketId = ticketId;
-        this.buyOrders = {};
-        this.sellOrders = {};
+        this.buyOrder = {};
+        this.sellOrder = {};
         this.seatMapping = undefined;
         this.owner = undefined;
         this.isNf = true;
     }
+
 
     async buy(web3Instance, ABI, account) {
         console.log(`buying ticket \n
@@ -242,6 +338,10 @@ export class NonFungibleTicket {
         console.log(result);
     }
 
+    getTitle() {
+        return this.ticketType.title;
+    }
+
     getFullTicketId() {
         // return nonFungibleBaseId.plus(this.ticketTypeId).plus(this.ticketId)
         return getIdAsBigNumber(true, this.ticketTypeId, this.ticketId).toFixed();
@@ -255,17 +355,19 @@ export class NonFungibleTicket {
         return new BigNumber(this.sellOrder.userAddress).isZero() ? false : true;
     }
 
-    async makeBuyOrder(web3Instance, percentage, account) {
-        console.log(`creating buy order: \n
-        Event: ${this.eventContractAddress}\n
-        Ticket: ${this.getFullTicketId()}\n
-        Percentage: ${percentage}\n
-        Price: ${web3Instance.utils.toWei(String(Math.floor(this.ticketType.price* (percentage/100))))}`);
+    async makeSellOrder(web3Instance, percentage, account) {
+        console.log(`Making sell order: \n
+        Event: ${this.ticketType.eventContractAddress}\n
+        Tickets: ${String([this.getFullTicketId()])}\n
+        Percentages: ${String([percentage])}\n
+        From Account: ${account}`);
+        //const ticketIds = tickets.map(ticket => ticket.getFullTicketId());
         const contract = new web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI, this.ticketType.eventContractAddress);
-        const result = await contract.methods.makeBuyOrder(this.getFullTicketId(), 1, percentage).send({
+        const result = await contract.methods.makeSellOrderNonFungibles([this.getFullTicketId()], [percentage]).send({
             from: account,
-            value: web3Instance.utils.toWei(String(Math.floor(this.ticketType.price* (percentage/100)))),
-          });
+        });
         console.log(result);
     }
+    
+
 }

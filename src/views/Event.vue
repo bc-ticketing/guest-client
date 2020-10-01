@@ -1,6 +1,7 @@
 <template>
   <div class="event">
-    <div class="container-fluid header-img" ref="teaser">
+    <div class="container-fluid header-img" ref="teaser" 
+    :style="{ backgroundColor: `${event.color}` }">
       <!-- <div class="parallax" ref="parallax">  -->
       <img ref="teaserImg" :src="event.img_url" alt="" class="img-fluid" />
       <!-- </div> -->
@@ -54,42 +55,64 @@
           <span class="info-value">{{ event.location }}</span>
         </div>
         <div class="info-group">
-          <md-icon class="info-title">home</md-icon>
-          <span class="info-value">Hallenstadion</span>
+          <md-icon class="info-title">event</md-icon>
+          <span class="info-value">{{event_date}}</span>
         </div>
         <div class="info-group">
-          <md-icon class="info-title">verified_user</md-icon>
-          <span class="info-value">approvers </span>
+          <md-icon class="info-title">label</md-icon>
+          <span class="info-value tag">{{event.category}}</span>
         </div>
         <div class="info-group">
           <md-icon class="info-title">local_offer</md-icon>
-          <span class="info-value">lowestPrice</span>
+          <span class="info-value">From {{lowest_price}} ETH</span>
+        </div>
+        <div class="info-group">
+          <md-icon class="info-title">link</md-icon>
+          <a class="info-value" :href='event.url' target="_blank">Website</a>
+        </div>
+        <div class="info-group">
+          <md-icon class="info-title">delete</md-icon>
+          <a class="info-value" :href="event.twitter" target="_blank">Twitter</a>
         </div>
       </div>
 
       <div class="event-info-wrapper" ref="content-tickets-plan">
         <div class="seat-info">
           <div class="tooltip" ref="tooltip">
-            <span class="ticket-title">{{ tooltip_title }}</span>
+            <span class="ticket-title">
+              <h2>{{ tooltip.title }}</h2>
+              <span>{{ tooltip.price }} ETH</span>
+            </span>
             <div style="display: flex; justify-content: space-between;">
               <span
-                v-bind:class="{ active: !tooltip_isNF }"
+                v-bind:class="{ active: !tooltip.isNf }"
                 class="ticket-supply"
                 ref="supply"
               >
-                {{ tooltip_supply }} tickets left</span
+                {{ tooltip.supply }} tickets left</span
               >
+              <span v-if="tooltip.isNf">
+                Seat Number: {{tooltip.seat}}
+              </span>
               <span
-                v-if="tooltip_isNF"
-                :data-status="tooltip_seat_status"
+                v-if="tooltip.isNf"
+                :data-status="tooltip.seat_status"
                 class="ticket-status"
-                >{{ tooltip_seat_status }}</span
+                >{{ tooltip.seat_status }}</span
               >
-              <span v-if="tooltip_isNF" class="ticket-nr"
-                >Seat {{ tooltip_seat }}</span
+              <span v-if="tooltip.isNF" class="ticket-nr"
+                >Seat {{ tooltip.seat }}</span
               >
             </div>
-            <span class="ticket-desc"> {{ tooltip_desc }}</span>
+            <h3>Ticket Description:</h3>
+            <span class="ticket-desc"> {{ tooltip.desc }}</span>
+            <h3>Aftermarket:</h3>
+            <div class='aftermarket' v-if="tooltip.lowestSellOrder > 0">
+                {{tooltip.lowestSellOrderAmount}} Listing for {{tooltip.lowestSellOrder}}%
+            </div>
+            <div v-else>
+              No listings for this ticket
+            </div>
           </div>
         </div>
 
@@ -133,12 +156,7 @@ export default {
       tabs: ["about", "tickets-plan", "checkout"],
       rows: 0,
       cols: 0,
-      tooltip_title: "",
-      tooltip_supply: "",
-      tooltip_desc: "",
-      tooltip_seat: 0,
-      tooltip_seat_status: "",
-      tooltip_isNF: false,
+      tooltip: {},
       toolTipActive: false,
       navbarHeight: 0,
       selection: {
@@ -154,6 +172,12 @@ export default {
   },
   props: {},
   computed: {
+    lowest_price() {
+      try {return this.event.getLowestPrice();} catch(e) { return 0;}
+    },
+    event_date() {
+      try {return this.event.getTimeAndDate();} catch(e) { return 0;}
+    },
     shoppingCartItems() {
       return this.$store.state.shoppingCart.getAmountOfItems();
     },
@@ -163,6 +187,9 @@ export default {
       } else {
         return [];
       }
+    },
+    tooltipIsNf() {
+      return this.tooltip.isNf == true;
     },
   },
   watch: {},
@@ -237,6 +264,9 @@ export default {
       this.event = this.$store.state.events.filter(
         (event) => event.contractAddress == this.contractAddress
       )[0];
+      if (!this.event) {
+        this.event = {};
+      }
       //this.markSeats();
     },
     fetchTicketInfo: function() {
@@ -248,6 +278,7 @@ export default {
     setGridSizes: function() {
       let max_row = 0;
       let max_col = 0;
+      if (!this.event.fungibleTickets) {return;}
       this.event.fungibleTickets.forEach((ticket) => {
         ticket.seatMapping.forEach((mapping) => {
           max_col =
@@ -266,7 +297,7 @@ export default {
             max_row > ticket.seatMapping.split("/")[1]
               ? max_row
               : Number(ticket.seatMapping.split("/")[1]);
-          max_row =
+          max_col =
             max_col > ticket.seatMapping.split("/")[0]
               ? max_col
               : Number(ticket.seatMapping.split("/")[0]);
@@ -305,34 +336,43 @@ export default {
           if (ticket.isFree()) {
             seat[0].dataset.status = "free";
           } else {
-            seat[0].dataset.status = "occupied";
+            if(ticket.hasSellOrder()) {
+              seat[0].dataset.status = 'forsale'
+            } else {
+              seat[0].dataset.status = "occupied";
+            }
+            
           }
         }, this);
       }, this);
     },
     showToolTip: function(col, row) {
-      console.log('show tooltip');
       const ticket = this.findTicketIndex(col, row);
-      this.tooltip_title = ticket.isNf ? ticket.ticketType.title : ticket.title;
+      if (!ticket) {return;}
+      let t= {};
+      t.title = ticket.isNf ? ticket.ticketType.title : ticket.title;
+      t.price = ticket.isNf ? ticket.ticketType.price : ticket.price;
       const total_supply = ticket.isNf ? ticket.ticketType.supply : ticket.supply;
-      this.tooltip_supply = ticket.isNf ? ticket.ticketType.numberFreeSeats() : ticket.numberFreeSeats();
-      this.tooltip_desc = ticket.isNf ? ticket.ticketType.description : ticket.description;
+      t.supply = ticket.isNf ? ticket.ticketType.numberFreeSeats() : ticket.numberFreeSeats();
+      t.desc = ticket.isNf ? ticket.ticketType.description : ticket.description;
       if (ticket.isNf) {
-        this.tooltip_seat = ticket.ticketId;
-        this.tooltip_seat_status = ticket.isFree() ? 'free' : 'occupied';
-        this.tooltip_isNF = true;
+        t.seat = ticket.ticketId;
+        t.seat_status = ticket.isFree() ? 'free' : ticket.hasSellOrder() ? 'for sale' : 'occupied';
+        t.isNf = true;
       } else {
-        this.tooltip_isNF = false;
+        t.isNf = false;
+        t.lowestSellOrder = ticket.getLowestSellOrder().queue;
+        t.lowestSellOrderAmount = ticket.getLowestSellOrder().amount;
       }
-
       this.toolTipActive = true;
-      if (this.tooltip_supply > total_supply / 2) {
+      if (t.supply > total_supply / 2) {
         this.$refs["supply"].dataset.status = "good";
-      } else if (this.tooltip_supply > total_supply / 4) {
+      } else if (t.supply > total_supply / 4) {
         this.$refs["supply"].dataset.status = "neutral";
       } else {
         this.$refs["supply"].dataset.status = "bad";
       }
+      this.tooltip = t;
     },
     hideToolTip: function() {
       setTimeout(() => {
@@ -526,6 +566,9 @@ export default {
 .seat[data-status="occupied"] {
   background-color: #bf616a;
 }
+.seat[data-status="forsale"] {
+  background-color: #ebcb8b;
+}
 .seat.bought {
   background-color: #bf616a !important;
 }
@@ -538,11 +581,19 @@ export default {
   display: block;
 }
 .tooltip .ticket-title {
+  display: flex;
+  justify-content: space-between;
+}
+.tooltip .ticket-title h2{
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 0.5rem;
+  margin-top:0;
+  margin-bottom:0.2rem;
   font-size: 1.3rem;
+}
+.tooltip .ticket-title span {
+  font-size: 1.2rem;
 }
 .ticket-supply.active {
   display: block;
@@ -550,6 +601,8 @@ export default {
 .ticket-supply {
   display: none;
   font-weight: lighter;
+  margin-bottom: 1rem;
+
 }
 .ticket-supply[data-status="good"] {
   color: #a3be8c;
@@ -566,6 +619,7 @@ export default {
 .ticket-status[data-status="sold"] {
   color: #bf616a;
 }
+
 
 .buy-selection,
 .selection-step {
