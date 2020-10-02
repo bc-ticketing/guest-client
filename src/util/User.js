@@ -1,3 +1,5 @@
+import { ticketTransferred } from "./blockchainEventHandler";
+import { getFullTicketTypeId, getFullTicketId } from "./tickets";
 
 export class User {
     constructor(account, balance) {
@@ -5,6 +7,16 @@ export class User {
         this.nonFungibleTickets = [];
         this.account = account;
         this.balance = balance;
+        this.idetixIdentity = {
+            phone: false,
+            mail: false,
+            kyc: false,
+        };
+    }
+
+    async checkTicketChanges(contract, fromBlock) {
+        return ticketTransferred(contract, fromBlock, 'seller', this.account) ||
+                ticketTransferred(contract, fromBlock, 'buyer', this.account);
     }
 
     async loadTicketsForEvent(web3Instance, ABI, event) {
@@ -12,9 +24,14 @@ export class User {
             ABI,
             event.contractAddress
           );
-        for ( const ticketType of event.fungibleTickets) {
-            var myTickets = await eventSC.methods
-                .tickets(ticketType.getFullTicketId(), this.account)
+        const inStore = await idb.getUserTickets(this.account);
+        const changed = await this.checkTicketChanges(eventSC, 1);
+        if (changed) {
+            for (change of changed) {
+                console.log(change);
+                //TODO: check if nf/f and handle correctly
+                var myTickets = await eventSC.methods
+                .tickets(getFullTicketTypeId(ticketType), this.account)
                 .call();
             if (myTickets > 0) {
                 this.fungibleTickets.push({
@@ -22,11 +39,13 @@ export class User {
                     amount: myTickets
                 })
             }
+            }
         }
+
         for( const ticketType of event.nonFungibleTickets) {
             for(const ticket of ticketType.tickets) {
                 const owner = await eventSC.methods
-                .nfOwners(ticket.getFullTicketId())
+                .nfOwners(getFullTicketId(ticket))
                 .call();
                 if(owner === this.account) {
                     this.nonFungibleTickets.push(ticket);
@@ -42,6 +61,32 @@ export class User {
 
     ownsNonFungible(ticketType, ticketNr) {
         return this.nonFungibleTickets.filter(t => t.ticketTypeId === ticketType && t.ticketId === ticketNr).length > 0;
+    }
+
+    async requestIdentification() {
+
+    }
+
+    async verify(payload) {
+        if (payload.method === 'mail') {
+            this.addMailVerification(payload.mail);
+        } else if (payload.method === 'phone') {
+            this.addPhoneVerification(payload.phone);
+        } else {
+            this.addPhoneVerification(payload.files);
+        }
+    }
+
+    addPhoneVerification(phone) {
+        console.log(phone);
+    }
+
+    addMailVerification(mail) {
+        console.log(mail);
+    }
+
+    addKYCVerification(files) {
+        console.log(files);
     }
 
 

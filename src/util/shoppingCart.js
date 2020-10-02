@@ -35,6 +35,15 @@ export class ShoppingCart {
     }
   }
 
+  removeByIndex(index, fungible) {
+    if (fungible) {
+      console.log(`removing fungible ${index}`);
+      this.fungibleTickets.splice(index, 1);
+    } else {
+      this.nonFungibleTickets.splice(index, 1);
+    }
+  }
+
   checkout(web3instance, account) {
     this.fungibleTickets.forEach(selection => {
         selection.ticket.buy(selection.amount, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);

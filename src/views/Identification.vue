@@ -1,216 +1,93 @@
 <template>
   <div id="identity">
     <div class="container">
-      <div class="verification-wrapper">
-        <div class="md-layout-item">
-          <md-field class="md-field-select-verification-option">
-            <label>VerificationOption</label>
-            <md-select
-              v-model="verificationOption"
-              name="verificationOption"
-              id="verificationOption"
-              placeholder="Verification Option"
-            >
-              <md-option value="phone-verification">Phone Number</md-option>
-              <md-option value="mail-verification">Mail Address</md-option>
-            </md-select>
-          </md-field>
-        </div>
-        <div class="form-wrapper">
-          <PhoneVerificationForm
-            ref="phone-verification"
-            id="phone-verification"
-          ></PhoneVerificationForm>
-          <MailVerificationForm
-            ref="mail-verification"
-            id="mail-verification"
-          ></MailVerificationForm>
-        </div>
+      <div class="title">
+        <h3>Idetix Identifiation</h3>
+        <p>Some information text</p>
       </div>
-      <div class="approver-list-wrapper">
-        <div
-          class="approver-wrapper"
-          v-for="approver in approvers"
-          v-bind:key="approver.id"
-        >
-          <div class="overview">
-            <h3 @click="toggleApprover(approver.id)">{{ approver.name }}</h3>
-            <span class="status">{{ getApprovedFraction(approver.id) }}</span>
-          </div>
-          <div class="approver-methods" :ref="'methods_' + approver.id">
-            <div
-              class="method"
-              v-for="(method, index) in approver.methods"
-              v-bind:key="approver.id + index"
-            >
-              <span class="name">{{ method.name }}</span>
-              <span class="status">
-                <i class="material-icons" v-if="method.approved">done</i>
-                <i class="material-icons" v-if="!method.approved">close</i>
-              </span>
-            </div>
-          </div>
+      <div class="identification-option">
+        <div>
+          <md-icon class="icon">mail</md-icon>
+          <span class="status">{{ mailVerification }}</span>
         </div>
+
+        <md-button class="md-raised" @click="openForm('mail')">Verify</md-button>
+      </div>
+      <hr />
+      <div class="identification-option">
+        <div>
+          <md-icon class="icon">phone</md-icon>
+          <span class="status">{{ phoneVerification }}</span>
+        </div>
+        <md-button class="md-raised" @click="openForm('phone')">Verify</md-button>
+      </div>
+      <hr />
+      <div class="identification-option">
+        <div>
+          <md-icon class="icon">person</md-icon>
+          <span class="status">{{ kycVerification }}</span>
+        </div>
+        <md-button class="md-raised" @click="openForm('kyc')">Verify</md-button>
       </div>
     </div>
+    <IdentificationForm
+    v-bind:method="identificationMethod"
+    v-bind:open="formOpen"
+    v-on:close="closeForm()"></IdentificationForm>
   </div>
 </template>
 
 <script>
-import PhoneVerificationForm from "../components/PhoneVerificationForm";
-import MailVerificationForm from "../components/MailVerificationForm";
+import IdentificationForm from './../components/IdentificationForm';
 
 export default {
   name: "Identification",
-  components: { PhoneVerificationForm, MailVerificationForm },
+  components: {
+    IdentificationForm,
+  },
   data() {
     return {
-      verificationOption: "",
-      approvers: [
-        {
-          name: "Idetix",
-          id: "0",
-          methods: [
-            {
-              name: "Mail",
-              approved: false
-            },
-            {
-              name: "Phone",
-              approved: true
-            },
-            {
-              name: "Airbnb",
-              approved: false
-            }
-          ]
-        },
-        {
-          name: "Starticket",
-          id: "1",
-          methods: [
-            {
-              name: "Mail",
-              approved: false
-            },
-            {
-              name: "Phone",
-              approved: false
-            },
-            {
-              name: "Blackberry",
-              approved: false
-            }
-          ]
-        }
-      ]
+      identificationMethod: '',
+      formOpen: false,
     };
   },
-  watch: {
-    verificationOption: function(val) {
-      this.toggleForm(val);
+  watch: {},
+  methods: {
+    openForm(method) {
+      this.identificationMethod = method;
+      this.formOpen = true;
+    },
+    closeForm() {
+      this.formOpen = false;
     }
   },
-  methods: {
-    getApprovedFraction: function(approver_id) {
-      var approver = this.approvers.filter(app => app.id === approver_id)[0];
-      var approved = 0;
-      var total = 0;
-      approver.methods.forEach(method => {
-        if (method.approved) approved += 1;
-        total += 1;
-      });
-      return `${approved}/${total}`;
+  computed: {
+    mailVerification() {
+      return this.$store.state.user.idetixIdentity ? this.$store.state.user.idetixIdentity.mail : false;
     },
-    toggleApprover: function(approved_id) {
-      var test = `methods_${approved_id}`;
-      var element = this.$refs[test][0];
-      if (element.classList.contains("open")) {
-        element.classList.remove("open");
-      } else {
-        element.classList.add("open");
-      }
+    phoneVerification() {
+      return this.$store.state.user.idetixIdentity ? this.$store.state.user.idetixIdentity.phone : false;
     },
-    toggleForm: function(option) {
-      var phoneElem = document.getElementById(`phone-verification`);
-      var mailElem = document.getElementById(`mail-verification`);
-      if (option === `phone-verification`) {
-        if (!phoneElem.classList.contains("open")) {
-          phoneElem.classList.add("open");
-        }
-        if (mailElem.classList.contains("open")) {
-          mailElem.classList.remove("open");
-        }
-      } else if (option === `mail-verification`) {
-        if (!mailElem.classList.contains("open")) {
-          mailElem.classList.add("open");
-        }
-        if (phoneElem.classList.contains("open")) {
-          phoneElem.classList.remove("open");
-        }
-      }
-    }
+    kycVerification() {
+      return this.$store.state.user.idetixIdentity ? this.$store.state.user.idetixIdentity.kyc : false;
+    },
+  },
+  mounted: function() {
+    this.$root.$emit('hideSearchBar');
   }
 };
 </script>
 
 <style>
-.approver-methods {
-  margin-bottom: 1rem;
-  max-height: 0;
-  transition: max-height 0.3s linear;
-  overflow: hidden;
-}
-.approver-methods.open {
-  max-height: 500px;
-}
-
-.overview {
+.identification-option {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  align-items: center;
 }
-.overview h3 {
-  margin: 0;
-  cursor: pointer;
-  font-size: 1.3rem;
+.identification-option .icon {
+  margin-right: 1rem;
 }
-
-.approver-list-wrapper {
-  border-top: 2px solid black;
-}
-
-.approver-wrapper {
-  border-bottom: 2px solid black;
-  margin-top: 1rem;
-}
-
-.method {
-  display: flex;
-  justify-content: space-between;
-}
-
-.md-field-select-verification-option {
-  margin: 0;
-}
-
-#phone-verification {
-  margin-bottom: 1rem;
-  max-height: 0;
-  transition: max-height 0.3s linear;
-  overflow: hidden;
-}
-#phone-verification.open {
-  max-height: 500px;
-}
-
-#mail-verification {
-  margin-bottom: 1rem;
-  max-height: 0;
-  transition: max-height 0.3s linear;
-  overflow: hidden;
-}
-#mail-verification.open {
-  max-height: 500px;
+hr {
+  margin-bottom: 2rem;
 }
 </style>

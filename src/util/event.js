@@ -5,12 +5,20 @@ import {
   FungibleTicketType,
 } from "./tickets";
 import axios from "axios";
+import { ticketMetadataChanged } from "./blockchainEventHandler";
 
+import {fetchIpfsHash, loadIPFSMetadata, loadSellOrders, loadBuyOrders} from './tickets'
 
 //const BigNumber = require("bignumber.js");
 
 export class Event {
   constructor(contractAddress) {
+    // hack to turn events from idb into proper event objects
+    if(typeof contractAddress === 'object') {
+      Object.assign(this, contractAddress);
+      this.address = contractAddress.address;
+      return;
+    }
     this.contractAddress = contractAddress;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
@@ -105,62 +113,91 @@ export class Event {
     this.parseTimeStamp();
   }
 
-  async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
+  
+
+  hasFungibleTicketType(id) {
+    return this.fungibleTickets.filter(t => t.typeId == id).length > 0 ? this.fungibleTickets.filter(t => t.typeId == id)[0] : false;
+  }
+
+  hasNonFungibleTicketType(id) {
+    return this.nonFungibleTickets.filter(t => t.typeId == id).length > 0 ? this.nonFungibleTickets.filter(t => t.typeId == id)[0] : false;
+  }
+
+  async loadFungibleTickets(web3Instance, ABI, ipfsInstance, fromBlock) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
-        let ticketType = new FungibleTicketType(this.contractAddress, i);
         const typeIdentifier = getIdAsBigNumber(false, i);
-        const ticketMapping = await eventSC.methods
-          .ticketTypeMeta(typeIdentifier)
-          .call();
-        ticketType.price = ticketMapping.price;
-        ticketType.ticketsSold = ticketMapping.ticketsSold;
-        ticketType.supply = ticketMapping.supply;
-        const granularity = await eventSC.methods.granularity().call();
-        ticketType.aftermarketGranularity = granularity;
-        await ticketType.fetchIpfsHash(web3Instance, ABI);
-        await ticketType.loadIPFSMetadata(ipfsInstance);
-        await ticketType.loadSellOrders(web3Instance, ABI);
-        await ticketType.loadBuyOrders(web3Instance, ABI);
-
-        this.fungibleTickets.push(ticketType);
+        const changed = await ticketMetadataChanged(eventSC, fromBlock, typeIdentifier); 
+        if (changed) {
+          console.log('tickets chainged since last fetch at block number: '+fromBlock);
+          const exists = this.hasFungibleTicketType(i);
+          let ticketType = exists ? exists : new FungibleTicketType(this.contractAddress, i);
+          const ticketMapping = await eventSC.methods
+            .ticketTypeMeta(typeIdentifier)
+            .call();
+          ticketType.price = ticketMapping.price;
+          ticketType.ticketsSold = ticketMapping.ticketsSold;
+          ticketType.supply = ticketMapping.supply;
+          const granularity = await eventSC.methods.granularity().call();
+          ticketType.aftermarketGranularity = granularity;
+          await fetchIpfsHash(ticketType, web3Instance, ABI);
+          await loadIPFSMetadata(ticketType, ipfsInstance);
+          await loadSellOrders(ticketType, web3Instance, ABI);
+          await loadBuyOrders(ticketType, web3Instance, ABI);
+          if (!exists){
+            this.fungibleTickets.push(ticketType);
+          }
+        } else {
+          console.log('fungible tickets did not change');
+        }
       }
     }
   }
 
-  async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance) {
+  async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance, fromBlock) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
-        let ticketType = new NonFungibleTicketType(this.contractAddress, i);
-        const ticketMapping = await eventSC.methods
+        const typeIdentifier = getIdAsBigNumber(false, i);
+        const changed = await ticketMetadataChanged(eventSC, fromBlock, typeIdentifier);
+        if (changed) {
+          const exists = this.hasNonFungibleTicketType(i);
+          let ticketType = exists ? exists : new NonFungibleTicketType(this.contractAddress, i);
+          const ticketMapping = await eventSC.methods
           .ticketTypeMeta(getIdAsBigNumber(true, i).toFixed())
           .call();
-        ticketType.price = ticketMapping.price;
-        ticketType.ticketsSold = ticketMapping.ticketsSold;
-        ticketType.supply = ticketMapping.supply;
-        const granularity = await eventSC.methods.granularity().call();
-        ticketType.aftermarketGranularity = granularity;
-        for (let j = 1; j <= ticketType.supply; j++) {
-          const ticketId = getIdAsBigNumber(true, i, j).toFixed();
-          let ticket = new NonFungibleTicket(ticketType, j);
-          const owner = await eventSC.methods.nfOwners(ticketId).call();
-          ticket.owner = owner;
-          const sellOrder = await eventSC.methods.nfTickets(ticketId).call();
-          ticket.sellOrder = sellOrder;
-          ticketType.tickets.push(ticket);
+          ticketType.price = ticketMapping.price;
+          ticketType.ticketsSold = ticketMapping.ticketsSold;
+          ticketType.supply = ticketMapping.supply;
+          const granularity = await eventSC.methods.granularity().call();
+          ticketType.aftermarketGranularity = granularity;
+          for (let j = 1; j <= ticketType.supply; j++) {
+            const ticketId = getIdAsBigNumber(true, i, j).toFixed();
+            let ticket = new NonFungibleTicket(ticketType, j);
+            const owner = await eventSC.methods.nfOwners(ticketId).call();
+            ticket.owner = owner;
+            const sellOrder = await eventSC.methods.nfTickets(ticketId).call();
+            ticket.sellOrder = sellOrder;
+            ticketType.tickets.push(ticket);
+          }
+          await fetchIpfsHash(ticketType, web3Instance, ABI);
+          await loadIPFSMetadata(ticketType, ipfsInstance);
+  
+          await loadSellOrders(ticketType, web3Instance, ABI);
+          await loadBuyOrders(ticketType, web3Instance, ABI);
+          if (!exists) {
+            this.nonFungibleTickets.push(ticketType);
+          }
+        } else {
+          console.log('nonfungible Tickets did not change')
         }
-        await ticketType.fetchIpfsHash(web3Instance, ABI);
-        await ticketType.loadIPFSMetadata(ipfsInstance);
-
-        await ticketType.loadSellOrders(web3Instance, ABI);
-        await ticketType.loadBuyOrders(web3Instance, ABI);
-        this.nonFungibleTickets.push(ticketType);
+        
+        
       }
     }
   }

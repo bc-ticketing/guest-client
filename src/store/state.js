@@ -9,6 +9,7 @@ let state = {
     account: null,
     balance: null,
     error: null,
+    currentBlock: null,
   },
   eventAddresses: [],
   events: [],
@@ -16,5 +17,6 @@ let state = {
   ipfsInstance: null,
   user: {},
   shoppingCart: new ShoppingCart(),
+  lastFetchedBlock: 1,
 };
 export default state;

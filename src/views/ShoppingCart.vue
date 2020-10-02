@@ -1,6 +1,6 @@
 <template>
   <div class="checkout">
-    <div class="buy-category fungibles">
+    <div class="buy-category fungibles" v-if="$store.state.shoppingCart.fungibleTickets.length > 0">
       <h2>Fungible Tickets</h2>
       <div
         class="ticket"
@@ -12,6 +12,10 @@
             <span class="title">{{ selection.ticket.title }}</span>
             <span class="price">{{ selection.ticket.price }} ETH</span>
             <span class="amount">{{ selection.amount}} Tickets</span>
+          </div>
+
+          <div class="remove" @click="removeTicket(index, true)">
+            <md-icon>delete</md-icon>
           </div>
 
         </div>
@@ -48,18 +52,22 @@
         </div> -->
       </div>
     </div>
-    <div class="buy-category nonfungibles">
+    <div class="buy-category nonfungibles" v-if="$store.state.shoppingCart.nonFungibleTickets.length > 0">
       <h2>Non Fungible Tickets</h2>
       <div
         class="ticket"
-        v-for="(selection, index) in $store.state.shoppingCart.nonfungibleTickets"
+        v-for="(selection, index) in $store.state.shoppingCart.nonFungibleTickets"
         v-bind:key="'nonfungible_' + index"
       >
         <div class="direct-buy">
           <div class="header-line">
-            <span class="title">{{ selection.ticket.ticketType.title }}</span>
+            <span class="title">{{ selection.ticket.ticketType.title }} - Seat Nr {{selection.ticket.ticketId}}</span>
             <span class="price">{{ selection.ticket.ticketType.price }} ETH</span>
-            <span class="status">{{ selection.ticket.isFree() }}</span>
+            <span class="status">{{ selection.ticket.isFree() ? 'Available' : 'Sold' }}</span>
+          </div>
+
+          <div class="remove" @click="removeTicket(index, false)">
+            <md-icon>delete</md-icon>
           </div>
           <!--
           <div class="buttons">
@@ -110,8 +118,9 @@
         -->
       </div>
     </div>
+    <div class="empty" v-if="$store.state.shoppingCart.fungibleTickets.length == 0">No items currently in Shopping Cart</div>
 
-    <div class="total">
+    <div class="total" v-if="$store.state.shoppingCart.fungibleTickets.length > 0">
       <span class="total"> Total: {{totalPrice}} ETH</span>
       <md-button class="md-raised" @click="checkout">Purchase</md-button>
     </div>
@@ -166,16 +175,10 @@ export default {
   components: {},
   data() {
     return {
-      aftermarketOrders: {
-        fungibleTickets: [],
-        nonfungibleTickets: [],
-      },
       totalPrice: 0,
     };
   },
   props: {
-    fungibleTickets: Array,
-    nonfungibleTickets: Array,
   },
   beforeCreate: function() {
     this.$root.$on('shoppingCartChanged', async () => {
@@ -268,6 +271,10 @@ export default {
     checkout() {
       this.$store.state.shoppingCart.checkout(this.$store.state.web3.web3Instance, this.$store.state.user.account);
     },
+    async removeTicket(index, fungible) {
+      await this.$store.dispatch('removeTicketFromCart', {index: index, fungible: fungible});
+      this.calculateTotalPrice();
+    },
     calculateTotalPrice() {
       let totalPrice = 0;
       this.$store.state.shoppingCart.fungibleTickets.forEach((selection) => {
@@ -344,6 +351,12 @@ export default {
 </script>
 
 <style scoped>
+
+.empty {
+  margin-top: 3rem;
+}
+
+
 .ticket {
   margin-bottom: 1rem;
 }
@@ -382,6 +395,9 @@ export default {
 }
 .infos span {
   display: block;
+}
+.remove {
+  cursor: pointer;
 }
 
 </style>
