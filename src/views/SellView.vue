@@ -39,6 +39,15 @@
 </template>
 
 <script>
+import {
+  getLowestSellOrder,
+  getHighestBuyOrder,
+  makeSellOrderFungible,
+  makeSellOrderNonFungible,
+  fillBuyOrderNonFungible,
+  fillBuyOrderFungible
+  } from './../util/tickets';
+
 export default {
   name: "SellView",
   components: {},
@@ -51,7 +60,7 @@ export default {
   props: {
     ticketId: Number,
     ticketTypeId: Number,
-    eventContract: String,
+    eventContractAddress: String,
     isNf: Boolean,
     open: Boolean,
   },
@@ -59,7 +68,7 @@ export default {
   mounted: function() {},
   computed: {
     event() {
-      return this.$store.state.events.find(e => e.contractAddress === this.eventContract);
+      return this.$store.state.events.find(e => e.contractAddress === this.eventContractAddress);
     },
     ticket() {
       if(!this.event) {return undefined;}
@@ -132,17 +141,20 @@ export default {
         makeSellOrderNonFungible(
           this.ticketType,
           this.ticket,
-          this.$store.state.web3.web3Instance,
           this.percentage,
-          this.$store.state.user.account
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.eventContractAddress
         );
       } else {
         makeSellOrderFungible(
           this.ticketType,
-          this.$store.state.web3.web3Instance,
           this.amount,
           this.percentage,
-          this.$store.state.user.account
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.eventContractAddress,
+
         );
       }
       //this.$store.state.user.makeSellOrderFungible(this.$store.state.web3.web3Instance, this.activeTicket.ticketType, 100, 1);
@@ -152,18 +164,19 @@ export default {
         fillBuyOrderNonFungible(
           this.ticketType,
           this.ticket,
+          this.highestBuyOrder,
+          this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
-          [this.ticket],
-          [this.highestBuyOrder],
-          this.$store.state.user.account
+          this.eventContractAddress,
         );
       } else {
         fillBuyOrderFungible(
           this.ticketType,
-          this.$store.state.web3.web3Instance,
           1,
           this.highestBuyOrder,
-          this.$store.state.user.account
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.eventContractAddress,
         );
       }
     },

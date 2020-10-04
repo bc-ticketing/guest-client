@@ -44,6 +44,15 @@ export async function loadSellOrders(ticket, web3Instance, ABI) {
   return ticket;
 }
 
+export function hasSellOrder(ticket) {
+  if(!ticket.isNf) {
+    return Object.keys(ticket.sellOrders).length === 0 && ticket.sellOrders.constructor === Object
+  } else {
+    return new BigNumber(ticket.sellOrder.userAddress).isZero() ? false : true;
+  }
+  
+}
+
 export function getHighestBuyOrder(ticket) {
   for (const [key, value] of Object.entries(ticket.buyOrders)) {
     if (value > 0) {
@@ -70,86 +79,116 @@ export function ticketsAvailable(ticket) {
   return ticket.ticketsSold < ticket.supply;
 }
 
-export async function makeBuyOrder(
-  ticket,
-  web3Instance,
+
+
+/* BUY ORDERS */
+export async function makeBuyOrderFungible(
+  ticketType,
   amount,
   percentage,
-  account
+  price,
+  account,
+  web3Instance,
+  eventContractAddress
 ) {
-  console.log(`creating buy order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Ticket: ${getFullTicketTypeId(ticket)}\n
-    Amount: ${amount}\n
-    Percentage: ${percentage}\n
-    Price: ${amount *
-      web3Instance.utils.toWei(
-        String(Math.floor(ticket.price * (percentage / 100)))
-      )}`);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
+    eventContractAddress
   );
+  console.log(ticketType);
   const result = await contract.methods
-    .makeBuyOrder(getFullTicketTypeId(ticket), amount, percentage)
+    .makeBuyOrder(getFullTicketTypeId(false,ticketType), amount, percentage)
     .send({
       from: account,
       value:
         amount *
         web3Instance.utils.toWei(
-          String(Math.floor(ticket.price * (percentage / 100)))
+          String(Math.floor(price * (percentage / 100)))
         ),
     });
   console.log(result);
 }
 
-export async function fillBuyOrder(
-  ticket,
-  web3Instance,
+export async function makeBuyOrderNonFungible(
+  ticketType,
   amount,
   percentage,
-  account
+  price,
+  account,
+  web3Instance,
+  eventContractAddress
 ) {
-  console.log(`Filling buy order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Ticket: ${ticket.getFullTicketId()}\n
-    Amount: ${amount}\n
-    Percentage: ${percentage}\n
-    Price: ${amount *
-      web3Instance.utils.toWei(
-        String(Math.floor(ticket.price * (percentage / 100)))
-      )}`);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
+    eventContractAddress
   );
   const result = await contract.methods
-    .fillBuyOrderFungibles(ticket.getFullTicketId(), amount, percentage)
+    .makeBuyOrder(getFullTicketTypeId(true, ticketType), amount, percentage)
+    .send({
+      from: account,
+      value:
+        amount *
+        web3Instance.utils.toWei(
+          String(Math.floor(price * (percentage / 100)))
+        ),
+    });
+  console.log(result);
+}
+
+export async function fillBuyOrderFungible(
+  ticketType,
+  amount,
+  percentage,
+  account,
+  web3Instance,
+  eventContractAddress
+) {
+  const contract = new web3Instance.eth.Contract(
+    EVENT_MINTABLE_AFTERMARKET_ABI,
+    eventContractAddress
+  );
+  const result = await contract.methods
+    .fillBuyOrderFungibles(getFullTicketTypeId(false, ticketType), amount, percentage)
+    .send({
+      from: account,
+    });
+  console.log(result);
+}
+export async function fillBuyOrderNonFungibles(
+  ticketType,
+  ticketId,
+  percentage,
+  account,
+  web3Instance,
+  eventContractAddress
+) {
+  const contract = new web3Instance.eth.Contract(
+    EVENT_MINTABLE_AFTERMARKET_ABI,
+    eventContractAddress
+  );
+  const result = await contract.methods
+    .fillBuyOrderNonFungibles([getFullTicketId(ticketType, ticketId)], [percentage])
     .send({
       from: account,
     });
   console.log(result);
 }
 
+/* SELL ORDERS */
 export async function makeSellOrderFungible(
   ticketType,
-  web3Instance,
   amount,
   percentage,
-  account
+  account,
+  web3Instance,
+  eventContractAddress
 ) {
-  console.log(`Making sell order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Ticket: ${getFullTicketTypeId(ticketType)}\n
-    Amount: ${amount}\n
-    Percentage: ${percentage}<n
-    From Account: ${account}`);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticketType.eventContractAddress
+    eventContractAddress
   );
   const result = await contract.methods
-    .makeSellOrderFungibles(getFullTicketTypeId(ticketType), amount, percentage)
+    .makeSellOrderFungibles(getFullTicketTypeId(true, ticketType), amount, percentage)
     .send({
       from: account,
     });
@@ -159,122 +198,84 @@ export async function makeSellOrderFungible(
 export async function makeSellOrderNonFungible(
   ticketType,
   ticket,
+  percentage,
+  account,
   web3Instance,
-  tickets,
-  percentages,
-  account
+  eventContractAddress
 ) {
-  console.log(`Making sell order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Tickets: ${tickets}\n
-    Percentages: ${percentages}\n
-    From Account: ${account}`);
-  const ticketIds = tickets.map((ticket) => getFullTicketId(ticket));
+  //const ticketIds = tickets.map((ticket) => getFullTicketId(ticket));
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
+    eventContractAddress
   );
   const result = await contract.methods
-    .makeSellOrderNonFungibles(ticketIds, percentages)
+    .makeSellOrderNonFungibles([getFullTicketId(ticketType, ticket)], [percentage])
     .send({
       from: account,
     });
   console.log(result);
 }
 
-export async function fillSellOrder(
-  ticket,
-  web3Instance,
+export async function fillSellOrderFungible(
+  ticketType,
   amount,
+  price,
   percentage,
-  account
+  account,
+  web3Instance,
+  eventContractAddress,
 ) {
-  console.log(`Filling sell order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Ticket: ${ticket.getFullTicketId()}\n
-    Amount: ${amount}\n
-    Percentage: ${percentage}<n
-    From Account: ${account}`);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
+    eventContractAddress
   );
   var result = await contract.methods
-    .fillSellOrderFungibles(ticket.getFullTicketId(), amount, percentage)
+    .fillSellOrderFungibles(getFullTicketId(ticketType), amount, percentage)
     .send({
       from: account,
       value:
         amount *
         web3Instance.utils.toWei(
-          String(Math.floor(ticket.price * (percentage / 100)))
+          String(Math.floor(price * (percentage / 100)))
         ),
     });
   console.log(result);
 }
 
-export async function fillBuyOrderNonFungible(
+export async function fillSellOrderNonFungible(
   ticketType,
   ticket,
+  percentage,
+  price,
+  account,
   web3Instance,
-  tickets,
-  percentages,
-  account
+  eventContractAddress
 ) {
-  console.log(`Filling buy order: \n
-    Event: ${ticketType.eventContractAddress}\n
-    Tickets: ${tickets}\n
-    Percentage: ${percentages}`);
-  const ticketIds = tickets.map((ticket) => getFullTicketId(ticket));
+  //const reducer = (total, ticket, index) =>
+    //total + Math.floor(ticket.ticketType.price * percentages[index]);
+  //const total = web3Instance.utils.toWei(String(tickets.reduce(reducer)));
+  //const ticketIds = tickets.map((ticket) => ticket.getFullTicketId());
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
-  );
-  const result = await contract.methods
-    .fillBuyOrderNonFungibles(ticketIds, percentages)
-    .send({
-      from: account,
-    });
-  console.log(result);
-}
-
-
-
-export async function fillSellOrderNonFungible(
-  ticket,
-  web3Instance,
-  tickets,
-  percentages,
-  account
-) {
-  console.log(`Filling sell order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Tickets: ${tickets}\n
-    Percentages: ${percentages}\n
-    From Account: ${account}`);
-  const reducer = (total, ticket, index) =>
-    total + Math.floor(ticket.ticketType.price * percentages[index]);
-  const total = web3Instance.urils.toWei(String(tickets.reduce(reducer)));
-  const ticketIds = tickets.map((ticket) => ticket.getFullTicketId());
-  const contract = new web3Instance.eth.Contract(
-    EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
+    eventContractAddress
   );
   var result = await contract.methods
-    .fillSellOrderFungibles(ticketIds, percentages)
+    .fillSellOrderFungibles([getFullTicketId(ticketType, ticket)], [percentage])
     .send({
       from: account,
-      value: total,
+      value: web3Instance.utils.toWei(price * percentage)
     });
   console.log(result);
 }
 
+/* BUY DIRECTLY */
 export async function buyFungible(ticket, amount, web3Instance, ABI, account){
   const eventSC = new web3Instance.eth.Contract(
     ABI,
     ticket.eventContractAddress
   );
   const result = await eventSC.methods
-      .mintFungible(getFullTicketTypeId(ticket), amount)
+      .mintFungible(getFullTicketTypeId(false, ticket), amount)
       .send({
         from: account,
         value: amount * web3Instance.utils.toWei(ticket.price),
@@ -328,7 +329,7 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
     ticket.eventContractAddress
   );
   const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
-    filter: { ticketTypeId: getFullTicketTypeId(ticket) },
+    filter: { ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId) },
     fromBlock: 1,
   });
   if (ticketMetadata.length < 1) {
@@ -344,22 +345,20 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
   return ticket;
 }
 
-export function getFullTicketTypeId(ticket) {
-  return getIdAsBigNumber(ticket.isNf, ticket.typeId).toFixed();
+export function getFullTicketTypeId(isNf, typeId) {
+  return getIdAsBigNumber(isNf, typeId).toFixed();
 }
 
 export function getFullTicketId(ticket, ticketTypeId) {
   // return nonFungibleBaseId.plus(ticket.ticketTypeId).plus(ticket.ticketId)
-  return getIdAsBigNumber(true, ticketTypeId, ticket.ticketId).toFixed();
+  return getIdAsBigNumber(true, ticketTypeId, ticket).toFixed();
 }
 
 export function isFree(ticket) {
   return ticket.owner === NULL_ADDRESS;
 }
 
-export function hasSellOrder(ticket) {
-  return new BigNumber(ticket.sellOrder.userAddress).isZero() ? false : true;
-}
+
 
 export class FungibleTicketType {
   constructor(eventContractAddress, typeId) {

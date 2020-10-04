@@ -84,6 +84,8 @@ export default {
         } else {
           return this.$store.state.user.getNumberFungibleOwned(this.eventContract, this.ticketTypeId);
         }
+      } else {
+        return 0;
       }
     },
     seat() {

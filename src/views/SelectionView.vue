@@ -18,34 +18,41 @@
             <md-icon>add_circle</md-icon>
           </div>
         </div>
-        <div v-if="nfSold && !nfForSale">
-          This Ticket has already been sold, you can create an aftermarket listing if you want to queue up for it.
+        <div v-if="available && !nfForSale">
+          This Ticket has already been sold, you can create an aftermarket
+          listing if you want to queue up for it.
         </div>
         <div v-if="fSoldOut">
-          This Ticket Category is sold out, you can create an aftermarket listing if you want to queue up for it. 
+          This Ticket Category is sold out, you can create an aftermarket
+          listing if you want to queue up for it.
         </div>
-        <md-button v-if="available" class="md-raised" @click="addToCart">Add To Cart</md-button>
+        <md-button v-if="available" class="md-raised" @click="addToCart"
+          >Add To Cart</md-button
+        >
       </div>
       <hr />
       <div class="group">
-         <div class="percentage-selection">
-            <input
-              type="range"
-              :min="getStepSize(granularity)"
-              max="100"
-              :step="getStepSize(granularity)"
-              v-model.number="percentage"
-            />
-            {{ percentage }}
-            %
-          </div>
+        <div class="percentage-selection">
+          <input
+            type="range"
+            :min="getStepSize(granularity)"
+            max="100"
+            :step="getStepSize(granularity)"
+            v-model.number="percentage"
+          />
+          {{ percentage }}
+          %
+        </div>
         <md-button class="md-raised" @click="createBuyOrder"
           >Create Aftermarket Listing</md-button
         >
       </div>
       <hr />
-      <div class="group" v-if="hasSellOrders">
-        <p>{{lowestSellOrderAmount}} Available on the aftermarket for {{lowestSellOrder}}%</p>
+      <div class="group" v-if="ticketHasSellOrders">
+        <p>
+          {{ lowestSellOrderAmount }} Available on the aftermarket for
+          {{ lowestSellOrder }}%
+        </p>
         <md-button class="md-raised" @click="fillSellOrder"
           >Buy from Aftermarket</md-button
         >
@@ -55,16 +62,12 @@
 </template>
 
 <script>
-
 import {
-  makeBuyOrder,
-  ticketsAvailable, 
-  isFree, 
-  hasSellOrder, 
-  hasSellOrders, 
-  getLowestSellOrder, 
-  getHighestBuyOrder
-} from './../util/tickets'
+  fillSellOrderFungible,
+  fillSellOrderNonFungible,
+  makeBuyOrderNonFungible,
+  makeBuyOrderFungible,
+} from "./../util/tickets";
 
 export default {
   name: "SelectionView",
@@ -77,50 +80,72 @@ export default {
   },
   props: {
     selection: Object,
+    eventContractAddress: String,
     open: Boolean,
+    price: Number,
   },
   beforeCreate: function() {},
   mounted: function() {},
   computed: {
-    granularity() {
-      return this.selection.ticket.isNf ? this.selection.ticket.ticketType.aftermarketGranularity : this.selection.ticket.aftermarketGranularity;
+    event() {
+      return this.$store.state.events.find(
+        (e) => e.contractAddress === this.eventContractAddress
+      );
     },
-    hasSellOrders() {
-      if (!this.selection.active) {return false;}
-      if (this.selection.ticket.isNf) {
-        return hasSellOrder(this.selection.ticket);
+    granularity() {
+      if (!this.event) {
+        return 1;
       }
-      return Object.getOwnPropertyNames(this.selection.ticket.sellOrders).length > 1;
+      return this.event.getGranularity(this.selection.ticketType);
+    },
+    ticketHasSellOrders() {
+      if (!this.event) {
+        return false;
+      }
+      if (this.selection.isNf) {
+        return this.event.hasSellOrders(
+          this.selection.ticketType,
+          this.selection.ticket
+        );
+      }
+      return this.event.hasSellOrders(this.selection.ticketType);
     },
     lowestSellOrder() {
-      if (!this.selection.active) {return 0;}
-      if (this.selection.ticket.isNf) {
-        if (hasSellOrder(this.selection.ticket)) { return this.selection.ticket.sellOrder.percentage;}
-        return 0;
+      if (!this.event) {
+        return false;
       }
-      return getLowestSellOrder(this.selection.ticket).queue;
+      if (this.selection.isNf) {
+        return this.event.getLowestSellOrder(
+          this.selection.ticketType,
+          this.selection.ticket
+        ).queue;
+      }
+      return this.event.getLowestSellOrder(this.selection.ticketType).queue;
     },
     lowestSellOrderAmount() {
-      if (!this.selection.active) {return 0;}
-      if (this.selection.ticket.isNf) {return 1;}
-      return getLowestSellOrder(this.selection.ticket).amount;
-    },
-    nfSold() {
-      return this.selection.active && this.selection.ticket.isNf && !isFree(this.selection.ticket);
-    },
-    nfForSale() {
-      return this.selection.active && hasSellOrder(this.selection.ticket);
-    },
-    fSoldOut() {
-      return this.selection.active && !this.selection.ticket.isNf && !ticketsAvailable(this.selection.ticket);
+      if (!this.event) {
+        return false;
+      }
+      return this.event.getLowestSellOrder(this.selection.ticket).amount;
     },
     available() {
-      return this.selection.active && (
-        (!this.selection.ticket.isNf && ticketsAvailable(this.selection.ticket)) 
-        || 
-        (this.selection.ticket.isNf && isFree(this.selection.ticket))
-        )
-    }
+      if (!this.event) {
+        return false;
+      }
+      return !this.event.isAvailable(this.selection.ticketType, this.selection.ticket);
+    },
+    nfForSale() {
+      if (!this.event) {
+        return false;
+      }
+      return  this.event.hasSellOrders(this.selection.ticketType, this.selection.ticket);
+    },
+    fSoldOut() {
+      if (!this.event) {
+        return false;
+      }
+      return this.event.isAvailable(this.selection.ticketType);
+    },
   },
   methods: {
     changeSelectionAmount(amount) {
@@ -131,36 +156,56 @@ export default {
     },
     addToCart: async function() {
       await this.$store.dispatch("addTicketToCart", {
-        ticket: this.selection.ticket, 
-        amount: this.amount});
+        ticket: this.selection.ticket,
+        amount: this.amount,
+      });
       this.$root.$emit("shoppingCartChanged");
     },
     createBuyOrder: async function() {
       if (this.selection.ticket.isNf) {
-        await makeBuyOrder(
-          this.selection.ticket.ticketType,
-          this.$store.state.web3.web3Instance,
+        await makeBuyOrderNonFungible(
+          this.selection.ticketType,
           this.amount,
           this.percentage,
-          this.$store.state.user.account
+          this.price,
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.selection.eventContractAddress
         );
       } else {
-        await makeBuyOrder(
-          this.selection.ticket,
-          this.$store.state.web3.web3Instance,
+        await makeBuyOrderFungible(
+          this.selection.ticketType,
           this.amount,
           this.percentage,
-          this.$store.state.user.account
+          this.price,
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.selection.eventContractAddress
         );
       }
     },
     fillSellOrder: async function() {
-      await this.selection.ticket.fillSellOrder(
-          this.$store.state.web3.web3Instance,
-          this.amount,
+      if (this.selection.ticket.isNf) {
+        await fillSellOrderNonFungible(
+          this.selection.ticketType,
+          this.selection.ticket,
           this.lowestSellOrder,
-          this.$store.state.user.account
-      );
+          this.price,
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.selection.eventContractAddress
+        );
+      } else {
+        await fillSellOrderFungible(
+          this.selection.ticketType,
+          this.amount,
+          this.price,
+          this.lowestSellOrder,
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.lowestSellOrder
+        );
+      }
     },
     close: function() {
       this.$emit("close");
@@ -188,7 +233,6 @@ export default {
   position: relative;
   padding: 2rem;
   padding-bottom: 4rem;
-
 }
 
 .amount-selection {

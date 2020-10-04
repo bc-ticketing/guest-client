@@ -6,10 +6,11 @@ import {
 } from "./tickets";
 import axios from "axios";
 import { ticketMetadataChanged } from "./blockchainEventHandler";
+import NULL_ADDRESS from './constants/constants';
 
 import {fetchIpfsHash, loadIPFSMetadata, loadSellOrders, loadBuyOrders} from './tickets'
 
-//const BigNumber = require("bignumber.js");
+const BigNumber = require("bignumber.js");
 
 export class Event {
   constructor(contractAddress) {
@@ -66,6 +67,46 @@ export class Event {
     this.latlong = latlong;
   }
 
+  hasSellOrders(ticketType, ticket=false) {
+    let t;
+    if(!ticket) {
+      t = this.fungibleTickets.find(t => t.typeId === ticketType)
+      return Object.keys(t.sellOrders).length === 0 && t.sellOrders.constructor === Object
+    } else {
+      t = this.nonFungibleTickets.find(type => type.typeId === ticketType).tickets.find(ticket => ticket.ticketId === ticket);
+      return new BigNumber(t.sellOrder.userAddress).isZero() ? false : true;
+    }
+    
+  }
+
+  getLowestSellOrder(ticketType, ticket=false) {
+    let t;
+    if(!ticket) {
+      t = this.fungibleTickets.find(t => t.typeId === ticketType);
+      for (const [key, value] of Object.entries(ticket.sellOrders).reverse()) {
+        if (value > 0) {
+          return { queue: key, amount: value };
+        }
+      }
+    } else {
+      t = this.nonFungibleTickets.find(type => type.typeId === ticketType).tickets.find(ticket => ticket.ticketId === ticket);
+      return {queue: t.percentage, amount: 1};
+    }
+    return {queue: 0, amount: 0};
+  }
+
+  getGranularity(ticketType) {
+    return this.getTicketType(ticketType).aftermarketGranularity;
+  }
+
+  isAvailable(ticketType, ticket = false) {
+    if (!ticket) {
+      const t = this.fungibleTickets.find(t => t.typeId === ticketType);
+      return t.ticketsSold < t.supply;
+    }
+    return this.getNfTicket(ticketType, ticket).owner === NULL_ADDRESS;
+  }
+
   getTimeAndDate() {
     return `${this.date.getDay()}/${this.date.getMonth()}/${this.date.getFullYear()} - ${this.getTime()}`
   }
@@ -77,7 +118,6 @@ export class Event {
   }
 
   getTicketType(ticketTypeId) {
-    console.log('------------------ searching: '+ ticketTypeId);
     const foundFungible = this.fungibleTickets.find(t => t.typeId === ticketTypeId);
     if (foundFungible) {return foundFungible;}
     const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);

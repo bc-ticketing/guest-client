@@ -131,7 +131,11 @@
           </div>
         </div>
  
-          <SelectionView v-bind:selection="selection" v-bind:open="selection.active"
+          <SelectionView 
+          v-bind:selection="selection" 
+          v-bind:eventContractAddress="selection.eventContractAddress"
+          v-bind:open="selection.active"
+          v-bind:price="selection.price"
           v-on:close="clearSelection"></SelectionView>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
@@ -144,7 +148,7 @@
 <script>
 import ShoppingCart from './ShoppingCart';
 import SelectionView from './SelectionView';
-import {getLowestSellOrder, hasSellOrder, numberFreeSeats, isFree} from './../util/tickets';
+import {hasSellOrder, getLowestSellOrder, numberFreeSeats, isFree} from './../util/tickets';
 
 export default {
   name: "Event",
@@ -162,7 +166,11 @@ export default {
       navbarHeight: 0,
       selection: {
         active: false,
-        ticket: {},
+        ticket: 0,
+        price:0,
+        ticketType: 0,
+        eventContractAddress: '',
+        isNf: false,
       },
       //tickets: [{ name: "fungible", price: 50 }],
     };
@@ -205,7 +213,10 @@ export default {
     clearSelection() {
       this.selection = {
         active: false,
-        ticket: {},
+        ticket: 0,
+        price: 0,
+        ticketType: 0,
+        isNf: false,
         amount: 1,
       }
     },
@@ -241,7 +252,17 @@ export default {
       const ticket = this.findTicketIndex(col, row);
       this.selection.ticket = ticket;
       if (ticket.isNf) {
-        this.selection.ticket.ticketType = this.getTicketType(ticket);
+        this.selection.ticket = ticket.ticketId;
+        this.selection.ticketType = ticket.ticketTypeId;
+        this.selection.isNf = true;
+        this.selection.price = Number(ticket.ticketType.price);
+        this.selection.eventContractAddress = ticket.eventContractAddress;
+      } else {
+        this.selection.ticketType = ticket.typeId;
+        this.selection.ticket = '';
+        this.selection.price = Number(ticket.price),
+        this.selection.isNf = false;
+        this.selection.eventContractAddress = ticket.eventContractAddress;
       }
       this.selection.active = true;
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
