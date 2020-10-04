@@ -79,7 +79,7 @@ export async function makeBuyOrder(
 ) {
   console.log(`creating buy order: \n
     Event: ${ticket.eventContractAddress}\n
-    Ticket: ${ticket.getFullTicketId()}\n
+    Ticket: ${getFullTicketTypeId(ticket)}\n
     Amount: ${amount}\n
     Percentage: ${percentage}\n
     Price: ${amount *
@@ -91,7 +91,7 @@ export async function makeBuyOrder(
     ticket.eventContractAddress
   );
   const result = await contract.methods
-    .makeBuyOrder(ticket.getFullTicketId(), amount, percentage)
+    .makeBuyOrder(getFullTicketTypeId(ticket), amount, percentage)
     .send({
       from: account,
       value:
@@ -131,8 +131,8 @@ export async function fillBuyOrder(
   console.log(result);
 }
 
-export async function makeSellOrder(
-  ticket,
+export async function makeSellOrderFungible(
+  ticketType,
   web3Instance,
   amount,
   percentage,
@@ -140,16 +140,42 @@ export async function makeSellOrder(
 ) {
   console.log(`Making sell order: \n
     Event: ${ticket.eventContractAddress}\n
-    Ticket: ${ticket.getFullTicketId()}\n
+    Ticket: ${getFullTicketTypeId(ticketType)}\n
     Amount: ${amount}\n
     Percentage: ${percentage}<n
     From Account: ${account}`);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
+    ticketType.eventContractAddress
+  );
+  const result = await contract.methods
+    .makeSellOrderFungibles(getFullTicketTypeId(ticketType), amount, percentage)
+    .send({
+      from: account,
+    });
+  console.log(result);
+}
+
+export async function makeSellOrderNonFungible(
+  ticketType,
+  ticket,
+  web3Instance,
+  tickets,
+  percentages,
+  account
+) {
+  console.log(`Making sell order: \n
+    Event: ${ticket.eventContractAddress}\n
+    Tickets: ${tickets}\n
+    Percentages: ${percentages}\n
+    From Account: ${account}`);
+  const ticketIds = tickets.map((ticket) => getFullTicketId(ticket));
+  const contract = new web3Instance.eth.Contract(
+    EVENT_MINTABLE_AFTERMARKET_ABI,
     ticket.eventContractAddress
   );
   const result = await contract.methods
-    .makeSellOrderFungibles(ticket.getFullTicketId(), amount, percentage)
+    .makeSellOrderNonFungibles(ticketIds, percentages)
     .send({
       from: account,
     });
@@ -187,6 +213,7 @@ export async function fillSellOrder(
 }
 
 export async function fillBuyOrderNonFungible(
+  ticketType,
   ticket,
   web3Instance,
   tickets,
@@ -194,10 +221,10 @@ export async function fillBuyOrderNonFungible(
   account
 ) {
   console.log(`Filling buy order: \n
-    Event: ${ticket.eventContractAddress}\n
+    Event: ${ticketType.eventContractAddress}\n
     Tickets: ${tickets}\n
     Percentage: ${percentages}`);
-  const ticketIds = tickets.map((ticket) => ticket.getFullTicketId());
+  const ticketIds = tickets.map((ticket) => getFullTicketId(ticket));
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
     ticket.eventContractAddress
@@ -210,30 +237,7 @@ export async function fillBuyOrderNonFungible(
   console.log(result);
 }
 
-export async function makeSellOrderNonFungible(
-  ticket,
-  web3Instance,
-  tickets,
-  percentages,
-  account
-) {
-  console.log(`Making sell order: \n
-    Event: ${ticket.eventContractAddress}\n
-    Tickets: ${tickets}\n
-    Percentages: ${percentages}\n
-    From Account: ${account}`);
-  const ticketIds = tickets.map((ticket) => ticket.getFullTicketId());
-  const contract = new web3Instance.eth.Contract(
-    EVENT_MINTABLE_AFTERMARKET_ABI,
-    ticket.eventContractAddress
-  );
-  const result = await contract.methods
-    .makeSellOrderNonFungibles(ticketIds, percentages)
-    .send({
-      from: account,
-    });
-  console.log(result);
-}
+
 
 export async function fillSellOrderNonFungible(
   ticket,
@@ -264,39 +268,34 @@ export async function fillSellOrderNonFungible(
   console.log(result);
 }
 
-export async function buy(ticket, amount, web3Instance, ABI, account) {
-  console.log(`buying ticket \n
-    from account: ${account}\n
-    ticketType: ${ticket.typeId} \n
-    full ticket id: ${ticket.getFullTicketId()}\n
-    amount: ${amount}\n
-    price per ticket: ${ticket.price}\n
-    total price: ${amount * ticket.price}\n
-    price in wei: ${amount * web3Instance.utils.toWei(ticket.price)}`);
+export async function buyFungible(ticket, amount, web3Instance, ABI, account){
   const eventSC = new web3Instance.eth.Contract(
     ABI,
     ticket.eventContractAddress
   );
-  if (ticket.isNf) {
-    const result = await eventSC.methods
-      .mintNonFungibles([ticket.getFullTicketId()])
-      .send({
-        from: account,
-        value: web3Instance.utils.toWei(String(ticket.ticketType.price)),
-      });
-      console.log(result);
-
-  } else {
-    const result = await eventSC.methods
-      .mintFungible(ticket.getFullTicketId(), amount)
+  const result = await eventSC.methods
+      .mintFungible(getFullTicketTypeId(ticket), amount)
       .send({
         from: account,
         value: amount * web3Instance.utils.toWei(ticket.price),
       });
       console.log(result);
-
-  }
 }
+
+export async function buyNonFungible(ticket, web3Instance, ABI, account){
+  const eventSC = new web3Instance.eth.Contract(
+    ABI,
+    ticket.ticketType.eventContractAddress
+  );
+  const result = await eventSC.methods
+  .mintNonFungibles([getFullTicketId(ticket)])
+  .send({
+    from: account,
+    value: web3Instance.utils.toWei(String(ticket.ticketType.price)),
+  });
+  console.log(result);
+}
+
 
 export async function loadIPFSMetadata(ticket, ipfsInstance) {
   if (ticket.ipfsHash === "") {
@@ -349,9 +348,9 @@ export function getFullTicketTypeId(ticket) {
   return getIdAsBigNumber(ticket.isNf, ticket.typeId).toFixed();
 }
 
-export function getFullTicketId(ticket) {
+export function getFullTicketId(ticket, ticketTypeId) {
   // return nonFungibleBaseId.plus(ticket.ticketTypeId).plus(ticket.ticketId)
-  return getIdAsBigNumber(true, ticket.ticketTypeId, ticket.ticketId).toFixed();
+  return getIdAsBigNumber(true, ticketTypeId, ticket.ticketId).toFixed();
 }
 
 export function isFree(ticket) {

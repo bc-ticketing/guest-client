@@ -32,7 +32,7 @@ export default {
                     db.createObjectStore('blocks', {autoIncrement: true, keyPath: 'index'});
                 }
                 if (e.oldVersion < 3) {
-                    db.createObjectStore('userTickets', {autoIncrement: true, keyPath: 'index'});
+                    db.createObjectStore('userTickets', {autoIncrement: false, keyPath: 'address'});
                 }
             };
         });
@@ -175,16 +175,25 @@ export default {
 
         let trans = db.transaction(['userTickets'], 'readonly');
         trans.oncomplete = () => {
-            resolve(events);
+            console.log(userTickets)
+            resolve(userTickets);
         }
 
         let store = trans.objectStore('userTickets');
-        let userTickets = {};
+        let userTickets = {
+            fungibleTickets: [],
+            nonFungibleTickets: [],
+            address: address,
+        };
 
         store.openCursor().onsuccess = e => {
             let cursor = e.target.result;
             if (cursor) {
+                console.log(cursor.value.address);
+                console.log(address);
                 if (cursor.value.address === address){
+                    console.log('found entry');
+
                     userTickets = cursor.value;
                 }
                 cursor.continue();

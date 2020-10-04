@@ -3,19 +3,19 @@
     <div
       class="ticket-img"
       :style="{
-        backgroundImage: `url(${event.img_url})`,
-        backgroundColor: `${event.color}`,
+        backgroundImage: `url(${eventImage})`,
+        backgroundColor: `${eventColor}`,
       }"
     ></div>
     <div class="ticket-content">
       <div class="event-title">
-        <h3>{{ event.title }}</h3>
+        <h3>{{ eventTitle }}</h3>
         <span class="date">
           {{ timeAndDate }}
         </span>
       </div>
       <div class="ticket-info">
-        <h3>{{ title }}</h3>
+        <h3>{{ ticketTitle }}</h3>
         <p v-if="isNf">Non Fungible</p>
         <p v-if="!isNf">Fungible</p>
         <p v-if="isNf">Seat Number: {{ seat }}</p>
@@ -33,7 +33,9 @@ export default {
     };
   },
   props: {
-    ticket: Object,
+    ticketTypeId: Number,
+    ticketId: Number,
+    eventContract: String,
   },
   watch: {
   },
@@ -46,51 +48,46 @@ export default {
     },
   },
   computed: {
+    eventImage() {
+      return this.event ? this.event.img_url : '';
+    },
+    eventColor() {
+      return this.event ? this.event.color : '';
+
+    },
+    eventTitle() {
+      return this.event ? this.event.title : '';
+    },
     event() {
-       if (
-        Object.keys(this.ticket).length === 0 &&
-        this.ticket.constructor === Object
-      ) {
-        return {};
-      }
-      const event = this.$store.state.events.filter(
-        (event) =>
-          event.contractAddress === this.ticket.ticketType.eventContractAddress
-      )[0];
-      return event === undefined ? {} : event;
+      console.log(this.$store.state.events);
+      return this.$store.state.events.find(e => e.contractAddress === this.eventContract);
+    },
+    ticket() {
+      return this.event ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
+    },
+    ticketType() {
+      return this.event ? this.event.getTicketType(this.ticketTypeId) : undefined;
     },
     timeAndDate() {
-      try {
-        return event.getTimeAndDate();
-      } catch (error) {
-        return "";
-      }
+      return this.event ? this.event.getTimeAndDate() : '';
     },
-    title() {
-      if (
-        Object.keys(this.ticket).length === 0 &&
-        this.ticket.constructor === Object
-      ) {
-        return "";
-      }
-      return this.ticket.ticketType.getTitle();
+    ticketTitle() {
+      return this.ticketType ? this.ticketType.title : '';
     },
     isNf() {
-      if (
-        Object.keys(this.ticket).length === 0 &&
-        this.ticket.constructor === Object
-      ) {
-        return false;
-      }
-      return !this.ticket.isNf ? this.ticket.ticketType.isNf : this.ticket.isNf;
+      return this.ticketType ? this.ticketType.isNf : false;
     },
     amount() {
-      if(Object.keys(this.ticket).length === 0 && this.ticket.constructor === Object) {return 0;}
-      return !this.ticket.isNf ? this.ticket.amount : 1;
+      if(this.ticketType) {
+        if (this.isNf) {
+          return this.ticket ? this.$store.state.user.nonFungibleTickets.filter(t => t.ticketTypeID == this.ticketTypeId).length : 0;
+        } else {
+          return this.$store.state.user.getNumberFungibleOwned(this.eventContract, this.ticketTypeId);
+        }
+      }
     },
     seat() {
-      if(Object.keys(this.ticket).length === 0 && this.ticket.constructor === Object) {return 0;}
-      return !this.ticket.isNf ? 0 : this.ticket.ticketId;
+      return this.ticket ? this.ticket.ticketId : 0;
     },
   },
   mounted: function() {

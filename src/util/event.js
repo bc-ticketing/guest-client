@@ -48,9 +48,16 @@ export class Event {
   }
 
   async fetchPosition() {
-    let response = await axios.get(
+    let response;
+    try {
+    response = await axios.get(
       `https://api.opencagedata.com/geocode/v1/json?q=${this.location}&key=9b5c0f0e97664b69baf8d617c4d0f1c6&language=en&pretty=1`
-    );
+    ); 
+    }
+    catch (e) {
+      this.latlong = '';
+      return;
+    }
     var first = response.data.results[0];
     var latlong = {
       lat: first.geometry.lat,
@@ -67,6 +74,21 @@ export class Event {
     let lowestFungible = Math.min(this.fungibleTickets.map(ticket => Number(ticket.price)));
     let lowestNonFungible = Math.min(this.nonFungibleTickets.map(ticket => Number(ticket.price)));
     return Math.min(lowestFungible, lowestNonFungible);
+  }
+
+  getTicketType(ticketTypeId) {
+    console.log('------------------ searching: '+ ticketTypeId);
+    const foundFungible = this.fungibleTickets.find(t => t.typeId === ticketTypeId);
+    if (foundFungible) {return foundFungible;}
+    const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
+    return foundNonFungible;
+  }
+
+  getNfTicket(ticketTypeId, ticketId) {
+    const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
+    if (foundNonFungible) {
+      return foundNonFungible.tickets.find(t => t.ticketId === ticketId);
+    }
   }
 
   async loadData(ABI, ipfsInstance, web3Instance) {
@@ -178,7 +200,7 @@ export class Event {
           ticketType.aftermarketGranularity = granularity;
           for (let j = 1; j <= ticketType.supply; j++) {
             const ticketId = getIdAsBigNumber(true, i, j).toFixed();
-            let ticket = new NonFungibleTicket(ticketType, j);
+            let ticket = new NonFungibleTicket(ticketType, i, j);
             const owner = await eventSC.methods.nfOwners(ticketId).call();
             ticket.owner = owner;
             const sellOrder = await eventSC.methods.nfTickets(ticketId).call();

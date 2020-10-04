@@ -55,6 +55,17 @@
 </template>
 
 <script>
+
+import {
+  makeBuyOrder,
+  ticketsAvailable, 
+  isFree, 
+  hasSellOrder, 
+  hasSellOrders, 
+  getLowestSellOrder, 
+  getHighestBuyOrder
+} from './../util/tickets'
+
 export default {
   name: "SelectionView",
   components: {},
@@ -77,34 +88,38 @@ export default {
     hasSellOrders() {
       if (!this.selection.active) {return false;}
       if (this.selection.ticket.isNf) {
-        return this.selection.ticket.hasSellOrder();
+        return hasSellOrder(this.selection.ticket);
       }
       return Object.getOwnPropertyNames(this.selection.ticket.sellOrders).length > 1;
     },
     lowestSellOrder() {
       if (!this.selection.active) {return 0;}
       if (this.selection.ticket.isNf) {
-        if (this.selection.ticket.hasSellOrder()) { return this.selection.ticket.sellOrder.percentage;}
+        if (hasSellOrder(this.selection.ticket)) { return this.selection.ticket.sellOrder.percentage;}
         return 0;
       }
-      return this.selection.ticket.getLowestSellOrder().queue;
+      return getLowestSellOrder(this.selection.ticket).queue;
     },
     lowestSellOrderAmount() {
       if (!this.selection.active) {return 0;}
       if (this.selection.ticket.isNf) {return 1;}
-      return this.selection.ticket.getLowestSellOrder().amount;
+      return getLowestSellOrder(this.selection.ticket).amount;
     },
     nfSold() {
-      return this.selection.active && this.selection.ticket.isNf && !this.selection.ticket.isFree();
+      return this.selection.active && this.selection.ticket.isNf && !isFree(this.selection.ticket);
     },
     nfForSale() {
-      return this.selection.active && this.selection.ticket.hasSellOrder();
+      return this.selection.active && hasSellOrder(this.selection.ticket);
     },
     fSoldOut() {
-      return this.selection.active && !this.selection.ticket.isNf && !this.selection.ticket.isFree();
+      return this.selection.active && !this.selection.ticket.isNf && !ticketsAvailable(this.selection.ticket);
     },
     available() {
-      return this.selection.active && this.selection.ticket.isFree()
+      return this.selection.active && (
+        (!this.selection.ticket.isNf && ticketsAvailable(this.selection.ticket)) 
+        || 
+        (this.selection.ticket.isNf && isFree(this.selection.ticket))
+        )
     }
   },
   methods: {
@@ -122,14 +137,16 @@ export default {
     },
     createBuyOrder: async function() {
       if (this.selection.ticket.isNf) {
-        await this.selection.ticket.ticketType.makeBuyOrder(
+        await makeBuyOrder(
+          this.selection.ticket.ticketType,
           this.$store.state.web3.web3Instance,
           this.amount,
           this.percentage,
           this.$store.state.user.account
         );
       } else {
-        await this.selection.ticket.makeBuyOrder(
+        await makeBuyOrder(
+          this.selection.ticket,
           this.$store.state.web3.web3Instance,
           this.amount,
           this.percentage,

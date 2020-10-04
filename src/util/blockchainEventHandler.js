@@ -26,7 +26,9 @@ Mintable:
     event MintNonFungibles(address indexed owner, uint256[] ids);
 */
 
+
 async function getEvents(contract, name, fromBlock) {
+    console.log(fromBlock);
     return await contract.getPastEvents(name, {fromBlock: fromBlock});
 }
 async function getLatestEvent(contract, name, fromBlock) {
@@ -54,23 +56,40 @@ export async function ticketMetadataChanged(contract, fromBlock, ticketId) {
 
 
 /* aftermarket */
-export async function ticketTransferred(contract, fromBlock, filter = 0, filterValue = '') {
+export async function ticketTransferred(contract, fromBlock, filter = '', filterValue = '') {
+    let events;
     if (filter == '') {
-        const events = await getEvents(contract, 'TicketTransferred', fromBlock: fromBlock); 
+        events = await contract.getPastEvents('TicketTransferred', fromBlock); 
     } else if(filter === 'seller') {
-        const events = await getEvents(contract, 'TicketTransferred', {
+        events = await contract.getPastEvents('TicketTransferred', {
             fromBlock: fromBlock,
             filter: {seller: filterValue}
         });  
     } else {
-        const events = await getEvents(contract, 'TicketTransferred', {
+        events = await contract.getPastEvents('TicketTransferred', {
             fromBlock: fromBlock,
             filter: {buyer: filterValue}
         }); 
     }
-    
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
+
+export async function MintFungibles(contract, fromBlock, address) {
+    const events = await contract.getPastEvents('MintFungibles',{
+        fromBlock: fromBlock,
+        filter: {owner: address}
+    });
+    return events.length > 0 ? events : [];
+}
+
+export async function MintNonFungibles(contract, fromBlock, address) {
+    const events = await contract.getPastEvents('MintNonFungibles',{
+        fromBlock: fromBlock,
+        filter: {owner: address}
+    });
+    return events.length > 0 ? events : [];
+}
+
 
 export async function BuyOrderPlaced(contract, fromBlock) {
     const events = await getEvents(contract, 'BuyOrderPlaced',fromBlock);
@@ -129,15 +148,7 @@ export async function BuyOrderWithdrawn(contract, fromBlock) {
 
 
 /* mintable */
-export async function MintFungibles(contract, fromBlock) {
-    const events = await getEvents(contract, 'MintFungibles',fromBlock);
-    return events.length > 0 ? events : false;
-}
 
-export async function MintNonFungibles(contract, fromBlock) {
-    const events = await getEvents(contract, 'MintNonFungibles',fromBlock);
-    return events.length > 0 ? events : false;
-}
 
 
 

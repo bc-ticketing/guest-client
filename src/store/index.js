@@ -6,11 +6,11 @@ import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import getIpfs from "./../util/ipfs/getIpfs";
-import {Event} from './../util/event';
-import {User} from './../util/User';
-import {ShoppingCart} from './../util/shoppingCart';
+import { Event } from "./../util/event";
+import { User } from "./../util/User";
+import { ShoppingCart } from "./../util/shoppingCart";
 
-import idb from './../util/db/idb';
+import idb from "./../util/db/idb";
 import { eventMetadataChanged } from "../util/blockchainEventHandler";
 //import { FungibleTicketType, NonFungibleTicketType, NonFungibleTicket } from "../util/tickets";
 
@@ -52,21 +52,26 @@ export default new Vuex.Store({
       state.userTickets = tickets;
     },
     setLastFetchedBlock(state, block) {
-      state.lastFetchedBlock = block.blockNumber;
-    }
+      state.lastFetchedBlock = block;
+    },
   },
   /* */
   actions: {
-    async getLastFetchedBlock( {commit}) {
+    async getLastFetchedBlock({ commit }) {
       const blocks = await idb.getBlocks();
-      console.log(blocks);
-      commit('setLastFetchedBlock', blocks.length > 0 ? blocks[0] : 1);
+      commit(
+        "setLastFetchedBlock",
+        blocks.length > 0 ? blocks[blocks.length - 1].blockNumber : 0
+      );
     },
-    async registerUser({commit}) {
-      commit('updateUserStore', new User(state.web3.account, state.web3.balance));
+    async registerUser({ commit }) {
+      commit(
+        "updateUserStore",
+        new User(state.web3.account, state.web3.balance)
+      );
     },
-    async createShoppingCart({commit}) {
-      commit('updateShoppingCartStore', new ShoppingCart());
+    async createShoppingCart({ commit }) {
+      commit("updateShoppingCartStore", new ShoppingCart());
     },
     async registerIpfs({ commit }) {
       const ipfs = await getIpfs();
@@ -88,19 +93,12 @@ export default new Vuex.Store({
       );
       commit("setEventFactory", eventFactory);
     },
-    async saveEvents({ commit }) {
-      console.log(state.events);
-      for (const event of state.events) {
-        console.log(event);
-        console.log('saving event');
-        console.log(await idb.saveEvent(event));
+    async saveFetchedBlockNumber({ commit }) {
+      console.log("saving block");
+      if (await idb.saveBlock(state.web3.currentBlock)) {
+        console.log("saved block");
+        commit("setLastFetchedBlock", state.web3.currentBlock);
       }
-      console.log('saving block');
-      if(await idb.saveBlock(state.web3.currentBlock)) {
-        console.log('saved block');
-        commit('setLastFetchedBlock', state.web3.currentBlock);
-      }
-      
     },
     async loadEvents({ commit }) {
       console.log("dispatched loadEvents Action");
@@ -110,11 +108,17 @@ export default new Vuex.Store({
       var events = [];
       for (let i = 0; i < eventAddresses.length; i++) {
         const address = eventAddresses[i];
-        const eventSC = new state.web3.web3Instance.eth.Contract(EVENT_MINTABLE_AFTERMARKET_ABI,address);
-        const changed = await eventMetadataChanged(eventSC, state.lastFetchedBlock+1); 
+        const eventSC = new state.web3.web3Instance.eth.Contract(
+          EVENT_MINTABLE_AFTERMARKET_ABI,
+          address
+        );
+        const changed = await eventMetadataChanged(
+          eventSC,
+          state.lastFetchedBlock + 1
+        );
         const inStore = await idb.getEvent(address);
-        if (changed){
-          let event;
+        let event;
+        if (changed) {
           if (!inStore) {
             try {
               event = new Event(address);
@@ -122,20 +126,26 @@ export default new Vuex.Store({
               console.log("could not get metadata for event");
             }
           } else {
-            console.log('event already in store');
+            console.log("event already in store");
             event = new Event(inStore);
           }
-          await event.loadData(EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance, state.web3.web3Instance);
+          await event.loadData(
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.ipfsInstance,
+            state.web3.web3Instance
+          );
           await event.fetchPosition();
-          if(!await idb.saveEvent(event)) {
-            console.log('could not save event to db');
+          if (!(await idb.saveEvent(event))) {
+            console.log("could not save event to db");
           }
-          events.push(event);
+          {
+            console.log("stored event to db");
+          }
         } else {
-          const event = new Event(inStore);
-          events.push(event);
-          console.log('nothing changed');
+          event = new Event(inStore);
+          console.log("nothing changed");
         }
+        events.push(event);
       }
       commit("updateEventStore", events);
     },
@@ -143,60 +153,81 @@ export default new Vuex.Store({
       console.log("dispatched loadFungibleTickets Action");
       for (const event of state.events) {
         try {
-          await event.loadFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance, state.lastFetchedBlock+1);
+          await event.loadFungibleTickets(
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.ipfsInstance,
+            state.lastFetchedBlock + 1
+          );
+          if (!(await idb.saveEvent(event))) {
+            console.log("could not save event to db");
+          }
+          {
+            console.log("stored event to db");
+          }
         } catch (error) {
           console.log(error);
         }
-      };
+      }
       commit("updateEventStore", state.events);
     },
     async loadNonFungibleTickets({ commit }) {
       console.log("dispatched loadNonFungibleTickets Action");
-        for (const event of state.events) {
+      for (const event of state.events) {
         try {
-        await event.loadNonFungibleTickets(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, state.ipfsInstance, state.lastFetchedBlock+1);
+          await event.loadNonFungibleTickets(
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.ipfsInstance,
+            state.lastFetchedBlock + 1
+          );
+          if (!(await idb.saveEvent(event))) {
+            console.log("could not save event to db");
+          }
+          {
+            console.log("stored event to db");
+          }
         } catch (error) {
           console.log(error);
         }
-      };
+      }
       commit("updateEventStore", state.events);
     },
-    async addTicketToCart({ commit}, selection) {
+    async addTicketToCart({ commit }, selection) {
       state.shoppingCart.add(selection);
-      commit('updateShoppingCartStore', state.shoppingCart);
+      commit("updateShoppingCartStore", state.shoppingCart);
     },
     async removeTicketFromCart({ commit }, toRemove) {
       state.shoppingCart.removeByIndex(toRemove.index, toRemove.fungible);
-      commit('updateShoppingCartStore', state.shoppingCart);
+      commit("updateShoppingCartStore", state.shoppingCart);
     },
-    /* TODO: also non fungible */
     async loadUserTickets({ commit }) {
       console.log("dispatchet loadUserTicketsAction");
-      /* const fungibleTickets = await idb.getFungibleTickets().map(t => { 
-        return { 
-          ticketType: new FungibleTicketType(t.ticketType),
-          amount: t.amount,
-        };
-      });
-      const nonFungibleTickets = await idb.getNonFungibleTickets().map(t => {
-        t.ticketType = new NonFungibleTicketType(t.ticketType);
-        t = new NonFungibleTicket(0,t);
-        return t;
-      });
-      state.user.fungibleTickets = fungibleTickets;
-      state.user.nonFungibleTickets = nonFungibleTickets;
-      commit('updateUserStore', state.user); */
       for (const event of state.events) {
-        await state.user.loadTicketsForEvent(state.web3.web3Instance, EVENT_MINTABLE_AFTERMARKET_ABI, event);
+        await state.user.loadTicketsForEvent(
+          state.web3.web3Instance,
+          EVENT_MINTABLE_AFTERMARKET_ABI,
+          event,
+          state.lastFetchedBlock + 1
+        );
+      }
+      console.log(state.user);
+      if (
+        !(await idb.saveUserTickets({
+          fungibleTickets: state.user.fungibleTickets,
+          nonFungibleTickets: state.user.nonFungibleTickets,
+          address: state.user.account,
+        }))
+      ) {
+        console.log("could not save tickets to db");
       }
       commit("updateUserStore", state.user);
     },
     async verifyUser({ commit }, payload) {
-      console.log('dispatched verifyUser Action')
+      console.log("dispatched verifyUser Action");
       await state.user.verify(payload);
-      commit('upateUserStore', state.user);
-    }
-    
+      commit("upateUserStore", state.user);
+    },
   },
   modules: {},
 });

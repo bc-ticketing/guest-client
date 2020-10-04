@@ -19,37 +19,6 @@
           </div>
 
         </div>
-        <!--
-        <div class="create-buy-order">
-          <md-button class="md-raised" @click="toggleBuyOffering(index)"
-            >Create buy offering</md-button
-          >
-          <div class="percentage-selection" :ref="'aftermarketConfig' + index">
-            <input
-              type="range"
-              :min="getStepSize(category.granularity)"
-              max="100"
-              :step="getStepSize(category.granularity)"
-              v-model.number="category.selectedPrice"
-            />
-            {{ category.selectedPrice }}
-            <div class="amount-selection">
-              <div
-                class="icon-wrap"
-                @click="changeAftermarketAmount(index, -1)"
-              >
-                <md-icon>remove_circle</md-icon>
-              </div>
-              <input type="number" v-model="category.aftermarketAmount" />
-              <div class="icon-wrap" @click="changeAftermarketAmount(index, 1)">
-                <md-icon>add_circle</md-icon>
-              </div>
-            </div>
-            <md-button class="md-raised" @click="confirmAftermarketOrder(index)"
-              >confirm</md-button
-            >
-          </div>
-        </div> -->
       </div>
     </div>
     <div class="buy-category nonfungibles" v-if="$store.state.shoppingCart.nonFungibleTickets.length > 0">
@@ -63,109 +32,23 @@
           <div class="header-line">
             <span class="title">{{ selection.ticket.ticketType.title }} - Seat Nr {{selection.ticket.ticketId}}</span>
             <span class="price">{{ selection.ticket.ticketType.price }} ETH</span>
-            <span class="status">{{ selection.ticket.isFree() ? 'Available' : 'Sold' }}</span>
           </div>
 
           <div class="remove" @click="removeTicket(index, false)">
             <md-icon>delete</md-icon>
           </div>
-          <!--
-          <div class="buttons">
-            <md-button v-if="seat.isFree" class="md-raised">confirm</md-button>
-            <md-button
-              v-if="!seat.isFree"
-              class="md-raised"
-              @click="togglenfBuyOffering(index)"
-              >Create buy offering</md-button
-            >
-          </div>
-          -->
-        </div>
-        <!--
-        <div class="createdOffers">
-          <div
-            class="offer"
-            v-for="(offering, oIndex) in getNFOfferingsForIndex(index)"
-            v-bind:key="'offering_' + oIndex"
-          >
-            <div class="infos">
-              <span>Buy offering</span>
-              <span
-                >Offering for {{ offering.queue }}%</span
-              >
-            </div>
-            <md-button class="md-raised" @click="removeNFAftermarketOrder(index)"
-              >remove</md-button
-            >
-          </div>
-        </div>
-        -->
-        <!--
-        <div class="percentage-selection" :ref="'nfaftermarketConfig' + index">
-          <input
-            type="range"
-            :min="getStepSize(seat.granularity)"
-            max="100"
-            :step="getStepSize(seat.granularity)"
-            v-model.number="seat.selectedPrice"
-          />
-          {{ seat.selectedPrice }}
 
-          <md-button class="md-raised" @click="confirmNFAftermarketOrder(index)"
-            >confirm</md-button
-          >
         </div>
-        -->
       </div>
     </div>
-    <div class="empty" v-if="$store.state.shoppingCart.fungibleTickets.length == 0">No items currently in Shopping Cart</div>
+    <div class="empty" v-if="$store.state.shoppingCart.fungibleTickets.length == 0 && $store.state.shoppingCart.nonFungibleTickets.length == 0">No items currently in Shopping Cart</div>
 
-    <div class="total" v-if="$store.state.shoppingCart.fungibleTickets.length > 0">
+    <div class="total" v-if="$store.state.shoppingCart.fungibleTickets.length > 0 || $store.state.shoppingCart.nonFungibleTickets.length > 0">
       <span class="total"> Total: {{totalPrice}} ETH</span>
       <md-button class="md-raised" @click="checkout">Purchase</md-button>
     </div>
 
-    <!--
-    <div class="buy-selection" v-bind:class="{ active: selected_ticket }">
-      <div class="fungible" v-bind:class="{ active: selectedIsFungible }">
-        <div
-          class="selection-step amount"
-          v-bind:class="{ active: selection_process_amount }"
-        >
-          <div class="icon-wrap" @click="changeAmount(-1)">
-            <md-icon>remove_circle</md-icon>
-          </div>
-          <input type="number" v-model="amount" />
-          <div class="icon-wrap" @click="changeAmount(1)">
-            <md-icon>add_circle</md-icon>
-          </div>
-          <md-button class="md-raised" @click="selectionPrice"
-            >Confirm</md-button
-          >
-        </div>
-        <div
-          class="selection-step price"
-          v-bind:class="{ active: selection_process_price }"
-        >
-          <md-button v-if="selected_ticket" class="md-raised"
-            >Buy {{ amount }} tickets for
-            {{ selected_ticket.price * amount }} ETH</md-button
-          >
-         
-
-          <md-button
-            v-if="selected_ticket"
-            class="md-raised"
-            @click="showDialog = !showDialog"
-            >Join Aftermarket</md-button
-          >
-        </div>
-      </div>
-      <div
-        class="nonfungible"
-        v-bind:class="{ active: !selectedIsFungible }"
-      ></div>
-    </div> -->
+    
   </div>
 </template>
 

@@ -63,8 +63,6 @@ export default {
     loadTickets: async function() {
       await this.$store.dispatch("loadFungibleTickets");
       await this.$store.dispatch("loadNonFungibleTickets");
-      console.log('test')
-      await this.$store.dispatch('saveEvents');
       this.$root.$emit("loadedTickets");
     },
     loadUserTickets: async function() {
@@ -79,6 +77,7 @@ export default {
     this.$root.$on("loadedEvents", async () => {
       await this.loadTickets();
       await this.loadUserTickets();
+      await this.$store.dispatch('saveFetchedBlockNumber');
     });
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");

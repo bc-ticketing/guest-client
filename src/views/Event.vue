@@ -144,6 +144,7 @@
 <script>
 import ShoppingCart from './ShoppingCart';
 import SelectionView from './SelectionView';
+import {getLowestSellOrder, hasSellOrder, numberFreeSeats, isFree} from './../util/tickets';
 
 export default {
   name: "Event",
@@ -194,6 +195,13 @@ export default {
   },
   watch: {},
   methods: {
+    getTicketType(ticket) {
+      for (const ticketType of this.event.nonFungibleTickets) {
+        if( ticketType.typeId == ticket.ticketTypeId) {
+          return ticketType;
+        }
+      }
+    },
     clearSelection() {
       this.selection = {
         active: false,
@@ -232,6 +240,9 @@ export default {
       //const seat = this.$refs[`seat_${col}_${row}`];
       const ticket = this.findTicketIndex(col, row);
       this.selection.ticket = ticket;
+      if (ticket.isNf) {
+        this.selection.ticket.ticketType = this.getTicketType(ticket);
+      }
       this.selection.active = true;
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
@@ -318,9 +329,9 @@ export default {
           // check if this fungible category still has seats available
           const seat = this.$refs[`seat_${x}_${y}`];
           seat[0].classList.add("fungible");
-          if (ticket.numberFreeSeats() > ticket.supply / 2) {
+          if (numberFreeSeats(ticket) > ticket.supply / 2) {
             seat[0].dataset.status = "good";
-          } else if (ticket.numberFreeSeats() > ticket.supply / 4) {
+          } else if (numberFreeSeats(ticket) > ticket.supply / 4) {
             seat[0].dataset.status = "neutral";
           } else {
             seat[0].dataset.status = "bad";
@@ -333,10 +344,10 @@ export default {
           let y = Number(ticket.seatMapping.split("/")[1]);
 
           const seat = this.$refs[`seat_${x}_${y}`];
-          if (ticket.isFree()) {
+          if (isFree(ticket)) {
             seat[0].dataset.status = "free";
           } else {
-            if(ticket.hasSellOrder()) {
+            if(hasSellOrder(ticket)) {
               seat[0].dataset.status = 'forsale'
             } else {
               seat[0].dataset.status = "occupied";
@@ -348,26 +359,36 @@ export default {
     },
     showToolTip: function(col, row) {
       const ticket = this.findTicketIndex(col, row);
+      let t = {};
+      let totalSupply;
       if (!ticket) {return;}
-      let t= {};
-      t.title = ticket.isNf ? ticket.ticketType.title : ticket.title;
-      t.price = ticket.isNf ? ticket.ticketType.price : ticket.price;
-      const total_supply = ticket.isNf ? ticket.ticketType.supply : ticket.supply;
-      t.supply = ticket.isNf ? ticket.ticketType.numberFreeSeats() : ticket.numberFreeSeats();
-      t.desc = ticket.isNf ? ticket.ticketType.description : ticket.description;
       if (ticket.isNf) {
+        const ticketType = this.getTicketType(ticket);
+        t.title = ticketType.title;
+        t.price = ticketType.price;
+        totalSupply = ticketType.supply;
+        t.supply = numberFreeSeats(ticketType);
+        t.desc = ticketType.description;
         t.seat = ticket.ticketId;
-        t.seat_status = ticket.isFree() ? 'free' : ticket.hasSellOrder() ? 'for sale' : 'occupied';
+        t.seat_status = isFree(ticket) ? 'free' : hasSellOrder(ticket) ? 'for sale' : 'occupied';
         t.isNf = true;
       } else {
+        t.title = ticket.title;
+        t.price = ticket.price;
+        console.log(ticket);
+
+        totalSupply = ticket.supply;
+        t.supply = numberFreeSeats(ticket);
+        t.desc = ticket.description;
         t.isNf = false;
-        t.lowestSellOrder = ticket.getLowestSellOrder().queue;
-        t.lowestSellOrderAmount = ticket.getLowestSellOrder().amount;
+        t.lowestSellOrder = getLowestSellOrder(ticket).queue;
+        t.lowestSellOrderAmount = getLowestSellOrder(ticket).amount;
       }
+      
       this.toolTipActive = true;
-      if (t.supply > total_supply / 2) {
+      if (t.supply > totalSupply / 2) {
         this.$refs["supply"].dataset.status = "good";
-      } else if (t.supply > total_supply / 4) {
+      } else if (t.supply > totalSupply / 4) {
         this.$refs["supply"].dataset.status = "neutral";
       } else {
         this.$refs["supply"].dataset.status = "bad";

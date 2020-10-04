@@ -1,4 +1,5 @@
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
+import { buyFungible, buyNonFungible } from "./tickets";
 
 export class ShoppingCart {
   constructor() {
@@ -46,10 +47,10 @@ export class ShoppingCart {
 
   checkout(web3instance, account) {
     this.fungibleTickets.forEach(selection => {
-        selection.ticket.buy(selection.amount, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);
+        buyFungible(selection.ticket, selection.amount, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);
     })
     this.nonFungibleTickets.forEach(selection => {
-        selection.ticket.buy(web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);
+        buyNonFungible(selection.ticket, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);
     })
 
   }
