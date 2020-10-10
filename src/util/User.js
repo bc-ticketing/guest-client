@@ -12,6 +12,8 @@ export class User {
   constructor(account, balance) {
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
+    this.fBuyOrders = [];
+    this.nfBuyOrders = [];
     this.account = account;
     this.balance = balance;
     this.idetixIdentity = {
@@ -62,14 +64,37 @@ export class User {
     return seller.concat(buyer);
   }
 
-  async loadTicketsForEvent(web3Instance, ABI, event, fromBlock) {
-      console.log('loading tickets from block: '+ fromBlock);
-    const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
+  async loadTicketsFromStore() {
     const inStore = await idb.getUserTickets(this.account);
     console.log('in store: ',inStore);
-    this.fungibleTickets = this.fungibleTickets.concat(inStore.fungibleTickets);
-    this.nonFungibleTickets = this.nonFungibleTickets.concat(inStore.nonFungibleTickets);
-    console.log(this.fungibleTickets);
+    this.fungibleTickets = inStore.fungibleTickets;
+    this.nonFungibleTickets = inStore.nonFungibleTickets;
+  }
+
+ 
+  loadAftermarketForEvent(event) {
+    console.log('loading user sell orders');
+    for(const ticket of this.fungibleTickets) {
+      if (ticket.eventContractAddress === event.contractAddress){
+        const sellOrders = event.getSellOrdersByAddress(this.account, ticket.ticketType, false);
+        ticket.sellOrders = sellOrders;
+      }
+  
+    }
+    for (const ticket of this.nonFungibleTickets) {
+      if (ticket.eventContractAddress === event.contractAddress){
+      const sellOrder = event.getSellOrdersByAddress(this.account, ticket.ticketType, ticket.ticketId);
+      ticket.sellOrder = sellOrder;
+      }
+    }
+    console.log('loading user buy orders');
+    this.fBuyOrders = this.fBuyOrders.concat(event.getBuyOrdersByAddress(this.account, false));
+    this.nfBuyOrders = this.nfBuyOrders.concat(event.getBuyOrdersByAddress(this.account, true));
+  }
+
+  async loadTicketsForEvent(web3Instance, ABI, event, fromBlock) {
+      console.log('for loading tickets for event: '+ event.contractAddress);
+    const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
     const fungiblePurchases = await this.checkFungibleTicketPurchases(
       eventSC,
       fromBlock
@@ -83,7 +108,7 @@ export class User {
       console.log('bought fungible ticket');
       const ticketType = Number(getTicketTypeIndex(new BigNumber(purchase.returnValues.ticketType)).toFixed());
       const quantity = purchase.returnValues.quantity;
-      let t = this.fungibleTickets.find(t => t.ticketType === ticketType);
+      let t = this.fungibleTickets.find(t => t.ticketType === ticketType && t.eventContractAddress === event.contractAddress );
       if (t) {
         t.amount += Number(quantity);
       } else {
@@ -159,7 +184,6 @@ export class User {
 
       }
     }
-    console.log(this.fungibleTickets);
 
   }
 

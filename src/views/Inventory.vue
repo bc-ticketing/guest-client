@@ -11,9 +11,26 @@
       </div>
 
       <div class="container ticket-sell">
-        <md-button class="md-raised" @click="sellOpen = true"
-          >Sell this ticket</md-button
-        >
+        <div v-if="activeSellOrders.length > 0">
+          <p>You have created the following sale listings for this ticket:</p>
+          <div class="sell-order">
+          <div v-for="(order, index) in activeSellOrders" v-bind:key="'sell_'+index">
+            <p>{{order.quantity}} tickets for {{order.percentage}}% of its original price </p>
+          <md-button class="md-raised"
+          @click="withdrawSellOrder(index)">
+            Withdraw sell order
+          </md-button>
+          </div>
+          </div>
+ 
+        </div>
+        <md-button 
+          v-if="ticketsLeftToSell > 0"
+          class="md-raised" 
+          @click="sellOpen = true"
+          >
+          Create Sell Order
+        </md-button>
       </div>
 
       <div class="ticket-swiper">
@@ -86,6 +103,7 @@
       v-bind:eventContractAddress="activeTicketEvent"
       v-bind:ticketId="activeTicket"
       v-bind:ticketTypeId="activeTicketType"
+      v-bind:leftToSell="ticketsLeftToSell"
       v-bind:isNf="activeIsNf"
       v-bind:open="sellOpen"
       v-on:close="sellOpen = false"
@@ -100,6 +118,7 @@ import SellView from "./SellView";
 import Swiper, { Pagination } from "swiper";
 Swiper.use([Pagination]);
 import "swiper/swiper-bundle.css";
+import { withdrawSellOrderFungible } from '../util/tickets';
 
 export default {
   name: "Inventory",
@@ -120,9 +139,49 @@ export default {
     SellView,
   },
   computed: {
-
+    activeSellOrders() {
+      if (this.activeIsNf) {
+        let order = this.$store.state.user.nonFungibleTickets[this.activeSlide - this.$store.state.user.fungibleTickets.length].sellOrder;
+        order.quantity = 1;
+        return order.percentage ? [order] : [];
+      } else {
+        return this.$store.state.user.fungibleTickets[this.activeSlide].sellOrders;
+      }
+    },
+    ticketsLeftToSell() {
+      let total = 0;
+      this.activeSellOrders.forEach(o => {
+        total += o.quantity;
+      })
+      return this.amountOwned - total;
+    },
+    amountOwned() {
+      if(this.activeTicketType) {
+        if (this.activeIsNf) {
+          return 1;
+        } else {
+          return this.$store.state.user.getNumberFungibleOwned(this.activeTicketEvent, this.activeTicketType);
+        }
+      } else {
+        return 0;
+      }
+    },
   },
   methods: {
+    withdrawSellOrder(index) {
+      if(this.activeIsNf) {
+        console.log('nf');
+      } else {
+        withdrawSellOrderFungible(
+          this.activeTicketType,
+          this.activeSellOrders[index].quantity,
+          this.activeSellOrders[index].percentage,
+          this.$store.state.user.account,
+          this.$store.state.web3.web3Instance,
+          this.activeTicketEvent
+        );
+      }
+    },
     getTicketType(ticket) {
       for (const ticketType of this.event.nonFungibleTickets) {
         if( ticketType.typeId == ticket.ticketTypeId) {
@@ -182,6 +241,10 @@ export default {
 </script>
 
 <style>
+.sell-order {
+  display: flex;
+  justify-content: space-between;
+}
 .img {
   display: flex;
   justify-content: center;

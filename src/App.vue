@@ -63,6 +63,8 @@ export default {
     loadTickets: async function() {
       await this.$store.dispatch("loadFungibleTickets");
       await this.$store.dispatch("loadNonFungibleTickets");
+      await this.$store.dispatch("loadOwnershipChanges");
+      await this.$store.dispatch("loadAftermarketChanges");
       this.$root.$emit("loadedTickets");
     },
     loadUserTickets: async function() {

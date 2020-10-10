@@ -5,7 +5,11 @@
         <md-icon>close</md-icon>
       </span>
       <h3>{{ ticketTitle }}</h3>
-      <div class="group">
+      <div v-if="!userNotOwner">
+          You are the owner of this ticket, you can create a sell offering
+          in your inventory!
+        </div>
+      <div class="group" v-if="available">
         <div v-if="!isNf" class="amount-selection">
           <div class="icon-wrap" @click="changeSelectionAmount(-1)">
             <md-icon>remove_circle</md-icon>
@@ -15,9 +19,14 @@
             <md-icon>add_circle</md-icon>
           </div>
         </div>
+        
         <div v-if="!available && !nfForSale">
           This Ticket has already been sold, you can create an aftermarket
           listing if you want to queue up for it.
+        </div>
+        <div v-if="!available && nfForSale">
+          This ticket is sold but listed on the aftermarket, you can buy it from there 
+          or create your own listing.
         </div>
         <div v-if="fSoldOut">
           This Ticket Category is sold out, you can create an aftermarket
@@ -28,7 +37,7 @@
         >
       </div>
       <hr />
-      <div class="group">
+      <div class="group" v-if="userNotOwner">
         <div class="percentage-selection">
           <input
             type="range"
@@ -45,7 +54,7 @@
         >
       </div>
       <hr />
-      <div class="group" v-if="ticketHasSellOrders">
+      <div class="group" v-if="ticketHasSellOrders && userNotOwner">
         <p>
           {{ lowestSellOrderAmount }} Available on the aftermarket for
           {{ lowestSellOrder }}%
@@ -125,24 +134,31 @@ export default {
           this.ticketTypeId,
           this.ticketId
         ).queue;
-      }
+      } else {
+      console.log('',this.ticketTypeId)
       return this.event.getLowestSellOrder(this.ticketTypeId).queue;
+      }
+
     },
     lowestSellOrderAmount() {
       if (!this.event || !this.ticketHasSellOrders) {
         return false;
       }
       console.log('ticket has sell orders');
-      return this.event.getLowestSellOrder(this.ticketId).amount;
+      if (this.isNf) {
+        return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId).amount;
+      } else {
+        return this.event.getLowestSellOrder(this.ticketTypeId).amount;
+      }
     },
     available() {
       return this.event ? this.event.isAvailable(this.ticketTypeId, this.ticketId) : false;
     },
+    userNotOwner() {
+      return this.event ? this.event.getNfOwner(this.ticketTypeId, this.ticketId) !== this.$store.state.user.account : false;
+    },
     nfForSale() {
-      if (!this.event) {
-        return false;
-      }
-      return  this.event.hasSellOrders(this.ticketTypeId, this.ticketId);
+      return  this.event ? this.event.hasSellOrders(this.ticketTypeId, this.ticketId) : false;
     },
     fSoldOut() {
       return this.event ? !this.event.isAvailable(this.ticketTypeId) : false;
@@ -170,7 +186,6 @@ export default {
       if (this.isNf) {
         await makeBuyOrderNonFungible(
           this.ticketTypeId,
-          this.ticketId,
           this.amount,
           this.percentage,
           this.price,
@@ -209,7 +224,7 @@ export default {
           this.lowestSellOrder,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
-          this.lowestSellOrder
+          this.eventContractAddress
         );
       }
     },

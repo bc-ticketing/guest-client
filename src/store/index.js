@@ -53,6 +53,8 @@ export default new Vuex.Store({
     },
     setLastFetchedBlock(state, block) {
       state.lastFetchedBlock = block;
+      console.log(block);
+      //state.lastFetchedBlock = 0;
     },
   },
   /* */
@@ -193,6 +195,48 @@ export default new Vuex.Store({
       }
       commit("updateEventStore", state.events);
     },
+    async loadOwnershipChanges({ commit }) {
+      for (const event of state.events) {
+        try {
+          await event.loadOwnerShipChanges(
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.lastFetchedBlock +1
+            //1
+          );
+          await event.loadTicketsSoldChanges(
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.lastFetchedBlock +1
+            //1
+          )
+          if (!await idb.saveEvent(event)) {
+            console.log('could not safe event to db');
+          }
+        } catch(e) {
+          console.log(e);
+        }
+      }
+      commit("updateEventStore", state.events);
+    },
+    async loadAftermarketChanges({ commit }) {
+      for (const event of state.events) {
+        try {
+          await event.loadAftermarketChanges(
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.lastFetchedBlock +1
+            //1
+          );
+          if (!await idb.saveEvent(event)) {
+            console.log('could not safe event to db');
+          }
+        } catch(e) {
+          console.log(e);
+        }
+      }
+      commit("updateEventStore", state.events);
+    },
     async addTicketToCart({ commit }, selection) {
       state.shoppingCart.add(selection);
       commit("updateShoppingCartStore", state.shoppingCart);
@@ -203,6 +247,7 @@ export default new Vuex.Store({
     },
     async loadUserTickets({ commit }) {
       console.log("dispatchet loadUserTicketsAction");
+      await state.user.loadTicketsFromStore();
       for (const event of state.events) {
         await state.user.loadTicketsForEvent(
           state.web3.web3Instance,
@@ -210,6 +255,7 @@ export default new Vuex.Store({
           event,
           state.lastFetchedBlock + 1
         );
+        state.user.loadAftermarketForEvent(event);
       }
       console.log(state.user);
       if (

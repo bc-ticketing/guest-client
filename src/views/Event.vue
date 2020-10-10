@@ -108,11 +108,12 @@
             <span class="ticket-desc"> {{ tooltip.desc }}</span>
             <h3>Aftermarket:</h3>
             <div class='aftermarket' v-if="tooltip.lowestSellOrder > 0">
-                {{tooltip.lowestSellOrderAmount}} Listing for {{tooltip.lowestSellOrder}}%
+                {{tooltip.lowestSellOrderAmount}} tickets on sale for {{tooltip.lowestSellOrder}}%
             </div>
-            <div v-else>
-              No listings for this ticket
+            <div class='aftermarket' v-if="tooltip.highestBuyOrder > 0">
+                {{tooltip.highestBuyOrderAmount}} offers for {{tooltip.highestBuyOrder}}%
             </div>
+
           </div>
         </div>
 
@@ -149,7 +150,7 @@
 <script>
 import ShoppingCart from './ShoppingCart';
 import SelectionView from './SelectionView';
-import {hasSellOrder, getLowestSellOrder, numberFreeSeats, isFree} from './../util/tickets';
+import {hasSellOrder, getLowestSellOrder, numberFreeSeats, isFree, getHighestBuyOrder} from './../util/tickets';
 
 export default {
   name: "Event",
@@ -391,6 +392,10 @@ export default {
         t.supply = numberFreeSeats(ticketType);
         t.desc = ticketType.description;
         t.seat = ticket.ticketId;
+        t.lowestSellOrder = getLowestSellOrder(ticket).percentage;
+        t.lowestSellOrderAmount = getLowestSellOrder(ticket).quantity;
+        t.highestBuyOrder = getHighestBuyOrder(ticketType).percentage;
+        t.highestBuyOrderAmount = getHighestBuyOrder(ticketType).quantity;
         t.seat_status = isFree(ticket) ? 'free' : hasSellOrder(ticket) ? 'for sale' : 'occupied';
         t.isNf = true;
       } else {
@@ -401,8 +406,10 @@ export default {
         t.supply = numberFreeSeats(ticket);
         t.desc = ticket.description;
         t.isNf = false;
-        t.lowestSellOrder = getLowestSellOrder(ticket).queue;
-        t.lowestSellOrderAmount = getLowestSellOrder(ticket).amount;
+        t.lowestSellOrder = getLowestSellOrder(ticket).percentage;
+        t.lowestSellOrderAmount = getLowestSellOrder(ticket).quantity;
+        t.highestBuyOrder = getHighestBuyOrder(ticket).percentage;
+        t.highestBuyOrderAmount = getHighestBuyOrder(ticket).quantity;
       }
       
       this.toolTipActive = true;

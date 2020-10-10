@@ -12,12 +12,12 @@ Aftermarket:
     event SellOrderFungiblePlaced(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
     event SellOrderFungibleFilled(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
     event BuyOrderFungibleFilled(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
-    event SellOrderFungibleWithdrawn(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
     event SellOrderNonFungiblePlaced(address indexed addr, uint256[] _ids, uint8[] percentage);
     event SellOrderNonFungibleFilled(address indexed addr, uint256[] _ids, uint8[] percentage);
     event BuyOrderNonFungibleFilled(address indexed addr, uint256[] _ids, uint8[] percentage);
     event SellOrderNonFungibleWithdrawn(address indexed addr, uint256 _id);
 
+    event SellOrderFungibleWithdrawn(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
     event SellOrderWithdrawn(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
     event BuyOrderWithdrawn(address indexed addr, uint256 ticketType, uint256 quantity, uint8 percentage);
 
@@ -28,7 +28,6 @@ Mintable:
 
 
 async function getEvents(contract, name, fromBlock) {
-    console.log(fromBlock);
     return await contract.getPastEvents(name, {fromBlock: fromBlock});
 }
 async function getLatestEvent(contract, name, fromBlock) {
@@ -93,57 +92,57 @@ export async function MintNonFungibles(contract, fromBlock, address) {
 
 export async function BuyOrderPlaced(contract, fromBlock) {
     const events = await getEvents(contract, 'BuyOrderPlaced',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderFungiblePlaced(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderFungiblePlaced',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderFungibleFilled(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderFungibleFilled',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function BuyOrderFungibleFilled(contract, fromBlock) {
     const events = await getEvents(contract, 'BuyOrderFungibleFilled',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderFungibleWithdrawn(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderFungibleWithdrawn',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderNonFungiblePlaced(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderNonFungiblePlaced',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderNonFungibleFilled(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderNonFungibleFilled',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function BuyOrderNonFungibleFilled(contract, fromBlock) {
     const events = await getEvents(contract, 'BuyOrderNonFungibleFilled',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderNonFungibleWithdrawn(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderNonFungibleWithdrawn',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function SellOrderWithdrawn(contract, fromBlock) {
     const events = await getEvents(contract, 'SellOrderWithdrawn',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 export async function BuyOrderWithdrawn(contract, fromBlock) {
     const events = await getEvents(contract, 'BuyOrderWithdrawn',fromBlock);
-    return events.length > 0 ? events : false;
+    return events.length > 0 ? events : [];
 }
 
 

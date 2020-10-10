@@ -32,7 +32,7 @@
         >Create Sell Order</md-button
       >
       <md-button v-if="hasBuyOrder" class="md-raised" @click="fillBuyOrder"
-        >Sell for {{ highestBuyOrder }}%</md-button
+        >Sell for {{ highestBuyOrder.queue }}%</md-button
       >
     </div>
   </div>
@@ -61,6 +61,7 @@ export default {
     ticketId: Number,
     ticketTypeId: Number,
     eventContractAddress: String,
+    leftToSell: Number,
     isNf: Boolean,
     open: Boolean,
   },
@@ -103,8 +104,8 @@ export default {
     changeSelectionAmount(amount) {
       this.amount += amount;
       this.amount = Math.max(
-        Math.min(this.amount, Number(this.ticketsOwned)),
-        0
+        Math.min(this.amount, Number(this.leftToSell)),
+        1
       );
     },
     getStepSize(granularity) {
@@ -140,7 +141,7 @@ export default {
         fillBuyOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,
-          this.highestBuyOrder,
+          this.highestBuyOrder.queue,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,
@@ -149,7 +150,7 @@ export default {
         fillBuyOrderFungible(
           this.ticketTypeId,
           1,
-          this.highestBuyOrder,
+          this.highestBuyOrder.queue,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,
