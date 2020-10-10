@@ -2,10 +2,12 @@
   <div class="container-fluid inventory">
     <div class="position-relative">
       <div class="ticket-preview">
-        <Ticket 
+        <Ticket v-if="activeTicketType != 0"
         v-bind:ticketTypeId="activeTicketType" 
         v-bind:ticketId="activeTicket"
-        v-bind:eventContract="activeTicketEvent"/>
+        v-bind:eventContractAddress="activeTicketEvent"
+        v-bind:isNf="activeIsNf"
+        v-bind:ticketIndex="activeSlide"/>
       </div>
 
       <div class="container ticket-sell">
@@ -81,7 +83,7 @@
       </div>
     </div>
     <SellView
-      v-bind:eventContract="activeTicketEvent"
+      v-bind:eventContractAddress="activeTicketEvent"
       v-bind:ticketId="activeTicket"
       v-bind:ticketTypeId="activeTicketType"
       v-bind:isNf="activeIsNf"
@@ -118,16 +120,7 @@ export default {
     SellView,
   },
   computed: {
-    isNf() {
-      return this.activeTicket.isNf;
-    },
 
-    granularity() {
-      if (!this.activeTicket.ticketType) {
-        return 0;
-      }
-      return this.activeTicket.ticketType.aftermarketGranularity;
-    },
   },
   methods: {
     getTicketType(ticket) {
@@ -146,27 +139,26 @@ export default {
       if (!this.$store.state.user.fungibleTickets || !this.$store.state.user.nonFungibleTickets){
         return;
       }
+      let t;
         if (this.activeSlide >= this.$store.state.user.fungibleTickets.length) {
-          let t = this.$store.state.user.nonFungibleTickets[
+        t = this.$store.state.user.nonFungibleTickets[
           this.activeSlide - this.$store.state.user.fungibleTickets.length
         ];
         this.activeTicket = t.ticketId;
-        this.activeTicketType = t.ticketType;
-        this.activeTicketEvent = t.eventContractAddress;
         this.activeIsNf = true;
       } else {
-        let t = this.$store.state.user.fungibleTickets[
+        t = this.$store.state.user.fungibleTickets[
           this.activeSlide
         ];
-        this.activeTicketType = t.ticketType
         this.activeIsNf = false;
-        this.activeTicketEvent = t.eventContractAddress;
       }
+        this.activeTicketEvent = t.eventContractAddress;
+        this.activeTicketType = t.ticketType
     }
   },
   beforeCreate: async function() {
     this.$root.$on("loadedUserTickets", () => {
-      console.log('event landed');
+      console.log('event loaded');
      this.setActiveTicket();
     });
   },

@@ -68,58 +68,35 @@ export default {
   mounted: function() {},
   computed: {
     event() {
+      if (!this.eventContractAddress) return undefined;
       return this.$store.state.events.find(e => e.contractAddress === this.eventContractAddress);
     },
     ticket() {
-      if(!this.event) {return undefined;}
-      return this.event.getNfTicket(this.ticketTypeId, this.ticketId);
+      return this.event ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
     },
     ticketType() {
-      if(!this.event) {return undefined;}
-      return this.event.getTicketType(this.tickedTypeId);
+      return this.event ? this.event.getTicketType(this.ticketTypeId, this.isNf) : undefined;
     },
     granularity() {
-      if (!this.ticketType) {
-        return 0;
-      }
-      return this.ticketType.aftermarketGranularity;
+      return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
     },
     hasSellOrders() {
-      if (!this.ticketType) {
-        return false;
-      }
-      return (
-        Object.getOwnPropertyNames(this.ticketType.sellOrders).length > 1
-      );
+      return this.ticketType ? Object.getOwnPropertyNames(this.ticketType.sellOrders).length > 1 : false;
     },
     lowestSellOrder() {
-      if (!this.ticket.ticketType) {
-        return 0;
-      }
-      return getLowestSellOrder(this.ticketType).queue;
+      return this.ticketType ? getLowestSellOrder(this.ticketType).queue : 0;
     },
     lowestSellOrderAmount() {
-      if (!this.ticketType) {
-        return 0;
-      }
-      return getLowestSellOrder(this.ticketType).amount;
+      return this.ticketType ? getLowestSellOrder(this.ticketType).amount : 0;
     },
     highestBuyOrder() {
-      if (!this.ticketType) {
-        return 0;
-      }
-      return getHighestBuyOrder(this.ticketType);
+      return this.ticketType ? getHighestBuyOrder(this.ticketType) : 0;
     },
     hasBuyOrder() {
-      if (!this.ticketType) {
-        return false;
-      }
-      return (
-        Object.getOwnPropertyNames(this.ticketType.buyOrders).length > 1
-      );
+      return this.ticketType ? Object.getOwnPropertyNames(this.ticketType.buyOrders).length > 1 : false;
     },
     ticketsOwned() {
-      return this.ticket.amount;
+      return this.amount;
     },
   },
   methods: {
@@ -139,8 +116,8 @@ export default {
     sellTicket: function() {
       if (this.isNf) {
         makeSellOrderNonFungible(
-          this.ticketType,
-          this.ticket,
+          this.ticketTypeId,
+          this.ticketId,
           this.percentage,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
@@ -148,13 +125,12 @@ export default {
         );
       } else {
         makeSellOrderFungible(
-          this.ticketType,
+          this.ticketTypeId,
           this.amount,
           this.percentage,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,
-
         );
       }
       //this.$store.state.user.makeSellOrderFungible(this.$store.state.web3.web3Instance, this.activeTicket.ticketType, 100, 1);
@@ -162,8 +138,8 @@ export default {
     fillBuyOrder: function() {
       if (this.isNf) {
         fillBuyOrderNonFungible(
-          this.ticketType,
-          this.ticket,
+          this.ticketTypeId,
+          this.ticketId,
           this.highestBuyOrder,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
@@ -171,7 +147,7 @@ export default {
         );
       } else {
         fillBuyOrderFungible(
-          this.ticketType,
+          this.ticketTypeId,
           1,
           this.highestBuyOrder,
           this.$store.state.user.account,

@@ -117,11 +117,16 @@ export class Event {
     return Math.min(lowestFungible, lowestNonFungible);
   }
 
-  getTicketType(ticketTypeId) {
-    const foundFungible = this.fungibleTickets.find(t => t.typeId === ticketTypeId);
-    if (foundFungible) {return foundFungible;}
-    const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
-    return foundNonFungible;
+  getTicketType(ticketTypeId, isNf = false) {
+    if (isNf) {
+      const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
+      return foundNonFungible;
+    } else {
+      const foundFungible = this.fungibleTickets.find(t => t.typeId === ticketTypeId);
+      return foundFungible;
+    }
+
+   
   }
 
   getNfTicket(ticketTypeId, ticketId) {
@@ -194,7 +199,6 @@ export class Event {
         const typeIdentifier = getIdAsBigNumber(false, i);
         const changed = await ticketMetadataChanged(eventSC, fromBlock, typeIdentifier); 
         if (changed) {
-          console.log('tickets chainged since last fetch at block number: '+fromBlock);
           const exists = this.hasFungibleTicketType(i);
           let ticketType = exists ? exists : new FungibleTicketType(this.contractAddress, i);
           const ticketMapping = await eventSC.methods

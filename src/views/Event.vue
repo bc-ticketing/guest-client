@@ -396,7 +396,6 @@ export default {
       } else {
         t.title = ticket.title;
         t.price = ticket.price;
-        console.log(ticket);
 
         totalSupply = ticket.supply;
         t.supply = numberFreeSeats(ticket);

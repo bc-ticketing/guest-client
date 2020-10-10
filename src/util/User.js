@@ -25,7 +25,7 @@ export class User {
       let amount = 0;
       for (const t of this.fungibleTickets) {
         if (t.eventContractAddress === event && t.ticketType === type) {
-            amount += t.amount;
+            amount += Number(t.amount);
         }
       }
       return amount;
@@ -83,18 +83,25 @@ export class User {
       console.log('bought fungible ticket');
       const ticketType = Number(getTicketTypeIndex(new BigNumber(purchase.returnValues.ticketType)).toFixed());
       const quantity = purchase.returnValues.quantity;
+      let t = this.fungibleTickets.find(t => t.ticketType === ticketType);
+      if (t) {
+        t.amount += Number(quantity);
+      } else {
       this.fungibleTickets.push({
         ticketType: ticketType,
-        amount: quantity,
+        amount: Number(quantity),
         eventContractAddress: event.contractAddress
       });
+    }
     }
     for (const purchase of nonFungiblePurchases) {
         console.log('bought nonFungibleTicket')
       const ids = purchase.returnValues.ids;
       for (const id of ids) {
+        console.log('id: '+id);
         const ticketType = Number(getTicketTypeIndex(new BigNumber(id)).toFixed());
         const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
+        console.log('ticketId: '+ ticketId);
         this.nonFungibleTickets.push({
             ticketId: ticketId,
             ticketType: ticketType,
@@ -103,11 +110,14 @@ export class User {
       }
     }
     /* Changes in ownership involving the current user */
+    /* TODO: check with simon to get the actual ticket ID in the NF case */
     const changes = await this.checkTicketChanges(eventSC, fromBlock);
     for (const change of changes) {
+      console.log('change: ',change);
       const ticketType = new BigNumber(change.returnValues.ticketType);
+      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(change.returnValues.ticketType)).toFixed());
       if (!isNf(ticketType)) {
-        let t = this.fungibleTickets.find(t => t.ticketType === ticketType.toFixed());
+        let t = this.fungibleTickets.find(t => t.ticketType === ticketTypeId);
         if (change.changeType === 'sold') {
             console.log('sold f ticket');
             if (t) {
@@ -119,25 +129,32 @@ export class User {
                 t.amount += 1;
             } else {
                 this.fungibleTickets.push({
-                    ticketType: ticketType.toFixed(),
+                    ticketType: ticketTypeId,
                     amount: 1,
                     eventContractAddress: event.contractAddress,
                   });
             }
         }
       } else {
+        console.log('change for ticket: '+ change.returnValues.ticketType);
+        console.log(new BigNumber(change.returnValues.ticketType).toFixed());
+        console.log(Number(getTicketId(new BigNumber(change.returnValues.ticketType)).toFixed()))
+        const ticketId = Number(getTicketId(new BigNumber(change.returnValues.ticketType)).toFixed());
         let t = this.nonFungibleTickets.find(t => {t === ticketType.toFixed()});
         if(change.changeType === 'sold') {
-            console.log('sold nf ticket');
+            console.log('sold nf ticket: '+ticketTypeId + ' - '+ticketId);
             if(t) {
-                this.nonFungibleTickets.filter(t => {t === ticketType.toFixed()});
+                this.nonFungibleTickets.filter(t => {t.ticketType === ticketTypeId && t.ticketId === ticketId});
             }
+            console.log('nf tickets: ', this.nonFungibleTickets);
         } else {
-            console.log('bought nf ticket');
+            console.log('bought nf ticket: '+ ticketTypeId + ' - '+ticketId);
             this.nonFungibleTickets.push({
-                ticketId: ticketType.toFixed(),
+                ticketType: ticketTypeId,
+                ticketId: ticketId,
                 eventContractAddress: event.contractAddress,
             });
+            console.log('nf tickets: ', this.nonFungibleTickets);
         }
 
       }

@@ -16,8 +16,8 @@
       </div>
       <div class="ticket-info">
         <h3>{{ ticketTitle }}</h3>
-        <p v-if="isNf">Non Fungible</p>
-        <p v-if="!isNf">Fungible</p>
+        <p v-if="isNf">{{ticketDescription}}</p>
+        <p v-if="!isNf">{{ticketDescription}}</p>
         <p v-if="isNf">Seat Number: {{ seat }}</p>
         <p v-if="!isNf">Number of tickets: {{ amount }}</p>
       </div>
@@ -35,9 +35,14 @@ export default {
   props: {
     ticketTypeId: Number,
     ticketId: Number,
-    eventContract: String,
+    eventContractAddress: String,
+    isNf: Boolean,
+    ticketIndex: Number,
   },
   watch: {
+    ticketIndex: function () {
+      console.log('tt changed')
+    }
   },
   methods: {
     goToDetails: function() {
@@ -48,6 +53,16 @@ export default {
     },
   },
   computed: {
+    event() {
+      if (!this.eventContractAddress) return undefined;
+      return this.$store.state.events.find(e => e.contractAddress === this.eventContractAddress);
+    },
+    ticket() {
+      return this.event && this.isNf ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
+    },
+    ticketType() {
+      return this.event ? this.event.getTicketType(this.ticketTypeId, this.isNf) : undefined;
+    },
     eventImage() {
       return this.event ? this.event.img_url : '';
     },
@@ -58,31 +73,21 @@ export default {
     eventTitle() {
       return this.event ? this.event.title : '';
     },
-    event() {
-      console.log(this.$store.state.events);
-      return this.$store.state.events.find(e => e.contractAddress === this.eventContract);
-    },
-    ticket() {
-      return this.event ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
-    },
-    ticketType() {
-      return this.event ? this.event.getTicketType(this.ticketTypeId) : undefined;
-    },
     timeAndDate() {
       return this.event ? this.event.getTimeAndDate() : '';
     },
     ticketTitle() {
       return this.ticketType ? this.ticketType.title : '';
     },
-    isNf() {
-      return this.ticketType ? this.ticketType.isNf : false;
+    ticketDescription() {
+      return this.ticketType ? this.ticketType.description : '';
     },
     amount() {
-      if(this.ticketType) {
+      if(this.ticketTypeId) {
         if (this.isNf) {
           return this.ticket ? this.$store.state.user.nonFungibleTickets.filter(t => t.ticketTypeID == this.ticketTypeId).length : 0;
         } else {
-          return this.$store.state.user.getNumberFungibleOwned(this.eventContract, this.ticketTypeId);
+          return this.$store.state.user.getNumberFungibleOwned(this.eventContractAddress, this.ticketTypeId);
         }
       } else {
         return 0;

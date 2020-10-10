@@ -38,7 +38,6 @@ export class ShoppingCart {
 
   removeByIndex(index, fungible) {
     if (fungible) {
-      console.log(`removing fungible ${index}`);
       this.fungibleTickets.splice(index, 1);
     } else {
       this.nonFungibleTickets.splice(index, 1);
