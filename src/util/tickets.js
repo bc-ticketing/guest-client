@@ -288,30 +288,50 @@ export async function fillSellOrderNonFungible(
 }
 
 /* BUY DIRECTLY */
-export async function buyFungible(ticket, amount, web3Instance, ABI, account){
+export async function buyFungible(
+  ticketType, 
+  amount,
+  price,
+  web3Instance, 
+  ABI, 
+  account, 
+  eventContractAddress){
   const eventSC = new web3Instance.eth.Contract(
     ABI,
-    ticket.eventContractAddress
+    eventContractAddress
   );
   const result = await eventSC.methods
-      .mintFungible(getFullTicketTypeId(false, ticket), amount)
+      .mintFungible(
+        getFullTicketTypeId(false, new BigNumber(ticketType)),
+        amount
+      )
       .send({
         from: account,
-        value: amount * web3Instance.utils.toWei(ticket.price),
+        value: amount * price,
       });
       console.log(result);
 }
 
-export async function buyNonFungible(ticket, web3Instance, ABI, account){
+export async function buyNonFungible(
+  ticketType,
+  ticket,
+  price,
+  web3Instance, 
+  ABI, 
+  account,
+  eventContractAddress){
+    console.log(ticketType);
+    console.log(ticket);
+    console.log(price);
   const eventSC = new web3Instance.eth.Contract(
     ABI,
-    ticket.ticketType.eventContractAddress
+    eventContractAddress
   );
   const result = await eventSC.methods
-  .mintNonFungibles([getFullTicketId(ticket)])
+  .mintNonFungibles([getFullTicketId(ticket, ticketType)])
   .send({
     from: account,
-    value: web3Instance.utils.toWei(String(ticket.ticketType.price)),
+    value: price,
   });
   console.log(result);
 }

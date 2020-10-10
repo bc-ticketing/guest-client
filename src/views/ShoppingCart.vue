@@ -30,8 +30,8 @@
       >
         <div class="direct-buy">
           <div class="header-line">
-            <span class="title">{{ selection.ticket.ticketType.title }} - Seat Nr {{selection.ticket.ticketId}}</span>
-            <span class="price">{{ selection.ticket.ticketType.price }} ETH</span>
+            <span class="title">{{ selection.ticketType }} - Seat Nr {{selection.ticket}}</span>
+            <span class="price">{{ selection.price }} ETH</span>
           </div>
 
           <div class="remove" @click="removeTicket(index, false)">

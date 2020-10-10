@@ -20,9 +20,13 @@ export class ShoppingCart {
   }
 
   add(selection) {
-    if (selection.ticket.isNf) {
+    if (selection.isNf) {
+      console.log('is nf');
       this.nonFungibleTickets.push({
         ticket: selection.ticket,
+        ticketType: selection.ticketType,
+        price: selection.price,
+        eventContractAddress: selection.eventContractAddress
       });
     } else {
       if (this.fungibleAlreadySelected(selection.ticket.typeId)) {
@@ -30,6 +34,9 @@ export class ShoppingCart {
       } else {
         this.fungibleTickets.push({
           ticket: selection.ticket,
+          ticketType: selection.ticketType,
+          price: selection.price,
+          eventContractAddress: selection.eventContractAddress,
           amount: selection.amount,
         });
       }
@@ -46,10 +53,10 @@ export class ShoppingCart {
 
   checkout(web3instance, account) {
     this.fungibleTickets.forEach(selection => {
-        buyFungible(selection.ticket, selection.amount, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);
+        buyFungible(selection.ticketType, selection.amount, selection.price, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account, selection.eventContractAddress);
     })
     this.nonFungibleTickets.forEach(selection => {
-        buyNonFungible(selection.ticket, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account);
+        buyNonFungible(selection.ticketType, selection.ticket, selection.price, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account, selection.eventContractAddress);
     })
 
   }

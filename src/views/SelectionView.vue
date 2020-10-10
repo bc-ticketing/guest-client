@@ -4,12 +4,9 @@
       <span class="close-icon" @click="close">
         <md-icon>close</md-icon>
       </span>
-      <h3 v-if="!selection.ticket.isNf">{{ selection.ticket.title }}</h3>
-      <h3 v-if="selection.ticket.isNf">
-        {{ selection.ticket.ticketType.title }}
-      </h3>
+      <h3>{{ ticketTitle }}</h3>
       <div class="group">
-        <div v-if="!selection.ticket.isNf" class="amount-selection">
+        <div v-if="!isNf" class="amount-selection">
           <div class="icon-wrap" @click="changeSelectionAmount(-1)">
             <md-icon>remove_circle</md-icon>
           </div>
@@ -18,7 +15,7 @@
             <md-icon>add_circle</md-icon>
           </div>
         </div>
-        <div v-if="available && !nfForSale">
+        <div v-if="!available && !nfForSale">
           This Ticket has already been sold, you can create an aftermarket
           listing if you want to queue up for it.
         </div>
@@ -79,72 +76,76 @@ export default {
     };
   },
   props: {
-    selection: Object,
+    ticketId: Number,
+    ticketTypeId: Number,
+    isNf: Boolean,
     eventContractAddress: String,
     open: Boolean,
-    price: Number,
   },
   beforeCreate: function() {},
   mounted: function() {},
   computed: {
     event() {
-      return this.$store.state.events.find(
-        (e) => e.contractAddress === this.eventContractAddress
-      );
+      if (!this.eventContractAddress) return undefined;
+      return this.$store.state.events.find(e => e.contractAddress === this.eventContractAddress);
+    },
+    ticket() {
+      return this.event ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
+    },
+    ticketType() {
+      return this.event ? this.event.getTicketType(this.ticketTypeId, this.isNf) : undefined;
+    },
+    ticketTitle() {
+      return this.ticketType ? this.ticketType.title : '';
+    },
+    price() {
+      return this.ticketType ? this.ticketType.price: 0;
     },
     granularity() {
-      if (!this.event) {
-        return 1;
-      }
-      return this.event.getGranularity(this.selection.ticketType);
+      return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
     },
     ticketHasSellOrders() {
       if (!this.event) {
         return false;
       }
-      if (this.selection.isNf) {
+      if (this.isNf) {
         return this.event.hasSellOrders(
-          this.selection.ticketType,
-          this.selection.ticket
+          this.ticketTypeId,
+          this.ticketId
         );
       }
-      return this.event.hasSellOrders(this.selection.ticketType);
+      return this.event.hasSellOrders(this.ticketTypeId);
     },
     lowestSellOrder() {
       if (!this.event) {
         return false;
       }
-      if (this.selection.isNf) {
+      if (this.isNf) {
         return this.event.getLowestSellOrder(
-          this.selection.ticketType,
-          this.selection.ticket
+          this.ticketTypeId,
+          this.ticketId
         ).queue;
       }
-      return this.event.getLowestSellOrder(this.selection.ticketType).queue;
+      return this.event.getLowestSellOrder(this.ticketTypeId).queue;
     },
     lowestSellOrderAmount() {
-      if (!this.event) {
+      if (!this.event || !this.ticketHasSellOrders) {
         return false;
       }
-      return this.event.getLowestSellOrder(this.selection.ticket).amount;
+      console.log('ticket has sell orders');
+      return this.event.getLowestSellOrder(this.ticketId).amount;
     },
     available() {
-      if (!this.event) {
-        return false;
-      }
-      return !this.event.isAvailable(this.selection.ticketType, this.selection.ticket);
+      return this.event ? this.event.isAvailable(this.ticketTypeId, this.ticketId) : false;
     },
     nfForSale() {
       if (!this.event) {
         return false;
       }
-      return  this.event.hasSellOrders(this.selection.ticketType, this.selection.ticket);
+      return  this.event.hasSellOrders(this.ticketTypeId, this.ticketId);
     },
     fSoldOut() {
-      if (!this.event) {
-        return false;
-      }
-      return this.event.isAvailable(this.selection.ticketType);
+      return this.event ? !this.event.isAvailable(this.ticketTypeId) : false;
     },
   },
   methods: {
@@ -156,48 +157,53 @@ export default {
     },
     addToCart: async function() {
       await this.$store.dispatch("addTicketToCart", {
-        ticket: this.selection.ticket,
+        ticket: this.ticketId,
+        ticketType: this.ticketTypeId,
+        price: this.price,
+        eventContractAddress: this.eventContractAddress,
         amount: this.amount,
+        isNf: this.isNf,
       });
       this.$root.$emit("shoppingCartChanged");
     },
     createBuyOrder: async function() {
-      if (this.selection.ticket.isNf) {
+      if (this.isNf) {
         await makeBuyOrderNonFungible(
-          this.selection.ticketType,
+          this.ticketTypeId,
+          this.ticketId,
           this.amount,
           this.percentage,
           this.price,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
-          this.selection.eventContractAddress
+          this.eventContractAddress
         );
       } else {
         await makeBuyOrderFungible(
-          this.selection.ticketType,
+          this.ticketTypeId,
           this.amount,
           this.percentage,
           this.price,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
-          this.selection.eventContractAddress
+          this.eventContractAddress
         );
       }
     },
     fillSellOrder: async function() {
-      if (this.selection.ticket.isNf) {
+      if (this.isNf) {
         await fillSellOrderNonFungible(
-          this.selection.ticketType,
-          this.selection.ticket,
+          this.ticketTypeId,
+          this.ticketId,
           this.lowestSellOrder,
           this.price,
           this.$store.state.user.account,
           this.$store.state.web3.web3Instance,
-          this.selection.eventContractAddress
+          this.eventContractAddress
         );
       } else {
         await fillSellOrderFungible(
-          this.selection.ticketType,
+          this.ticketTypeId,
           this.amount,
           this.price,
           this.lowestSellOrder,

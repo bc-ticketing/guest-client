@@ -70,10 +70,11 @@ export class Event {
   hasSellOrders(ticketType, ticket=false) {
     let t;
     if(!ticket) {
-      t = this.fungibleTickets.find(t => t.typeId === ticketType)
-      return Object.keys(t.sellOrders).length === 0 && t.sellOrders.constructor === Object
+      t = this.fungibleTickets.find(t => t.typeId === ticketType);
+      return Object.keys(t.sellOrders).length !== 0;
     } else {
-      t = this.nonFungibleTickets.find(type => type.typeId === ticketType).tickets.find(ticket => ticket.ticketId === ticket);
+      const tt = this.nonFungibleTickets.find(type => type.typeId === ticketType);
+      t = tt.tickets.find(temp => temp.ticketId === ticket);
       return new BigNumber(t.sellOrder.userAddress).isZero() ? false : true;
     }
     
@@ -100,11 +101,11 @@ export class Event {
   }
 
   isAvailable(ticketType, ticket = false) {
-    if (!ticket) {
+    if (!ticket || ticket == 0) {
       const t = this.fungibleTickets.find(t => t.typeId === ticketType);
-      return t.ticketsSold < t.supply;
+      return Number(t.ticketsSold) < Number(t.supply);
     }
-    return this.getNfTicket(ticketType, ticket).owner === NULL_ADDRESS;
+    return this.getNfTicket(ticketType, ticket).owner !== NULL_ADDRESS;
   }
 
   getTimeAndDate() {
@@ -244,7 +245,7 @@ export class Event {
           ticketType.aftermarketGranularity = granularity;
           for (let j = 1; j <= ticketType.supply; j++) {
             const ticketId = getIdAsBigNumber(true, i, j).toFixed();
-            let ticket = new NonFungibleTicket(ticketType, i, j);
+            let ticket = new NonFungibleTicket(this.contractAddress, i, j);
             const owner = await eventSC.methods.nfOwners(ticketId).call();
             ticket.owner = owner;
             const sellOrder = await eventSC.methods.nfTickets(ticketId).call();

@@ -132,10 +132,11 @@
         </div>
  
           <SelectionView 
-          v-bind:selection="selection" 
+          v-bind:ticketId="selection.ticketId" 
+          v-bind:ticketTypeId="selection.ticketTypeId"
           v-bind:eventContractAddress="selection.eventContractAddress"
+          v-bind:isNf="selection.isNf"
           v-bind:open="selection.active"
-          v-bind:price="selection.price"
           v-on:close="clearSelection"></SelectionView>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
@@ -166,9 +167,9 @@ export default {
       navbarHeight: 0,
       selection: {
         active: false,
-        ticket: 0,
+        ticketId: 0,
+        ticketTypeId: 0,
         price:0,
-        ticketType: 0,
         eventContractAddress: '',
         isNf: false,
       },
@@ -213,9 +214,9 @@ export default {
     clearSelection() {
       this.selection = {
         active: false,
-        ticket: 0,
+        ticketId: 0,
         price: 0,
-        ticketType: 0,
+        ticketTypeId: 0,
         isNf: false,
         amount: 1,
       }
@@ -250,17 +251,16 @@ export default {
     selectTicket: async function(col, row) {
       //const seat = this.$refs[`seat_${col}_${row}`];
       const ticket = this.findTicketIndex(col, row);
+      console.log(ticket);
       this.selection.ticket = ticket;
       if (ticket.isNf) {
-        this.selection.ticket = ticket.ticketId;
-        this.selection.ticketType = ticket.ticketTypeId;
+        this.selection.ticketId = ticket.ticketId;
+        this.selection.ticketTypeId = ticket.ticketTypeId;
         this.selection.isNf = true;
-        this.selection.price = Number(ticket.ticketType.price);
         this.selection.eventContractAddress = ticket.eventContractAddress;
       } else {
-        this.selection.ticketType = ticket.typeId;
-        this.selection.ticket = '';
-        this.selection.price = Number(ticket.price),
+        this.selection.ticketTypeId = ticket.typeId;
+        this.selection.ticketId = 0;
         this.selection.isNf = false;
         this.selection.eventContractAddress = ticket.eventContractAddress;
       }
