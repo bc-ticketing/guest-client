@@ -631,6 +631,7 @@ export function removeSellOrders(
     let order = ticketType.sellOrders.find(
       o => o.address === address && Number(o.percentage) == Number(percentage)
     );
+    if(!order) {return;}
     if (Number(quantity) >= Number(order.quantity)) {
       ticketType.sellOrders = ticketType.sellOrders.filter(
         o => o.address !== address && Number(o.percentage) != Number(percentage)

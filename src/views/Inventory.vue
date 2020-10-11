@@ -41,9 +41,10 @@
 
       <div class="ticket-swiper">
         <div class="pagination"></div>
-        <div class="swiper-container">
+        <div v-if="$store.state.activeUser">
+          <div class="swiper-container">
           <!-- Additional required wrapper -->
-          <div class="swiper-wrapper" v-if="$store.state.activeUser">
+          <div class="swiper-wrapper">
             <!-- Slides -->
             <div
               class="swiper-slide"
@@ -92,6 +93,8 @@
             </div>
           </div>
         </div>
+        </div>
+        
       </div>
     </div>
     <SellView
@@ -126,7 +129,8 @@ export default {
       activeTicketEvent: "",
       aftermarketPercentage: 100,
       aftermarketAmount: 0,
-      sellOpen: false
+      sellOpen: false,
+      swiper: {},
     };
   },
   components: {
@@ -136,7 +140,7 @@ export default {
   computed: {
     activeSellOrders() {
       if (!this.$store.state.activeUser) {return [];}
-      console.log(this.$store.state.activeUser);
+      try{
       if (this.activeIsNf) {
         let order = this.$store.state.activeUser.nonFungibleTickets[
           this.activeSlide - this.$store.state.activeUser.fungibleTickets.length
@@ -146,6 +150,9 @@ export default {
       } else {
         return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
           .sellOrders;
+      }
+      } catch(e) {
+        return [];
       }
     },
     ticketsLeftToSell() {
@@ -200,10 +207,11 @@ export default {
     },
     setActiveTicket: function() {
       if (
-        this.$store.state.activeUser.fungibleTickets.length == 0 &&
-        this.$store.state.activeUser.nonFungibleTickets.length == 0
+        !this.$store.state.activeUser ||
+        (this.$store.state.activeUser.fungibleTickets.length == 0 &&
+        this.$store.state.activeUser.nonFungibleTickets.length == 0)
       ) {
-        return;
+        this.activeTicketType = 0;
       }
       let t;
       if (
@@ -228,10 +236,16 @@ export default {
     });
     this.$root.$on("accountUpdated", () => {
       console.log("account updated");
+  
       this.activeSlide =0;
       this.activeTicket = 0;
       this.setActiveTicket();
+      setTimeout(() => {
+        this.swiper.update();
+    }, 2000);
+          
     });
+
 
   },
   mounted: function() {

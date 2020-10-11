@@ -166,7 +166,7 @@ import {
   isFree,
   getHighestBuyOrder,
 } from "./../util/tickets";
-
+import {getNumberFungibleOwned, ownsNonFungible} from './../util/User';
 export default {
   name: "Event",
   data() {
@@ -201,13 +201,15 @@ export default {
     activeTicketsOwned() {
       if (this.toolTipActive) {
         if (this.tooltip.isNf) {
-          return this.$store.state.user.ownsNonFungible(
+          return ownsNonFungible(
+            this.$store.state.activeUser,
             this.tooltip.eventContractAddress,
             this.tooltip.ticketType,
             this.tooltip.seat
           );
         }
-        return this.$store.state.user.getNumberFungibleOwned(
+        return getNumberFungibleOwned(
+          this.$store.state.activeUser,
           this.tooltip.eventContractAddress,
           this.tooltip.ticketType
         );
@@ -385,6 +387,7 @@ export default {
       this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
     },
     markSeats: function() {
+      if(!this.event.contractAddress) {return;}
       this.event.fungibleTickets.forEach((ticket) => {
         ticket.seatMapping.forEach((mapping) => {
           let x = Number(mapping.split("/")[0]);
@@ -481,10 +484,9 @@ export default {
     this.contractAddress = this.$route.params.id;
     this.$root.$on("loadedEvents", () => {
       this.fetchEventInfo();
-    });
-    this.$root.$on("loadedTickets", () => {
       this.fetchTicketInfo();
     });
+
   },
   mounted() {
     this.$root.$emit("hideSearchBar");

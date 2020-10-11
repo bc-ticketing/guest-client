@@ -19,6 +19,7 @@
     <div class="content" ref="content">
       <router-view />
     </div>
+    <overlayMessage></overlayMessage>
     <messageBus v-bind:yPos="messagePos"></messageBus>
     <searchBar v-bind:yPos="navHeight"></searchBar>
     <bottomBar ref="nav" v-on:height="setNavHeight"></bottomBar>
@@ -33,6 +34,8 @@ import "vue-material/dist/theme/default.css";
 import bottomBar from "./components/bottomBar";
 import searchBar from "./components/searchBar";
 import messageBus from "./components/MessageBus";
+import overlayMessage from "./components/OverlayMessage";
+
 //import walletInfo from "./components/walletInfo";
 import Vue from "vue";
 
@@ -47,6 +50,7 @@ export default {
     bottomBar,
     searchBar,
     //walletInfo,
+    overlayMessage,
     messageBus
   },
   data() {
@@ -94,9 +98,11 @@ export default {
 
     this.$root.$on("accountChanged", async () => {
       console.log("accountChanged");
+      this.$root.$emit('openMessageOverlay');
       await this.$store.dispatch("updateWeb3");
       await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("accountUpdated");
+      this.$root.$emit("hideMessageOverlay");
     });
 
     await this.$store.dispatch("registerIpfs");

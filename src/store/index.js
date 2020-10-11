@@ -111,6 +111,7 @@ export default new Vuex.Store({
       var events = [];
       for (let i = 0; i < eventAddresses.length; i++) {
         const address = eventAddresses[i];
+        console.log('loading event: '+address);
         const inStore = await idb.getEvent(address);
 
         let event;
