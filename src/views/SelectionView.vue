@@ -136,7 +136,6 @@ export default {
         return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId)
           .queue;
       } else {
-        console.log("", this.ticketTypeId);
         return this.event.getLowestSellOrder(this.ticketTypeId).percentage;
       }
     },
@@ -144,7 +143,6 @@ export default {
       if (!this.event || !this.ticketHasSellOrders) {
         return false;
       }
-      console.log("ticket has sell orders");
       if (this.isNf) {
         return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId)
           .amount;
@@ -160,7 +158,7 @@ export default {
     userNotOwner() {
       return this.event
         ? this.event.getNfOwner(this.ticketTypeId, this.ticketId) !==
-            this.$store.state.user.account
+            this.$store.state.activeUser.account
         : false;
     },
     nfForSale() {
@@ -193,6 +191,7 @@ export default {
         message: "Ticket added to cart",
         status: 1,
       });
+      this.close();
     },
     createBuyOrder: async function() {
       if (this.isNf) {
@@ -201,7 +200,7 @@ export default {
           this.amount,
           this.percentage,
           this.price,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
@@ -212,7 +211,7 @@ export default {
           this.amount,
           this.percentage,
           this.price,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
@@ -226,7 +225,7 @@ export default {
           this.ticketId,
           this.lowestSellOrder,
           this.price,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
@@ -237,7 +236,7 @@ export default {
           this.amount,
           this.price,
           this.lowestSellOrder,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );

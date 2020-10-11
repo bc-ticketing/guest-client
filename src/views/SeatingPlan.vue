@@ -253,13 +253,7 @@ export default {
               }
               
           }
-          console.log(JSON.stringify(selected_seats));
-          /*
-          selected_seats is a list of x/y coordinates. it contains all seats in the venue that have been marked for the ticket to be created
-          for NF tickets: create 1 ticket per selected seat, store on ipfs for each ticket: the x/y index in the grid, the ticket address itself
-          for F tickets: the host can select how many tickets should be created for the selected standing area and the ticket type. Store on IPFS: list of all indices of the seats (for frontend display on guest client).  
-           */
-          //TODO: call SC to create tickets + store metadata on ipfs including ticket mapping
+          
       },
    
   },

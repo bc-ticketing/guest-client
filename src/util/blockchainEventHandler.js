@@ -1,4 +1,6 @@
 /* 
+This file contains helper functions for each type of event that we expect from the Blockchain
+
 Event Types: 
 
 Event:

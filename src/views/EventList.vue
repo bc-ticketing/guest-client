@@ -43,9 +43,6 @@ export default {
     };
   },
   watch: {
-    searchInput: function() {
-      console.log(`current search: ${this.searchInput}`);
-    },
   },
   beforeCreate: async function() {
     this.$root.$on("searchChange", (val) => {

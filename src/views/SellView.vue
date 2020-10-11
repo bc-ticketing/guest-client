@@ -114,25 +114,39 @@ export default {
     close: function() {
       this.$emit("close");
     },
-    sellTicket: function() {
+    sellTicket: async function() {
       if (this.isNf) {
-        makeSellOrderNonFungible(
+        const result = await makeSellOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,
           this.percentage,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        if(result.status ==1) {
+          await this.$store.dispatch('updateEvent', result.event);
+          await this.$store.dispatch("registerActiveUser");
+          this.$root.$emit('userUpdated');
+        }
+        this.$root.$emit("openMessageBus", result);
+        this.close();
       } else {
-        makeSellOrderFungible(
+        const result = await makeSellOrderFungible(
           this.ticketTypeId,
           this.amount,
           this.percentage,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,
         );
+        if(result.status ==1) {
+          await this.$store.dispatch('updateEvent', result.event);
+          await this.$store.dispatch("registerActiveUser");
+          this.$root.$emit('userUpdated');
+        }
+        this.$root.$emit("openMessageBus", result);
+        this.close();
       }
       //this.$store.state.user.makeSellOrderFungible(this.$store.state.web3.web3Instance, this.activeTicket.ticketType, 100, 1);
     },
@@ -142,7 +156,7 @@ export default {
           this.ticketTypeId,
           this.ticketId,
           this.highestBuyOrder.queue,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,
         );
@@ -151,7 +165,7 @@ export default {
           this.ticketTypeId,
           1,
           this.highestBuyOrder.queue,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,
         );

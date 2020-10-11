@@ -63,13 +63,13 @@ export default {
   },
   computed: {
     mailVerification() {
-      return this.$store.state.user.idetixIdentity ? this.$store.state.user.idetixIdentity.mail : false;
+      return this.$store.state.activeUser.idetixIdentity ? this.$store.state.activeUser.idetixIdentity.mail : false;
     },
     phoneVerification() {
-      return this.$store.state.user.idetixIdentity ? this.$store.state.user.idetixIdentity.phone : false;
+      return this.$store.state.activeUser.idetixIdentity ? this.$store.state.activeUser.idetixIdentity.phone : false;
     },
     kycVerification() {
-      return this.$store.state.user.idetixIdentity ? this.$store.state.user.idetixIdentity.kyc : false;
+      return this.$store.state.activeUser.idetixIdentity ? this.$store.state.activeUser.idetixIdentity.kyc : false;
     },
   },
   mounted: function() {

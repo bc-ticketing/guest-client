@@ -1,3 +1,6 @@
+/* 
+  This file models a simple shopping cart with typical behaviour such as adding/removing tickets and a checkout function.
+*/
 import {
   EVENT_MINTABLE_AFTERMARKET_ABI
 } from "./../util/abi/eventMintableAftermarket";
@@ -26,7 +29,6 @@ export class ShoppingCart {
 
   add(selection) {
     if (selection.isNf) {
-      console.log('is nf');
       this.nonFungibleTickets.push({
         ticket: selection.ticket,
         ticketType: selection.ticketType,

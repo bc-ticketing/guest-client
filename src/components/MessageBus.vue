@@ -69,7 +69,7 @@ export default {
       this.message = result.message;
       if (result.status == 1) {
         this.type = "success";
-        this.$root.$emit('refreshData');
+        //this.$root.$emit('refreshData');
       } else if (result.status == 0) {
         this.type = "neutral";
       } else if (result.status == -1) {

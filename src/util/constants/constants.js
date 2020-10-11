@@ -31,7 +31,7 @@ export const MONTHS = {
   "9": "Oct",
   "10": "Nov",
   "11": "Dec",
-}; // --> OFF
+}; 
 
 export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -39,3 +39,8 @@ export const MESSAGE_TRANSACTION_DENIED = 'Transaction denied due to user interr
 export const MESSAGE_TICKET_BOUGHT = 'Ticket bought successfully';
 export const MESSAGE_DEFAULT_ERROR = 'Oops! Looks like we hit a roadblock!';
 export const MESSAGE_MAX_TICKETS_ALLOWED = 'The purchase exceeds your maximum of allowed tickets for this event';
+export const MESSAGE_SELLORDER_PLACED = 'Your ticket is now listed for sale!'
+export const MESSAGE_SELLORDER_FILLED = 'Ticket bought successfully!';
+export const MESSAGE_BUYORDER_PLACED = 'You enqueued for this ticket!';
+export const MESSAGE_BUYORDER_FILLED = 'You sold your ticket!';
+export const MESSAGE_SELLORDER_WITHDRAWN = 'The sale listing has been withdrawn!';

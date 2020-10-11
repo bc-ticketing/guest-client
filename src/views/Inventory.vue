@@ -12,6 +12,14 @@
         />
       </div>
 
+      <div class="container-fluid empty-message" v-if="noTicketsOwned">
+        <p>
+          Looks like its empty here! Checkout some of our events to get your
+          first ticket!
+        </p>
+         
+      </div>
+
       <div class="container ticket-sell">
         <div v-if="activeSellOrders.length > 0">
           <p>You have created the following sale listings for this ticket:</p>
@@ -116,7 +124,7 @@ import { getNumberFungibleOwned } from "./../util/User";
 import Swiper, { Pagination } from "swiper";
 Swiper.use([Pagination]);
 import "swiper/swiper-bundle.css";
-import { withdrawSellOrderFungible } from "../util/tickets";
+import { withdrawSellOrderFungible, withdrawSellOrderNonFungible } from "../util/tickets";
 
 export default {
   name: "Inventory",
@@ -138,6 +146,11 @@ export default {
     SellView
   },
   computed: {
+    noTicketsOwned() {
+      return !this.$store.state.activeUser ||
+      (this.$store.state.activeUser.fungibleTickets.length == 0 &&
+      this.$store.state.activeUser.nonFungibleTickets.length == 0)
+    },
     activeSellOrders() {
       if (!this.$store.state.activeUser) {return [];}
       try{
@@ -179,11 +192,18 @@ export default {
     }
   },
   methods: {
-    withdrawSellOrder(index) {
+    async withdrawSellOrder(index) {
+      let result;
       if (this.activeIsNf) {
-        console.log("nf");
+        result = await withdrawSellOrderNonFungible(
+          this.activeTicketType,
+          this.activeTicket,
+          this.$store.state.activeUser.account,
+          this.$store.state.web3.web3Instance,
+          this.activeTicketEvent
+        );
       } else {
-        withdrawSellOrderFungible(
+        result = await withdrawSellOrderFungible(
           this.activeTicketType,
           this.activeSellOrders[index].quantity,
           this.activeSellOrders[index].percentage,
@@ -192,6 +212,12 @@ export default {
           this.activeTicketEvent
         );
       }
+        if(result.status ==1) {
+          await this.$store.dispatch('updateEvent', result.event);
+          await this.$store.dispatch("registerActiveUser");
+          this.$root.$emit('userUpdated');
+        }
+        this.$root.$emit("openMessageBus", result);
     },
     getTicketType(ticket) {
       for (const ticketType of this.event.nonFungibleTickets) {
@@ -212,6 +238,7 @@ export default {
         this.$store.state.activeUser.nonFungibleTickets.length == 0)
       ) {
         this.activeTicketType = 0;
+        return;
       }
       let t;
       if (
@@ -231,22 +258,14 @@ export default {
     }
   },
   beforeCreate: async function() {
-    this.$root.$on("userRegistered", () => {
-      this.setActiveTicket();
-    });
-    this.$root.$on("accountUpdated", () => {
-      console.log("account updated");
-  
+    this.$root.$on("userUpdated", () => {
       this.activeSlide =0;
       this.activeTicket = 0;
       this.setActiveTicket();
       setTimeout(() => {
         this.swiper.update();
     }, 2000);
-          
     });
-
-
   },
   mounted: function() {
     this.$root.$emit("hideSearchBar");
@@ -268,6 +287,16 @@ export default {
 </script>
 
 <style>
+.empty-message {
+  padding: 2rem;
+  background-color: var(--button-confirm);
+}
+.empty-message p {
+  color: white;
+  width: 80%;
+  margin: auto;
+  text-align: center;
+}
 .sell-order {
   display: flex;
   justify-content: space-between;

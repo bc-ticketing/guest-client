@@ -92,11 +92,24 @@ export default {
     async checkout() {
       const results = await this.$store.state.shoppingCart.checkout(
         this.$store.state.web3.web3Instance,
-        this.$store.state.user.account
+        this.$store.state.activeUser.account
       );
       for (const res of results) {
         this.$root.$emit("openMessageBus", res, "success");
       }
+      let eventsToUpdate = [];
+      for (const res of results) {
+        if (res.status == 1) {  
+          eventsToUpdate.push(res.event);
+        }
+      }
+      for (const event of eventsToUpdate) {
+        await this.$store.dispatch('updateEvent', event);
+      }
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit('userUpdated');
+      this.$store.dispatch('clearShoppingCart');
+
     },
     async removeTicket(index, fungible) {
       await this.$store.dispatch("removeTicketFromCart", {
@@ -108,10 +121,10 @@ export default {
     calculateTotalPrice() {
       let totalPrice = 0;
       this.$store.state.shoppingCart.fungibleTickets.forEach((selection) => {
-        totalPrice += Number(selection.ticket.price * selection.amount);
+        totalPrice += Number(selection.price) * Number(selection.amount);
       });
       this.$store.state.shoppingCart.nonFungibleTickets.forEach((selection) => {
-        totalPrice += Number(selection.ticket.ticketType.price);
+        totalPrice += Number(selection.price);
       });
       this.totalPrice = totalPrice;
     },

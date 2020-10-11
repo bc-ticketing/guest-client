@@ -89,12 +89,12 @@
             </span>
             <div style="display: flex; justify-content: space-between;">
               <span
-                v-bind:class="{ active: !tooltip.isNf }"
+                v-if="!tooltip.isNf"
                 class="ticket-supply"
                 ref="supply"
               >
-                {{ tooltip.supply }} tickets left</span
-              >
+                {{ tooltip.supply }} tickets left
+              </span>
               <span v-if="tooltip.isNf"> Seat Number: {{ tooltip.seat }} </span>
               <span
                 v-if="tooltip.isNf"
@@ -140,7 +140,13 @@
           </div>
         </div>
 
-        <SelectionView
+        
+      </div>
+      <div class="event-info-wrapper" ref="content-checkout">
+        <ShoppingCart></ShoppingCart>
+      </div>
+    </div>
+    <SelectionView
           v-bind:ticketId="selection.ticketId"
           v-bind:ticketTypeId="selection.ticketTypeId"
           v-bind:eventContractAddress="selection.eventContractAddress"
@@ -148,11 +154,6 @@
           v-bind:open="selection.active"
           v-on:close="clearSelection"
         ></SelectionView>
-      </div>
-      <div class="event-info-wrapper" ref="content-checkout">
-        <ShoppingCart></ShoppingCart>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -264,11 +265,9 @@ export default {
       };
     },
     findTicketIndex(col, row) {
-      //console.log('searching for : '+col+'/'+row);
       let found_ticket = false;
       this.event.fungibleTickets.forEach(function(ticketType) {
         ticketType.seatMapping.forEach(function(mapping) {
-          //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(mapping.split("/")[0]) == col &&
             Number(mapping.split("/")[1]) == row
@@ -279,7 +278,6 @@ export default {
       });
       this.event.nonFungibleTickets.forEach(function(ticketType) {
         ticketType.tickets.forEach(function(ticket) {
-          //console.log(Number(mapping.split('/')[0])+'/'+Number(mapping.split('/')[1]));
           if (
             Number(ticket.seatMapping.split("/")[0]) == col &&
             Number(ticket.seatMapping.split("/")[1]) == row
@@ -293,7 +291,6 @@ export default {
     selectTicket: async function(col, row) {
       //const seat = this.$refs[`seat_${col}_${row}`];
       const ticket = this.findTicketIndex(col, row);
-      console.log(ticket);
       this.selection.ticket = ticket;
       if (ticket.isNf) {
         this.selection.ticketId = ticket.ticketId;
@@ -425,7 +422,7 @@ export default {
     showToolTip: function(col, row) {
       const ticket = this.findTicketIndex(col, row);
       let t = {};
-      let totalSupply;
+      //let totalSupply;
       if (!ticket) {
         return;
       }
@@ -435,7 +432,7 @@ export default {
         t.ticketType = ticketType.typeId;
         t.eventContractAddress = ticketType.eventContractAddress;
         t.price = ticketType.price;
-        totalSupply = ticketType.supply;
+        //totalSupply = ticketType.supply;
         t.supply = numberFreeSeats(ticketType);
         t.desc = ticketType.description;
         t.seat = ticket.ticketId;
@@ -454,7 +451,7 @@ export default {
         t.price = ticket.price;
         t.ticketType = ticket.typeId;
         t.eventContractAddress = ticket.eventContractAddress;
-        totalSupply = ticket.supply;
+        //totalSupply = ticket.supply;
         t.supply = numberFreeSeats(ticket);
         t.desc = ticket.description;
         t.isNf = false;
@@ -462,16 +459,18 @@ export default {
         t.lowestSellOrderAmount = getLowestSellOrder(ticket).quantity;
         t.highestBuyOrder = getHighestBuyOrder(ticket).percentage;
         t.highestBuyOrderAmount = getHighestBuyOrder(ticket).quantity;
+        t.isNf = false;
       }
 
       this.toolTipActive = true;
+      /*
       if (t.supply > totalSupply / 2) {
         this.$refs["supply"].dataset.status = "good";
       } else if (t.supply > totalSupply / 4) {
         this.$refs["supply"].dataset.status = "neutral";
       } else {
         this.$refs["supply"].dataset.status = "bad";
-      }
+      }*/
       this.tooltip = t;
     },
     hideToolTip: function() {
@@ -497,6 +496,11 @@ export default {
 </script>
 
 <style scoped>
+.event {
+  height: 100vh;
+  overflow-y: hidden;
+  position: relative;
+}
 .ticket-category {
   display: flex;
   justify-content: space-between;
@@ -623,13 +627,15 @@ export default {
 }
 
 .seating-container {
+  position: absolute;
+  bottom: 70px;
+  left:0;
   padding: 5px;
   margin-top: 2rem;
   width: max-content;
   background-color: #d8dee9;
   display: grid;
   /*grid-gap: 2px;*/
-  position: relative;
   width: 100%;
   overflow-x: scroll;
 }

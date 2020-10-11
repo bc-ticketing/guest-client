@@ -69,35 +69,29 @@ export default {
       this.$root.$emit("loadedEvents");
     }
   },
+  /* handles the initial data loading logic */
   async beforeCreate() {
+    // load events when event factory is ready
     this.$root.$on("eventFactoryCreated", async () => {
       await this.loadEvents();
     });
-    /*
-    this.$root.$on("web3Injected", async () => {
-      this.$store.state.web3.web3Instance.currentProvider.publicConfigStore.on(
-        "update",
-        () => {
-          
-        },
-        this
-      );
-    });
-    */
 
+    // register the user only when events are loaded,
+    // since the ticket loading logic depends on the event metadata
+    // being present.
     this.$root.$on("loadedEvents", async () => {
-      await this.$store.dispatch("loadUsers");
+      //await this.$store.dispatch("loadUsers");
       await this.$store.dispatch("registerActiveUser");
-      this.$root.$emit("userRegistered");
+      this.$root.$emit("userUpdated");
     });
 
-    this.$root.$on("refreshData", async () => {
-      await this.$store.dispatch("registerActiveUser");
-      this.loadEvents();
-    });
-
+    /* 
+    When the user changes his active account we first display
+    an overlay screen with a loading animation, then make sure to have the
+    most recent account information through 'updateWeb3' and then fetch
+    ticket information for the new account.
+    */
     this.$root.$on("accountChanged", async () => {
-      console.log("accountChanged");
       this.$root.$emit('openMessageOverlay');
       await this.$store.dispatch("updateWeb3");
       await this.$store.dispatch("registerActiveUser");
@@ -105,18 +99,29 @@ export default {
       this.$root.$emit("hideMessageOverlay");
     });
 
+    // Actual execution starts here
+    // First we register ipfs and web3 handlers and emit the respective event
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
     this.$root.$emit("web3Injected");
+    // we subscribe to the accountsChanged event from web3 to detect thos
     this.$store.state.web3.ethereum.on("accountsChanged", () => {
       this.$root.$emit("accountChanged");
     });
 
+    /* 
+     we create an eventFactory instance, which is needed to get the event
+     smart contract addresses form the Blockchain
+     this triggers the 'loadEvents' action, which in turn triggers
+     the user ticket loading action 
+     */
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
 
+    // We register a new, empty shopping cart
     await this.$store.dispatch("createShoppingCart");
 
+    //finally a message confirms that all the data is loaded
     this.$root.$emit("openMessageBus", {
       message: "Loaded all data",
       status: "success"
@@ -209,6 +214,8 @@ a:hover {
 .content {
   padding-top: 0;
   overflow-x: hidden;
+  min-height: 100vh;
+  position: relative;
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */

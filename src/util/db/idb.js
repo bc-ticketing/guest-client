@@ -23,12 +23,11 @@ export default {
       };
 
       request.onupgradeneeded = e => {
-        console.log("upgrade needed");
         let db = e.target.result;
         if (e.oldVersion < 1) {
           db.createObjectStore("events", {
-            autoIncrement: true,
-            keyPath: "address"
+            autoIncrement: false,
+            keyPath: "contractAddress"
           });
         }
         if (e.oldVersion < 2) {
@@ -41,7 +40,7 @@ export default {
     });
   },
 
-  /* ----------------------- EVENTS -------------------------- */
+  /* ----------------------- EVENT STORE -------------------------- */
 
   async getEvents() {
     let db = await this.getDb();
@@ -80,7 +79,7 @@ export default {
       store.openCursor().onsuccess = e => {
         let cursor = e.target.result;
         if (cursor) {
-          if (cursor.value.contractAddress == eventAddress) {
+          if (cursor.value.contractAddress === eventAddress) {
             event = cursor.value;
           }
           cursor.continue();
@@ -103,12 +102,11 @@ export default {
         resolve(false);
       };
       let store = trans.objectStore("events");
-      console.log(event);
       store.put(event);
     });
   },
 
-  /* ----------------------- USERS -------------------------- */
+  /* ----------------------- USER STORE -------------------------- */
 
   async getUser(account) {
     let db = await this.getDb();
@@ -125,7 +123,7 @@ export default {
       store.openCursor().onsuccess = e => {
         let cursor = e.target.result;
         if (cursor) {
-          if (cursor.value.account == account) {
+          if (cursor.value.account === account) {
             user = cursor.value;
           }
           cursor.continue();

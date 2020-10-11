@@ -53,8 +53,6 @@ export default {
   },
   mounted: function() {
     this.$emit('height', this.$refs['wrapper'].getBoundingClientRect().top);
-    console.log(this.$refs['wrapper'].getBoundingClientRect().top)
-    console.log('emitttt  asfdasfasfasfd')
   },
 };
 </script>

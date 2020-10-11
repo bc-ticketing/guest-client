@@ -44,28 +44,23 @@ export default new Vuex.Store({
     },
     setActiveUser(state, user) {
       state.activeUser = user;
-    }
-  },
-  /* */
-  actions: {
-    async registerActiveUser({ commit }) {
-      const user = await idb.getUser(state.web3.account);
-      if (user) {
-        commit("setActiveUser", user);
-      } else {
-        let user = new User(state.web3.account, state.web3.balance);
-        await idb.saveUser(user);
-        commit("setActiveUser", user);
-      }
     },
-    async loadUsers({ commit }) {
-      //const account = state.web3.account;
-      let users = await idb.getUsers();
-      if (!users) {
-        users = [];
-      }
-      users.push(new User(state.web3.account, state.web3.balance));
-      for (const user of users) {
+  },
+  actions: {
+    /* 
+      Responsible for getting the current user object.
+      First checks if the IDB contains a user with the account
+      we get from web3, else creates a new user.
+      Then the user is updated with events from the Blockchain only
+      from the 'lastFetchedBlock', which is 0 in the case of a new account
+      Finally we store the user in the db/update the old record.
+    */
+    async registerActiveUser({ commit }) {
+      //check if the user is in the db already
+      const inDB = await idb.getUser(state.web3.account);
+      if (inDB) {
+        let user = new User(inDB);
+        //if yes, update the data of the user to the current block
         for (const event of state.events) {
           await loadTicketsForEvent(
             user,
@@ -75,10 +70,27 @@ export default new Vuex.Store({
           );
           loadAftermarketForEvent(user, event);
         }
+        //and update the record in the db
         user.lastFetchedBlock = state.web3.currentBlock;
         await idb.saveUser(user);
+        commit("setActiveUser", user);
+      } else {
+        //if not, create a new user from the web3 data and load his tickets
+        let user = new User(state.web3.account, state.web3.balance);
+        for (const event of state.events) {
+          await loadTicketsForEvent(
+            user,
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            event
+          );
+          loadAftermarketForEvent(user, event);
+        }
+        //and save it to the db
+        user.lastFetchedBlock = state.web3.currentBlock;
+        await idb.saveUser(user);
+        commit("setActiveUser", user);
       }
-      commit("setUsers", users);
     },
     async createShoppingCart({ commit }) {
       commit("updateShoppingCartStore", new ShoppingCart());
@@ -103,17 +115,25 @@ export default new Vuex.Store({
       );
       commit("setEventFactory", eventFactory);
     },
+    /* 
+      Loads all events from the IDB and Blockchain.
+      First gets all the event addresses from the eventFactory Smart contract.
+      Then checks for each address if there is a record in the DB.
+      If there is a record, checks with the 'lastFetchedBlock' if any updates 
+      are needed (metadata, tickets, ticketMetadata, aftermarket listings, etc.)
+      and fetches the updates if needed.
+      If there is no record, creates one and fetches all information from block 1.
+      finally stores/updates the event in the IDB and puts it into 
+      the state.
+    */
     async loadEvents({ commit }) {
-      console.log("dispatched loadEvents Action");
       const eventAddresses = await state.eventFactory.methods
         .getEvents()
         .call();
       var events = [];
       for (let i = 0; i < eventAddresses.length; i++) {
         const address = eventAddresses[i];
-        console.log('loading event: '+address);
         const inStore = await idb.getEvent(address);
-
         let event;
         if (!inStore) {
           event = new Event(address);
@@ -128,12 +148,28 @@ export default new Vuex.Store({
         if (fetch) {
           event.lastFetchedBlock = state.web3.currentBlock;
         }
-        if (!(await idb.saveEvent(event))) {
-          console.log("could not save event to db");
-        }
+        await idb.saveEvent(event);
         events.push(event);
       }
       commit("updateEventStore", events);
+    },
+    /* 
+      Updates a specific event in the same manner as described in 'updateEvents'.
+      This is used, e.g., when a user buys a ticket, in order to display
+      the changes in ownership live, without reloading the page.
+    */
+    async updateEvent({ commit }, address) {
+      let event = state.events.find((e) => e.contractAddress === address);
+      let fetch = await event.loadData(
+        EVENT_MINTABLE_AFTERMARKET_ABI,
+        state.ipfsInstance,
+        state.web3.web3Instance
+      );
+      if (fetch) {
+        event.lastFetchedBlock = state.web3.currentBlock;
+      }
+      await idb.saveEvent(event);
+      commit("updateEventStore", state.events);
     },
     async addTicketToCart({ commit }, selection) {
       state.shoppingCart.add(selection);
@@ -143,11 +179,14 @@ export default new Vuex.Store({
       state.shoppingCart.removeByIndex(toRemove.index, toRemove.fungible);
       commit("updateShoppingCartStore", state.shoppingCart);
     },
+    async clearShoppingCart({ commit }) {
+      state.shoppingCart.clear();
+      commit("updateShoppingCartStore", state.shoppingCart);
+    },
     async verifyUser({ commit }, payload) {
-      console.log("dispatched verifyUser Action");
       await state.user.verify(payload);
       commit("upateUserStore", state.user);
-    }
+    },
   },
-  modules: {}
+  modules: {},
 });

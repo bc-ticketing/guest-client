@@ -1,3 +1,6 @@
+/* 
+  This file contains a data class for the user and helper functions to get specific information from it and to load tickets for the user from the blockchain.
+*/
 import {
   MintFungibles,
   MintNonFungibles,
@@ -9,7 +12,7 @@ const BigNumber = require("bignumber.js");
 
 export class User {
   constructor(account, balance) {
-    // hack to turn events from idb into proper event objects
+    // hack to turn users from idb into proper user objects
     if (typeof account === "object") {
       Object.assign(this, account);
       this.account = account.account;
@@ -44,7 +47,7 @@ export function getNumberFungibleOwned(user, event, type) {
 export async function checkFungibleTicketPurchases(user, contract) {
   const fungibles = await MintFungibles(
     contract,
-    user.lastFetchedBlock,
+    user.lastFetchedBlock +1,
     user.account
   );
   return fungibles;
@@ -52,7 +55,7 @@ export async function checkFungibleTicketPurchases(user, contract) {
 export async function checkNonFungibleTicketPurchases(user, contract) {
   const nonFungibles = await MintNonFungibles(
     contract,
-    user.lastFetchedBlock,
+    user.lastFetchedBlock +1,
     user.account
   );
   return nonFungibles;
@@ -61,7 +64,7 @@ export async function checkNonFungibleTicketPurchases(user, contract) {
 export async function checkTicketChanges(user, contract) {
   const seller = await ticketTransferred(
     contract,
-    user.lastFetchedBlock,
+    user.lastFetchedBlock +1,
     "seller",
     user.account
   );
@@ -70,7 +73,7 @@ export async function checkTicketChanges(user, contract) {
   });
   const buyer = await ticketTransferred(
     contract,
-    user.lastFetchedBlock,
+    user.lastFetchedBlock +1,
     "buyer",
     user.account
   );
@@ -82,7 +85,6 @@ export async function checkTicketChanges(user, contract) {
 
 
 export function loadAftermarketForEvent(user, event) {
-  console.log("loading user sell orders");
   for (const ticket of user.fungibleTickets) {
     if (ticket.eventContractAddress === event.contractAddress) {
       const sellOrders = event.getSellOrdersByAddress(
@@ -103,7 +105,6 @@ export function loadAftermarketForEvent(user, event) {
       ticket.sellOrder = sellOrder;
     }
   }
-  console.log("loading user buy orders");
   user.fBuyOrders = user.fBuyOrders.concat(
     event.getBuyOrdersByAddress(user.account, false)
   );
@@ -113,21 +114,17 @@ export function loadAftermarketForEvent(user, event) {
 }
 
 export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
-  console.log("for loading tickets for event: " + event.contractAddress);
   const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
   const fungiblePurchases = await checkFungibleTicketPurchases(
     user,
     eventSC,
-    user.lastFetchedBlock
   );
   const nonFungiblePurchases = await checkNonFungibleTicketPurchases(
     user,
     eventSC,
-    user.lastFetchedBlock
   );
   /* Purchases from Host directly */
   for (const purchase of fungiblePurchases) {
-    console.log("bought fungible ticket");
     const ticketType = Number(
       getTicketTypeIndex(
         new BigNumber(purchase.returnValues.ticketType)
@@ -150,15 +147,12 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
     }
   }
   for (const purchase of nonFungiblePurchases) {
-    console.log("bought nonFungibleTicket");
     const ids = purchase.returnValues.ids;
     for (const id of ids) {
-      console.log("id: " + id);
       const ticketType = Number(
         getTicketTypeIndex(new BigNumber(id)).toFixed()
       );
       const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-      console.log("ticketId: " + ticketId);
       user.nonFungibleTickets.push({
         ticketId: ticketId,
         ticketType: ticketType,
@@ -170,7 +164,6 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
   /* TODO: check with simon to get the actual ticket ID in the NF case */
   const changes = await checkTicketChanges(user, eventSC);
   for (const change of changes) {
-    console.log("change: ", change);
     const ticketType = new BigNumber(change.returnValues.ticketType);
     const ticketTypeId = Number(
       getTicketTypeIndex(
@@ -180,12 +173,10 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
     if (!isNf(ticketType)) {
       let t = user.fungibleTickets.find(t => t.ticketType === ticketTypeId);
       if (change.changeType === "sold") {
-        console.log("sold f ticket");
         if (t) {
           t.amount -= 1;
         }
       } else {
-        console.log("bought f ticket");
         if (t) {
           t.amount += 1;
         } else {
@@ -243,14 +234,13 @@ export function ownsFungibles(user, eventContract, ticketType, amount) {
 }
 
 export function ownsNonFungible(user, eventContract, ticketType, ticketNr) {
-  return (
-    user.nonFungibleTickets.filter(
-      t =>
+  return user.nonFungibleTickets.find(
+        t =>
         t.ticketType === ticketType &&
         t.ticketId === ticketNr &&
-        t.eventContractAddress == eventContract
-    ).length > 0
-  );
+        t.eventContractAddress === eventContract
+    );
+  
 }
 
 export async function requestIdentification(user) {
