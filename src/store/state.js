@@ -15,7 +15,8 @@ let state = {
   events: [],
   eventFactory: null,
   ipfsInstance: null,
-  user: {},
+  users: [],
+  activeUser: undefined,
   shoppingCart: new ShoppingCart(),
   lastFetchedBlock: 1,
 };

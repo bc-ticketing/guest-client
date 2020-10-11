@@ -137,7 +137,7 @@ export default {
           .queue;
       } else {
         console.log("", this.ticketTypeId);
-        return this.event.getLowestSellOrder(this.ticketTypeId).queue;
+        return this.event.getLowestSellOrder(this.ticketTypeId).percentage;
       }
     },
     lowestSellOrderAmount() {
@@ -149,7 +149,7 @@ export default {
         return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId)
           .amount;
       } else {
-        return this.event.getLowestSellOrder(this.ticketTypeId).amount;
+        return this.event.getLowestSellOrder(this.ticketTypeId).quantity;
       }
     },
     available() {
@@ -189,10 +189,14 @@ export default {
         isNf: this.isNf,
       });
       this.$root.$emit("shoppingCartChanged");
+      this.$root.$emit("openMessageBus", {
+        message: "Ticket added to cart",
+        status: 1,
+      });
     },
     createBuyOrder: async function() {
       if (this.isNf) {
-        await makeBuyOrderNonFungible(
+        const result = await makeBuyOrderNonFungible(
           this.ticketTypeId,
           this.amount,
           this.percentage,
@@ -201,8 +205,9 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("openMessageBus", result);
       } else {
-        await makeBuyOrderFungible(
+        const result = await makeBuyOrderFungible(
           this.ticketTypeId,
           this.amount,
           this.percentage,
@@ -211,11 +216,12 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("openMessageBus", result);
       }
     },
     fillSellOrder: async function() {
       if (this.isNf) {
-        await fillSellOrderNonFungible(
+        const result = await fillSellOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,
           this.lowestSellOrder,
@@ -224,8 +230,9 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("openMessageBus", result);
       } else {
-        await fillSellOrderFungible(
+        const result = await fillSellOrderFungible(
           this.ticketTypeId,
           this.amount,
           this.price,
@@ -234,6 +241,7 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("openMessageBus", result);
       }
     },
     close: function() {

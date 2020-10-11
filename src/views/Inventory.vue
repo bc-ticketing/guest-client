@@ -2,33 +2,39 @@
   <div class="container-fluid inventory">
     <div class="position-relative">
       <div class="ticket-preview">
-        <Ticket v-if="activeTicketType != 0"
-        v-bind:ticketTypeId="activeTicketType" 
-        v-bind:ticketId="activeTicket"
-        v-bind:eventContractAddress="activeTicketEvent"
-        v-bind:isNf="activeIsNf"
-        v-bind:ticketIndex="activeSlide"/>
+        <Ticket
+          v-if="activeTicketType != 0"
+          v-bind:ticketTypeId="activeTicketType"
+          v-bind:ticketId="activeTicket"
+          v-bind:eventContractAddress="activeTicketEvent"
+          v-bind:isNf="activeIsNf"
+          v-bind:ticketIndex="activeSlide"
+        />
       </div>
 
       <div class="container ticket-sell">
         <div v-if="activeSellOrders.length > 0">
           <p>You have created the following sale listings for this ticket:</p>
           <div class="sell-order">
-          <div v-for="(order, index) in activeSellOrders" v-bind:key="'sell_'+index">
-            <p>{{order.quantity}} tickets for {{order.percentage}}% of its original price </p>
-          <md-button class="md-raised"
-          @click="withdrawSellOrder(index)">
-            Withdraw sell order
-          </md-button>
+            <div
+              v-for="(order, index) in activeSellOrders"
+              v-bind:key="'sell_' + index"
+            >
+              <p>
+                {{ order.quantity }} tickets for {{ order.percentage }}% of its
+                original price
+              </p>
+              <md-button class="md-raised" @click="withdrawSellOrder(index)">
+                Withdraw sell order
+              </md-button>
+            </div>
           </div>
-          </div>
- 
         </div>
-        <md-button 
+        <md-button
           v-if="ticketsLeftToSell > 0"
-          class="md-raised" 
+          class="md-raised"
           @click="sellOpen = true"
-          >
+        >
           Create Sell Order
         </md-button>
       </div>
@@ -37,31 +43,25 @@
         <div class="pagination"></div>
         <div class="swiper-container">
           <!-- Additional required wrapper -->
-          <div class="swiper-wrapper">
+          <div class="swiper-wrapper" v-if="$store.state.activeUser">
             <!-- Slides -->
             <div
               class="swiper-slide"
-              v-for="(ticket, index) in $store.state.user.fungibleTickets"
+              v-for="(ticket, index) in $store.state.activeUser.fungibleTickets"
               v-bind:key="'fungible_' + index"
             >
               <div
                 class="img"
                 :style="{
-                  backgroundImage: `url(${
-                    getEventForTicket(ticket).img_url
-                  })`,
+                  backgroundImage: `url(${getEventForTicket(ticket).img_url})`
                 }"
               >
                 <span class="nrTickets"> {{ ticket.amount }}</span>
               </div>
               <div class="info">
-                <span class="title">{{
-                  getEventForTicket(ticket).title
-                }}</span>
+                <span class="title">{{ getEventForTicket(ticket).title }}</span>
                 <span class="date">
-                  {{
-                    getEventForTicket(ticket).getTimeAndDate()
-                  }}</span
+                  {{ getEventForTicket(ticket).getTimeAndDate() }}</span
                 >
                 <span class="location">{{
                   getEventForTicket(ticket).location
@@ -70,25 +70,20 @@
             </div>
             <div
               class="swiper-slide"
-              v-for="(ticket, index) in $store.state.user.nonFungibleTickets"
+              v-for="(ticket, index) in $store.state.activeUser
+                .nonFungibleTickets"
               v-bind:key="'nonfungible_' + index"
             >
               <div
                 class="img"
                 :style="{
-                  backgroundImage: `url(${
-                    getEventForTicket(ticket).img_url
-                  })`,
+                  backgroundImage: `url(${getEventForTicket(ticket).img_url})`
                 }"
               ></div>
               <div class="info">
-                <span class="title">{{
-                  getEventForTicket(ticket).title
-                }}</span>
+                <span class="title">{{ getEventForTicket(ticket).title }}</span>
                 <span class="date">
-                  {{
-                    getEventForTicket(ticket).getTimeAndDate()
-                  }}</span
+                  {{ getEventForTicket(ticket).getTimeAndDate() }}</span
                 >
                 <span class="location">{{
                   getEventForTicket(ticket).location
@@ -114,11 +109,11 @@
 <script>
 import Ticket from "./../components/Ticket";
 import SellView from "./SellView";
-
+import { getNumberFungibleOwned } from "./../util/User";
 import Swiper, { Pagination } from "swiper";
 Swiper.use([Pagination]);
 import "swiper/swiper-bundle.css";
-import { withdrawSellOrderFungible } from '../util/tickets';
+import { withdrawSellOrderFungible } from "../util/tickets";
 
 export default {
   name: "Inventory",
@@ -128,55 +123,64 @@ export default {
       activeTicket: 0,
       activeTicketType: 0,
       activeIsNf: false,
-      activeTicketEvent: '',
+      activeTicketEvent: "",
       aftermarketPercentage: 100,
       aftermarketAmount: 0,
-      sellOpen: false,
+      sellOpen: false
     };
   },
   components: {
     Ticket,
-    SellView,
+    SellView
   },
   computed: {
     activeSellOrders() {
+      if (!this.$store.state.activeUser) {return [];}
+      console.log(this.$store.state.activeUser);
       if (this.activeIsNf) {
-        let order = this.$store.state.user.nonFungibleTickets[this.activeSlide - this.$store.state.user.fungibleTickets.length].sellOrder;
+        let order = this.$store.state.activeUser.nonFungibleTickets[
+          this.activeSlide - this.$store.state.activeUser.fungibleTickets.length
+        ].sellOrder;
         order.quantity = 1;
         return order.percentage ? [order] : [];
       } else {
-        return this.$store.state.user.fungibleTickets[this.activeSlide].sellOrders;
+        return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
+          .sellOrders;
       }
     },
     ticketsLeftToSell() {
       let total = 0;
       this.activeSellOrders.forEach(o => {
         total += o.quantity;
-      })
+      });
       return this.amountOwned - total;
     },
     amountOwned() {
-      if(this.activeTicketType) {
+      if (this.activeTicketType) {
         if (this.activeIsNf) {
           return 1;
         } else {
-          return this.$store.state.user.getNumberFungibleOwned(this.activeTicketEvent, this.activeTicketType);
+          return getNumberFungibleOwned(
+            this.$store.state.activeUser,
+            this.activeTicketEvent,
+            this.activeTicketType
+          );
         }
       } else {
         return 0;
       }
-    },
+    }
   },
   methods: {
     withdrawSellOrder(index) {
-      if(this.activeIsNf) {
-        console.log('nf');
+      if (this.activeIsNf) {
+        console.log("nf");
       } else {
         withdrawSellOrderFungible(
           this.activeTicketType,
           this.activeSellOrders[index].quantity,
           this.activeSellOrders[index].percentage,
-          this.$store.state.user.account,
+          this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.activeTicketEvent
         );
@@ -184,42 +188,51 @@ export default {
     },
     getTicketType(ticket) {
       for (const ticketType of this.event.nonFungibleTickets) {
-        if( ticketType.typeId == ticket.ticketTypeId) {
+        if (ticketType.typeId == ticket.ticketTypeId) {
           return ticketType;
         }
       }
     },
     getEventForTicket: function(ticket) {
       return this.$store.state.events.filter(
-        (event) => event.contractAddress === ticket.eventContractAddress
+        event => event.contractAddress === ticket.eventContractAddress
       )[0];
     },
     setActiveTicket: function() {
-      if (!this.$store.state.user.fungibleTickets || !this.$store.state.user.nonFungibleTickets){
+      if (
+        this.$store.state.activeUser.fungibleTickets.length == 0 &&
+        this.$store.state.activeUser.nonFungibleTickets.length == 0
+      ) {
         return;
       }
       let t;
-        if (this.activeSlide >= this.$store.state.user.fungibleTickets.length) {
-        t = this.$store.state.user.nonFungibleTickets[
-          this.activeSlide - this.$store.state.user.fungibleTickets.length
+      if (
+        this.activeSlide >= this.$store.state.activeUser.fungibleTickets.length
+      ) {
+        t = this.$store.state.activeUser.nonFungibleTickets[
+          this.activeSlide - this.$store.state.activeUser.fungibleTickets.length
         ];
         this.activeTicket = t.ticketId;
         this.activeIsNf = true;
       } else {
-        t = this.$store.state.user.fungibleTickets[
-          this.activeSlide
-        ];
+        t = this.$store.state.activeUser.fungibleTickets[this.activeSlide];
         this.activeIsNf = false;
       }
-        this.activeTicketEvent = t.eventContractAddress;
-        this.activeTicketType = t.ticketType
+      this.activeTicketEvent = t.eventContractAddress;
+      this.activeTicketType = t.ticketType;
     }
   },
   beforeCreate: async function() {
-    this.$root.$on("loadedUserTickets", () => {
-      console.log('event loaded');
-     this.setActiveTicket();
+    this.$root.$on("userRegistered", () => {
+      this.setActiveTicket();
     });
+    this.$root.$on("accountUpdated", () => {
+      console.log("account updated");
+      this.activeSlide =0;
+      this.activeTicket = 0;
+      this.setActiveTicket();
+    });
+
   },
   mounted: function() {
     this.$root.$emit("hideSearchBar");
@@ -229,14 +242,14 @@ export default {
       spaceBetween: 10,
       pagination: {
         el: ".pagination",
-        clickable: true,
-      },
+        clickable: true
+      }
     });
     this.swiper.on("slideChange", () => {
       this.activeSlide = this.swiper.activeIndex;
-      this.setActiveTicket()
+      this.setActiveTicket();
     });
-  },
+  }
 };
 </script>
 
@@ -276,7 +289,7 @@ export default {
   height: 200px;
 }
 .swiper-wrapper {
-  height: 100%; 
+  height: 100%;
 }
 
 .ticket-swiper .swiper-slide {
@@ -314,7 +327,6 @@ export default {
 .ticket-swiper .swiper-pagination-bullet-active {
   background: var(--accent);
 }
-
 
 .amount-selection {
   display: inline-block;

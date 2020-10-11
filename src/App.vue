@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <walletInfo v-bind:open="infoOpen"></walletInfo>
+    <!-- <walletInfo v-bind:open="infoOpen"></walletInfo> -->
     <!--
     <div id="nav" ref="nav">
       <div class="container">
@@ -19,8 +19,9 @@
     <div class="content" ref="content">
       <router-view />
     </div>
+    <messageBus v-bind:yPos="messagePos"></messageBus>
     <searchBar v-bind:yPos="navHeight"></searchBar>
-    <bottomBar ref='nav' v-on:height="setNavHeight"></bottomBar>
+    <bottomBar ref="nav" v-on:height="setNavHeight"></bottomBar>
   </div>
 </template>
 
@@ -30,8 +31,9 @@ import "vue-material/dist/vue-material.min.css";
 import "vue-material/dist/theme/default.css";
 // import Navigation from "./components/Navigation";
 import bottomBar from "./components/bottomBar";
-import searchBar from './components/searchBar';
-import walletInfo from "./components/walletInfo";
+import searchBar from "./components/searchBar";
+import messageBus from "./components/MessageBus";
+//import walletInfo from "./components/walletInfo";
 import Vue from "vue";
 
 // Importing Modules from the material kit, these are global imports
@@ -44,12 +46,14 @@ export default {
     //Navigation,
     bottomBar,
     searchBar,
-    walletInfo,
+    //walletInfo,
+    messageBus
   },
   data() {
     return {
       navHeight: 100,
-      infoOpen: false,
+      messagePos: 0
+      //infoOpen: false
     };
   },
   methods: {
@@ -59,48 +63,60 @@ export default {
     loadEvents: async function() {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
-    },
-    loadTickets: async function() {
-      await this.$store.dispatch("loadFungibleTickets");
-      await this.$store.dispatch("loadNonFungibleTickets");
-      await this.$store.dispatch("loadOwnershipChanges");
-      await this.$store.dispatch("loadAftermarketChanges");
-      this.$root.$emit("loadedTickets");
-    },
-    loadUserTickets: async function() {
-      await this.$store.dispatch("loadUserTickets");
-      this.$root.$emit("loadedUserTickets");
-    },
+    }
   },
   async beforeCreate() {
     this.$root.$on("eventFactoryCreated", async () => {
+      await this.loadEvents();
+    });
+    /*
+    this.$root.$on("web3Injected", async () => {
+      this.$store.state.web3.web3Instance.currentProvider.publicConfigStore.on(
+        "update",
+        () => {
+          
+        },
+        this
+      );
+    });
+    */
+
+    this.$root.$on("loadedEvents", async () => {
+      await this.$store.dispatch("loadUsers");
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("userRegistered");
+    });
+
+    this.$root.$on("refreshData", async () => {
+      await this.$store.dispatch("registerActiveUser");
       this.loadEvents();
     });
-    this.$root.$on("loadedEvents", async () => {
-      await this.loadTickets();
-      await this.loadUserTickets();
-      await this.$store.dispatch('saveFetchedBlockNumber');
+
+    this.$root.$on("accountChanged", async () => {
+      console.log("accountChanged");
+      await this.$store.dispatch("updateWeb3");
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("accountUpdated");
     });
+
     await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
-    await this.$store.dispatch('getLastFetchedBlock');
-
-    await this.$store.dispatch('registerUser');
-    await this.$store.dispatch('createShoppingCart');
     this.$root.$emit("web3Injected");
+    this.$store.state.web3.ethereum.on("accountsChanged", () => {
+      this.$root.$emit("accountChanged");
+    });
+
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
-  },
-  mounted: async function() {
-    setTimeout(() => {
-      this.infoOpen = true;
-    }, 1000);
-    this.$root.$on("web3Injected", async () => {
-      setTimeout(() => {
-        this.infoOpen = false;
-      }, 3000);
+
+    await this.$store.dispatch("createShoppingCart");
+
+    this.$root.$emit("openMessageBus", {
+      message: "Loaded all data",
+      status: "success"
     });
   },
+  mounted: async function() {}
 };
 </script>
 

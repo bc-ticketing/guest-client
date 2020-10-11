@@ -4,7 +4,7 @@
       class="ticket-img"
       :style="{
         backgroundImage: `url(${eventImage})`,
-        backgroundColor: `${eventColor}`,
+        backgroundColor: `${eventColor}`
       }"
     ></div>
     <div class="ticket-content">
@@ -16,8 +16,8 @@
       </div>
       <div class="ticket-info">
         <h3>{{ ticketTitle }}</h3>
-        <p v-if="isNf">{{ticketDescription}}</p>
-        <p v-if="!isNf">{{ticketDescription}}</p>
+        <p v-if="isNf">{{ ticketDescription }}</p>
+        <p v-if="!isNf">{{ ticketDescription }}</p>
         <p v-if="isNf">Seat Number: {{ seat }}</p>
         <p v-if="!isNf">Number of tickets: {{ amount }}</p>
       </div>
@@ -26,68 +26,81 @@
 </template>
 
 <script>
+import { getNumberFungibleOwned } from "./../util/User";
 export default {
   name: "Ticket",
   data() {
-    return {
-    };
+    return {};
   },
   props: {
     ticketTypeId: Number,
     ticketId: Number,
     eventContractAddress: String,
     isNf: Boolean,
-    ticketIndex: Number,
+    ticketIndex: Number
   },
   watch: {
-    ticketIndex: function () {
-      console.log('tt changed')
+    ticketIndex: function() {
+      console.log("tt changed");
     }
   },
   methods: {
     goToDetails: function() {
       this.$router.push({
         name: "event",
-        params: { id: this.ticketData.eventAddress },
+        params: { id: this.ticketData.eventAddress }
       });
-    },
+    }
   },
   computed: {
     event() {
       if (!this.eventContractAddress) return undefined;
-      return this.$store.state.events.find(e => e.contractAddress === this.eventContractAddress);
+      return this.$store.state.events.find(
+        e => e.contractAddress === this.eventContractAddress
+      );
     },
     ticket() {
-      return this.event && this.isNf ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
+      return this.event && this.isNf
+        ? this.event.getNfTicket(this.ticketTypeId, this.ticketId)
+        : undefined;
     },
     ticketType() {
-      return this.event ? this.event.getTicketType(this.ticketTypeId, this.isNf) : undefined;
+      return this.event
+        ? this.event.getTicketType(this.ticketTypeId, this.isNf)
+        : undefined;
     },
     eventImage() {
-      return this.event ? this.event.img_url : '';
+      return this.event ? this.event.img_url : "";
     },
     eventColor() {
-      return this.event ? this.event.color : '';
-
+      return this.event ? this.event.color : "";
     },
     eventTitle() {
-      return this.event ? this.event.title : '';
+      return this.event ? this.event.title : "";
     },
     timeAndDate() {
-      return this.event ? this.event.getTimeAndDate() : '';
+      return this.event ? this.event.getTimeAndDate() : "";
     },
     ticketTitle() {
-      return this.ticketType ? this.ticketType.title : '';
+      return this.ticketType ? this.ticketType.title : "";
     },
     ticketDescription() {
-      return this.ticketType ? this.ticketType.description : '';
+      return this.ticketType ? this.ticketType.description : "";
     },
     amount() {
-      if(this.ticketTypeId) {
+      if (this.ticketTypeId) {
         if (this.isNf) {
-          return this.ticket ? this.$store.state.user.nonFungibleTickets.filter(t => t.ticketTypeID == this.ticketTypeId).length : 0;
+          return this.ticket
+            ? this.$store.state.activeUser.nonFungibleTickets.filter(
+                t => t.ticketTypeID == this.ticketTypeId
+              ).length
+            : 0;
         } else {
-          return this.$store.state.user.getNumberFungibleOwned(this.eventContractAddress, this.ticketTypeId);
+          return getNumberFungibleOwned(
+            this.$store.state.activeUser,
+            this.eventContractAddress,
+            this.ticketTypeId
+          );
         }
       } else {
         return 0;
@@ -95,10 +108,9 @@ export default {
     },
     seat() {
       return this.ticket ? this.ticket.ticketId : 0;
-    },
+    }
   },
-  mounted: function() {
-  },
+  mounted: function() {}
 };
 </script>
 

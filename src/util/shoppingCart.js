@@ -1,5 +1,10 @@
-import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-import { buyFungible, buyNonFungible } from "./tickets";
+import {
+  EVENT_MINTABLE_AFTERMARKET_ABI
+} from "./../util/abi/eventMintableAftermarket";
+import {
+  buyFungible,
+  buyNonFungible
+} from "./tickets";
 
 export class ShoppingCart {
   constructor() {
@@ -51,13 +56,18 @@ export class ShoppingCart {
     }
   }
 
-  checkout(web3instance, account) {
-    this.fungibleTickets.forEach(selection => {
-        buyFungible(selection.ticketType, selection.amount, selection.price, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account, selection.eventContractAddress);
-    })
-    this.nonFungibleTickets.forEach(selection => {
-        buyNonFungible(selection.ticketType, selection.ticket, selection.price, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account, selection.eventContractAddress);
-    })
+  async checkout(web3instance, account) {
+    let results = [];
+    for (const selection of this.fungibleTickets) {
+      const result = await buyFungible(selection.ticketType, selection.amount, selection.price, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account, selection.eventContractAddress);
+      results.push(result);
+    }
+    for (const selection of this.nonFungibleTickets) {
+      const result = await buyNonFungible(selection.ticketType, selection.ticket, selection.price, web3instance, EVENT_MINTABLE_AFTERMARKET_ABI, account, selection.eventContractAddress);
+      results.push(result);
+    }
+    return results;
+
 
   }
 

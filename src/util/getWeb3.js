@@ -8,6 +8,7 @@ export async function getWeb3() {
     var web3 = {};
     // link to actual web3 object
     web3.web3Instance = window.web3;
+    web3.ethereum = window.ethereum;
     // some usefuell values to minimize web3 api calls
     web3.networkId = await window.web3.eth.net.getId();
     web3.accounts = await window.web3.eth.getAccounts();
@@ -27,6 +28,7 @@ export async function updateWeb3() {
   try {
     // Acccounts now exposed
     var web3 = {};
+    web3.ethereum = window.ethereum;
     web3.networkId = await window.web3.eth.net.getId();
     web3.accounts = await window.web3.eth.getAccounts();
     web3.web3Instance = window.web3;

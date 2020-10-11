@@ -29,16 +29,12 @@ import {
   BuyOrderNonFungibleFilled,
   SellOrderNonFungibleWithdrawn,
   BuyOrderWithdrawn,
-  SellOrderFungibleFilled
+  SellOrderFungibleFilled,
+  eventMetadataChanged
 } from "./blockchainEventHandler";
-import {
-  NULL_ADDRESS
-} from './constants/constants';
+import { NULL_ADDRESS } from "./constants/constants";
 
-import {
-  fetchIpfsHash,
-  loadIPFSMetadata
-} from './tickets'
+import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 
 const BigNumber = require("bignumber.js");
 
@@ -50,6 +46,7 @@ export class Event {
       this.address = contractAddress.address;
       return;
     }
+    this.lastFetchedBlock = 0;
     this.contractAddress = contractAddress;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
@@ -67,7 +64,7 @@ export class Event {
   }
 
   getTime() {
-    return this.hours + ':' + this.minutes.substr(-2);
+    return this.hours + ":" + this.minutes.substr(-2);
   }
 
   getDay() {
@@ -85,13 +82,13 @@ export class Event {
         `https://api.opencagedata.com/geocode/v1/json?q=${this.location}&key=9b5c0f0e97664b69baf8d617c4d0f1c6&language=en&pretty=1`
       );
     } catch (e) {
-      this.latlong = '';
+      this.latlong = "";
       return;
     }
     var first = response.data.results[0];
     var latlong = {
       lat: first.geometry.lat,
-      lng: first.geometry.lng,
+      lng: first.geometry.lng
     };
     this.latlong = latlong;
   }
@@ -109,11 +106,12 @@ export class Event {
       t = this.fungibleTickets.find(t => t.typeId === ticketType);
       return t.sellOrders.length !== 0;
     } else {
-      const tt = this.nonFungibleTickets.find(type => type.typeId === ticketType);
+      const tt = this.nonFungibleTickets.find(
+        type => type.typeId === ticketType
+      );
       t = tt.tickets.find(temp => temp.ticketId === ticket);
       return t.sellOrder.address != undefined;
     }
-
   }
 
   getLowestSellOrder(ticketType, ticketId = false) {
@@ -122,7 +120,9 @@ export class Event {
       ticket = this.getTicketType(ticketType, false);
       return getLowestSellOrder(ticket);
     } else {
-      const tt = this.nonFungibleTickets.find(type => type.typeId === ticketType);
+      const tt = this.nonFungibleTickets.find(
+        type => type.typeId === ticketType
+      );
       ticket = tt.tickets.find(t => t.ticketId === ticketId);
       return getLowestSellOrder(ticket);
     }
@@ -140,7 +140,7 @@ export class Event {
     }
   }
   getBuyOrdersByAddress(address, isNf) {
-    let buyOrders = []
+    let buyOrders = [];
     const tickets = !isNf ? this.fungibleTickets : this.nonFungibleTickets;
     for (const tt of tickets) {
       console.log(tt);
@@ -148,7 +148,7 @@ export class Event {
       orders.forEach(o => {
         o.ticketTypeId = tt.typeId;
         o.eventAddress = tt.eventContractAddress;
-      })
+      });
       console.log(orders);
       buyOrders = buyOrders.concat(orders);
     }
@@ -171,47 +171,77 @@ export class Event {
   }
 
   getTimeAndDate() {
-    return `${this.date.getDay()}/${this.date.getMonth()}/${this.date.getFullYear()} - ${this.getTime()}`
+    return `${this.date.getDay()}/${this.date.getMonth()}/${this.date.getFullYear()} - ${this.getTime()}`;
   }
 
   getLowestPrice() {
-    let lowestFungible = Math.min(this.fungibleTickets.map(ticket => Number(ticket.price)));
-    let lowestNonFungible = Math.min(this.nonFungibleTickets.map(ticket => Number(ticket.price)));
+    let lowestFungible = Math.min(
+      this.fungibleTickets.map(ticket => Number(ticket.price))
+    );
+    let lowestNonFungible = Math.min(
+      this.nonFungibleTickets.map(ticket => Number(ticket.price))
+    );
     return Math.min(lowestFungible, lowestNonFungible);
   }
 
   getTicketType(ticketTypeId, isNf = false) {
     if (isNf) {
-      const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
+      const foundNonFungible = this.nonFungibleTickets.find(
+        t => t.typeId === ticketTypeId
+      );
       return foundNonFungible;
     } else {
-      const foundFungible = this.fungibleTickets.find(t => t.typeId === ticketTypeId);
+      const foundFungible = this.fungibleTickets.find(
+        t => t.typeId === ticketTypeId
+      );
       return foundFungible;
     }
-
-
   }
 
   getNfTicket(ticketTypeId, ticketId) {
-    const foundNonFungible = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
+    const foundNonFungible = this.nonFungibleTickets.find(
+      t => t.typeId === ticketTypeId
+    );
     if (foundNonFungible) {
       return foundNonFungible.tickets.find(t => t.ticketId === ticketId);
     }
   }
 
+  async metadataChanged(ABI, web3Instance) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+    const changed = await eventMetadataChanged(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
+    return changed;
+  }
+
   async loadData(ABI, ipfsInstance, web3Instance) {
-    await this.fetchIPFSHash(ABI, web3Instance);
-    await this.loadIPFSMetadata(ipfsInstance)
+    try {
+      const changed = await this.metadataChanged(ABI, web3Instance);
+      if (changed) {
+        await this.fetchIPFSHash(ABI, web3Instance);
+        await this.loadIPFSMetadata(ipfsInstance);
+        await this.fetchPosition();
+      }
+      await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
+      await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
+      await this.loadOwnerShipChanges(web3Instance, ABI);
+      await this.loadTicketsSoldChanges(web3Instance, ABI);
+      await this.loadAftermarketChanges(web3Instance, ABI);
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+    return true;
   }
 
   async fetchIPFSHash(ABI, web3Instance) {
-    const eventSC = new web3Instance.eth.Contract(
-      ABI,
-      this.contractAddress
-    );
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
-      fromBlock: 1,
+      fromBlock: this.lastFetchedBlock + 1
     });
+
     var metadataObject = eventMetadata[0].returnValues;
     this.ipfsHash = argsToCid(
       metadataObject.hashFunction,
@@ -224,7 +254,7 @@ export class Event {
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
     for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000,
+      timeout: 2000
     })) {
       ipfsData = Buffer(chunk, "utf8").toString();
     }
@@ -243,33 +273,41 @@ export class Event {
     this.parseTimeStamp();
   }
 
-
-
   hasFungibleTicketType(id) {
-    return this.fungibleTickets.filter(t => t.typeId == id).length > 0 ? this.fungibleTickets.filter(t => t.typeId == id)[0] : false;
+    return this.fungibleTickets.filter(t => t.typeId == id).length > 0
+      ? this.fungibleTickets.filter(t => t.typeId == id)[0]
+      : false;
   }
 
   hasNonFungibleTicketType(id) {
-    return this.nonFungibleTickets.filter(t => t.typeId == id).length > 0 ? this.nonFungibleTickets.filter(t => t.typeId == id)[0] : false;
+    return this.nonFungibleTickets.filter(t => t.typeId == id).length > 0
+      ? this.nonFungibleTickets.filter(t => t.typeId == id)[0]
+      : false;
   }
 
-  async loadFungibleTickets(web3Instance, ABI, ipfsInstance, fromBlock) {
+  async loadFungibleTickets(web3Instance, ABI, ipfsInstance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.fNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
         const typeIdentifier = getIdAsBigNumber(false, i);
-        const changed = await ticketMetadataChanged(eventSC, fromBlock, typeIdentifier);
+        const changed = await ticketMetadataChanged(
+          eventSC,
+          this.lastFetchedBlock + 1,
+          typeIdentifier
+        );
         if (changed) {
           const exists = this.hasFungibleTicketType(i);
-          let ticketType = exists ? exists : new FungibleTicketType(this.contractAddress, i);
+          let ticketType = exists
+            ? exists
+            : new FungibleTicketType(this.contractAddress, i);
           const ticketMapping = await eventSC.methods
             .ticketTypeMeta(typeIdentifier)
             .call();
           ticketType.price = ticketMapping.price;
-          ticketType.ticketsSold = ticketMapping.ticketsSold;
-          ticketType.supply = ticketMapping.supply;
+          ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
+          ticketType.supply = Number(ticketMapping.supply);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
           await fetchIpfsHash(ticketType, web3Instance, ABI);
@@ -280,23 +318,29 @@ export class Event {
             this.fungibleTickets.push(ticketType);
           }
         } else {
-          console.log('fungible tickets did not change');
+          console.log("fungible tickets did not change");
         }
       }
     }
   }
 
-  async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance, fromBlock) {
+  async loadNonFungibleTickets(web3Instance, ABI, ipfsInstance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
         const typeIdentifier = getIdAsBigNumber(false, i);
-        const changed = await ticketMetadataChanged(eventSC, fromBlock, typeIdentifier);
+        const changed = await ticketMetadataChanged(
+          eventSC,
+          this.lastFetchedBlock + 1,
+          typeIdentifier
+        );
         if (changed) {
           const exists = this.hasNonFungibleTicketType(i);
-          let ticketType = exists ? exists : new NonFungibleTicketType(this.contractAddress, i);
+          let ticketType = exists
+            ? exists
+            : new NonFungibleTicketType(this.contractAddress, i);
           const ticketMapping = await eventSC.methods
             .ticketTypeMeta(getIdAsBigNumber(true, i).toFixed())
             .call();
@@ -327,16 +371,16 @@ export class Event {
             this.nonFungibleTickets.push(ticketType);
           }
         } else {
-          console.log('nonfungible Tickets did not change')
+          console.log("nonfungible Tickets did not change");
         }
-
-
       }
     }
   }
 
   updateNfOwner(ticketType, ticketId, owner) {
-    let ticket = this.nonFungibleTickets.find(tt => tt.typeId === ticketType).tickets.find(t => t.ticketId === ticketId);
+    let ticket = this.nonFungibleTickets
+      .find(tt => tt.typeId === ticketType)
+      .tickets.find(t => t.ticketId === ticketId);
     ticket.owner = owner;
   }
 
@@ -358,69 +402,84 @@ export class Event {
     ticketType.ticketsSold += amount;
   }
 
-  async loadOwnerShipChanges(web3Instance, ABI, fromBlock) {
+  async loadOwnerShipChanges(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const events = await MintNonFungibles(eventSC, fromBlock);
+    const events = await MintNonFungibles(eventSC, this.lastFetchedBlock + 1);
     if (events.length == 0) {
-      console.log('no nf tickets sold')
+      console.log("no nf tickets sold");
     }
     for (const event of events) {
       const owner = event.returnValues.owner;
       for (const id of event.returnValues.ids) {
-        const ticketType = Number(getTicketTypeIndex(new BigNumber(id)).toFixed());
+        const ticketType = Number(
+          getTicketTypeIndex(new BigNumber(id)).toFixed()
+        );
         const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
         this.updateNfOwner(ticketType, ticketId, owner);
-        this.updateTicketsSold(ticketType, true, 1)
+        this.updateTicketsSold(ticketType, true, 1);
       }
     }
   }
 
-  async loadTicketsSoldChanges(web3Instance, ABI, fromBlock) {
+  async loadTicketsSoldChanges(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
-    const events = await MintFungibles(eventSC, fromBlock);
+    const events = await MintFungibles(eventSC, this.lastFetchedBlock + 1);
     if (events.length == 0) {
-      console.log('no f tickets sold')
+      console.log("no f tickets sold");
     }
     for (const event of events) {
       //const owner = event.returnValues.owner;
-      const ticketType = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
-      const quantity = Number(event.returnValues.quantity)
+      const ticketType = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
+      const quantity = Number(event.returnValues.quantity);
       this.updateTicketsSold(ticketType, false, quantity);
     }
   }
 
-  adjustOrders(ticketTypeId, isNf, percentage, quantity, buyOrSell, placedOrFilled, address, ticketId = 0) {
+  adjustOrders(
+    ticketTypeId,
+    isNf,
+    percentage,
+    quantity,
+    buyOrSell,
+    placedOrFilled,
+    address,
+    ticketId = 0
+  ) {
     if (!isNf) {
       console.log(ticketTypeId);
       let ticketType = this.getTicketType(ticketTypeId, false);
       console.log(ticketType);
-      if (buyOrSell === 'buy') {
-        if (placedOrFilled === 'placed') {
+      if (buyOrSell === "buy") {
+        if (placedOrFilled === "placed") {
           addBuyOrders(ticketType, percentage, quantity, address);
         } else {
           removeBuyOrders(ticketType, percentage, quantity, address);
         }
         /* SELL */
       } else {
-        if (placedOrFilled === 'placed') {
+        if (placedOrFilled === "placed") {
           addSellOrders(ticketType, percentage, quantity, address);
         } else {
-          removeSellOrders(ticketType, percentage, quantity, address)
+          removeSellOrders(ticketType, percentage, quantity, address);
         }
       }
     } else {
-      console.log('test: ' + ticketTypeId);
+      console.log("test: " + ticketTypeId);
       let ticketType = this.getTicketType(ticketTypeId, true);
       console.log(ticketType);
-      if (buyOrSell == 'buy') {
-        if (placedOrFilled === 'placed') {
+      if (buyOrSell == "buy") {
+        if (placedOrFilled === "placed") {
           addBuyOrders(ticketType, percentage, quantity, address, ticketId);
         } else {
           removeBuyOrders(ticketType, percentage, quantity, address, ticketId);
         }
         /* SELL */
       } else {
-        if (placedOrFilled === 'placed') {
+        if (placedOrFilled === "placed") {
           addSellOrders(ticketType, percentage, quantity, address, ticketId);
         } else {
           removeSellOrders(ticketType, percentage, quantity, address, ticketId);
@@ -429,110 +488,267 @@ export class Event {
     }
   }
 
-  async loadAftermarketChanges(web3Instance, ABI, fromBlock) {
+  async loadAftermarketChanges(web3Instance, ABI) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
 
-    const buyOrdersPlaced = await BuyOrderPlaced(eventSC, fromBlock);
+    const buyOrdersPlaced = await BuyOrderPlaced(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of buyOrdersPlaced) {
-      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+      const ticketTypeId = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
       const nf = isNf(new BigNumber(event.returnValues.ticketType));
-      const ticketId = nf ? Number(getTicketId(new BigNumber(event.returnValues.ticketType)).toFixed()) : 0;
-      this.adjustOrders(ticketTypeId, nf, percentage, quantity, 'buy', 'placed', address, ticketId)
+      const ticketId = nf
+        ? Number(
+            getTicketId(new BigNumber(event.returnValues.ticketType)).toFixed()
+          )
+        : 0;
+      this.adjustOrders(
+        ticketTypeId,
+        nf,
+        percentage,
+        quantity,
+        "buy",
+        "placed",
+        address,
+        ticketId
+      );
     }
 
-    const buyOrderWithdrawn = await BuyOrderWithdrawn(eventSC, fromBlock);
+    const buyOrderWithdrawn = await BuyOrderWithdrawn(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of buyOrderWithdrawn) {
-      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+      const ticketTypeId = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
       const nf = isNf(new BigNumber(event.returnValues.ticketType));
-      const ticketId = nf ? Number(getTicketId(new BigNumber(event.returnValues.ticketType)).toFixed()) : 0;
-      this.adjustOrders(ticketTypeId, nf, percentage, quantity, 'buy', 'filled', address, ticketId)
+      const ticketId = nf
+        ? Number(
+            getTicketId(new BigNumber(event.returnValues.ticketType)).toFixed()
+          )
+        : 0;
+      this.adjustOrders(
+        ticketTypeId,
+        nf,
+        percentage,
+        quantity,
+        "buy",
+        "filled",
+        address,
+        ticketId
+      );
     }
 
-    const sellOrderFungiblePlaced = await SellOrderFungiblePlaced(eventSC, fromBlock);
+    const sellOrderFungiblePlaced = await SellOrderFungiblePlaced(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of sellOrderFungiblePlaced) {
-      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+      const ticketTypeId = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
-      this.adjustOrders(ticketTypeId, false, percentage, quantity, 'sell', 'placed', address)
+      this.adjustOrders(
+        ticketTypeId,
+        false,
+        percentage,
+        quantity,
+        "sell",
+        "placed",
+        address
+      );
     }
 
-    const sellOrderFungibleFilled = await SellOrderFungibleFilled(eventSC, fromBlock);
+    const sellOrderFungibleFilled = await SellOrderFungibleFilled(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of sellOrderFungibleFilled) {
-      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+      const ticketTypeId = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
-      this.adjustOrders(ticketTypeId, false, percentage, quantity, 'sell', 'filled', address)
+      this.adjustOrders(
+        ticketTypeId,
+        false,
+        percentage,
+        quantity,
+        "sell",
+        "filled",
+        address
+      );
     }
 
-    const buyOrderFungibleFilled = await BuyOrderFungibleFilled(eventSC, fromBlock);
+    const buyOrderFungibleFilled = await BuyOrderFungibleFilled(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of buyOrderFungibleFilled) {
-      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+      const ticketTypeId = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
-      this.adjustOrders(ticketTypeId, false, percentage, quantity, 'buy', 'filled', address)
+      this.adjustOrders(
+        ticketTypeId,
+        false,
+        percentage,
+        quantity,
+        "buy",
+        "filled",
+        address
+      );
     }
 
-    const sellOrderFungibleWithdrawn = await SellOrderFungibleWithdrawn(eventSC, fromBlock);
+    const sellOrderFungibleWithdrawn = await SellOrderFungibleWithdrawn(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of sellOrderFungibleWithdrawn) {
-      const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+      const ticketTypeId = Number(
+        getTicketTypeIndex(
+          new BigNumber(event.returnValues.ticketType)
+        ).toFixed()
+      );
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
-      this.adjustOrders(ticketTypeId, false, percentage, quantity, 'sell', 'filled', address)
+      this.adjustOrders(
+        ticketTypeId,
+        false,
+        percentage,
+        quantity,
+        "sell",
+        "filled",
+        address
+      );
     }
-    console.log('test');
-    const sellOrderNonFungiblePlaced = await SellOrderNonFungiblePlaced(eventSC, fromBlock);
+    console.log("test");
+    const sellOrderNonFungiblePlaced = await SellOrderNonFungiblePlaced(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of sellOrderNonFungiblePlaced) {
       const address = event.returnValues.addr;
       for (const [index, id] of event.returnValues._ids.entries()) {
-        const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(id)).toFixed());
+        const ticketTypeId = Number(
+          getTicketTypeIndex(new BigNumber(id)).toFixed()
+        );
         const percentage = event.returnValues.percentage[index];
         const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-        this.adjustOrders(ticketTypeId, true, percentage, 1, 'sell', 'placed', address, ticketId);
+        this.adjustOrders(
+          ticketTypeId,
+          true,
+          percentage,
+          1,
+          "sell",
+          "placed",
+          address,
+          ticketId
+        );
       }
     }
-    console.log('test2')
-    const sellOrderNonFungibleFilled = await SellOrderNonFungibleFilled(eventSC, fromBlock);
+    console.log("test2");
+    const sellOrderNonFungibleFilled = await SellOrderNonFungibleFilled(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of sellOrderNonFungibleFilled) {
       const address = event.returnValues.addr;
       for (const [index, id] of event.returnValues._ids.entries()) {
-        const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(id)).toFixed());
+        const ticketTypeId = Number(
+          getTicketTypeIndex(new BigNumber(id)).toFixed()
+        );
         const percentage = event.returnValues.percentage[index];
         const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-        this.adjustOrders(ticketTypeId, true, percentage, 1, 'sell', 'filled', address, ticketId);
+        this.adjustOrders(
+          ticketTypeId,
+          true,
+          percentage,
+          1,
+          "sell",
+          "filled",
+          address,
+          ticketId
+        );
       }
     }
 
-    const buyOrderNonFungibleFilled = await BuyOrderNonFungibleFilled(eventSC, fromBlock);
+    const buyOrderNonFungibleFilled = await BuyOrderNonFungibleFilled(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of buyOrderNonFungibleFilled) {
       const address = event.returnValues.addr;
       for (const [index, id] of event.returnValues._ids.entries()) {
-        const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(id)).toFixed());
+        const ticketTypeId = Number(
+          getTicketTypeIndex(new BigNumber(id)).toFixed()
+        );
         const percentage = event.returnValues.percentage[index];
         const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-        this.adjustOrders(ticketTypeId, true, percentage, 1, 'buy', 'filled', address, ticketId);
+        this.adjustOrders(
+          ticketTypeId,
+          true,
+          percentage,
+          1,
+          "buy",
+          "filled",
+          address,
+          ticketId
+        );
       }
     }
 
-    const sellOrderNonFungibleWithdrawn = await SellOrderNonFungibleWithdrawn(eventSC, fromBlock);
+    const sellOrderNonFungibleWithdrawn = await SellOrderNonFungibleWithdrawn(
+      eventSC,
+      this.lastFetchedBlock + 1
+    );
     for (const event of sellOrderNonFungibleWithdrawn) {
       const address = event.returnValues.addr;
       for (const [index, id] of event.returnValues._ids.entries()) {
-        const ticketTypeId = Number(getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed());
+        const ticketTypeId = Number(
+          getTicketTypeIndex(
+            new BigNumber(event.returnValues.ticketType)
+          ).toFixed()
+        );
         const percentage = event.returnValues.percentage[index];
         const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-        this.adjustOrders(ticketTypeId, true, percentage, 1, 'sell', 'filled', address, ticketId);
+        this.adjustOrders(
+          ticketTypeId,
+          true,
+          percentage,
+          1,
+          "sell",
+          "filled",
+          address,
+          ticketId
+        );
       }
     }
-
   }
 }

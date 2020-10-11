@@ -34,3 +34,8 @@ export const MONTHS = {
 }; // --> OFF
 
 export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+export const MESSAGE_TRANSACTION_DENIED = 'Transaction denied due to user interruption';
+export const MESSAGE_TICKET_BOUGHT = 'Ticket bought successfully';
+export const MESSAGE_DEFAULT_ERROR = 'Oops! Looks like we hit a roadblock!';
+export const MESSAGE_MAX_TICKETS_ALLOWED = 'The purchase exceeds your maximum of allowed tickets for this event';
