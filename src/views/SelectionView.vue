@@ -6,9 +6,9 @@
       </span>
       <h3>{{ ticketTitle }}</h3>
       <div v-if="!userNotOwner">
-          You are the owner of this ticket, you can create a sell offering
-          in your inventory!
-        </div>
+        You are the owner of this ticket, you can create a sell offering in your
+        inventory!
+      </div>
       <div class="group" v-if="available">
         <div v-if="!isNf" class="amount-selection">
           <div class="icon-wrap" @click="changeSelectionAmount(-1)">
@@ -19,14 +19,14 @@
             <md-icon>add_circle</md-icon>
           </div>
         </div>
-        
+
         <div v-if="!available && !nfForSale">
           This Ticket has already been sold, you can create an aftermarket
           listing if you want to queue up for it.
         </div>
         <div v-if="!available && nfForSale">
-          This ticket is sold but listed on the aftermarket, you can buy it from there 
-          or create your own listing.
+          This ticket is sold but listed on the aftermarket, you can buy it from
+          there or create your own listing.
         </div>
         <div v-if="fSoldOut">
           This Ticket Category is sold out, you can create an aftermarket
@@ -96,19 +96,25 @@ export default {
   computed: {
     event() {
       if (!this.eventContractAddress) return undefined;
-      return this.$store.state.events.find(e => e.contractAddress === this.eventContractAddress);
+      return this.$store.state.events.find(
+        (e) => e.contractAddress === this.eventContractAddress
+      );
     },
     ticket() {
-      return this.event ? this.event.getNfTicket(this.ticketTypeId, this.ticketId) : undefined;
+      return this.event
+        ? this.event.getNfTicket(this.ticketTypeId, this.ticketId)
+        : undefined;
     },
     ticketType() {
-      return this.event ? this.event.getTicketType(this.ticketTypeId, this.isNf) : undefined;
+      return this.event
+        ? this.event.getTicketType(this.ticketTypeId, this.isNf)
+        : undefined;
     },
     ticketTitle() {
-      return this.ticketType ? this.ticketType.title : '';
+      return this.ticketType ? this.ticketType.title : "";
     },
     price() {
-      return this.ticketType ? this.ticketType.price: 0;
+      return this.ticketType ? this.ticketType.price : 0;
     },
     granularity() {
       return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
@@ -118,10 +124,7 @@ export default {
         return false;
       }
       if (this.isNf) {
-        return this.event.hasSellOrders(
-          this.ticketTypeId,
-          this.ticketId
-        );
+        return this.event.hasSellOrders(this.ticketTypeId, this.ticketId);
       }
       return this.event.hasSellOrders(this.ticketTypeId);
     },
@@ -130,35 +133,40 @@ export default {
         return false;
       }
       if (this.isNf) {
-        return this.event.getLowestSellOrder(
-          this.ticketTypeId,
-          this.ticketId
-        ).queue;
+        return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId)
+          .queue;
       } else {
-      console.log('',this.ticketTypeId)
-      return this.event.getLowestSellOrder(this.ticketTypeId).queue;
+        console.log("", this.ticketTypeId);
+        return this.event.getLowestSellOrder(this.ticketTypeId).queue;
       }
-
     },
     lowestSellOrderAmount() {
       if (!this.event || !this.ticketHasSellOrders) {
         return false;
       }
-      console.log('ticket has sell orders');
+      console.log("ticket has sell orders");
       if (this.isNf) {
-        return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId).amount;
+        return this.event.getLowestSellOrder(this.ticketTypeId, this.ticketId)
+          .amount;
       } else {
         return this.event.getLowestSellOrder(this.ticketTypeId).amount;
       }
     },
     available() {
-      return this.event ? this.event.isAvailable(this.ticketTypeId, this.ticketId) : false;
+      return this.event
+        ? this.event.isAvailable(this.ticketTypeId, this.ticketId)
+        : false;
     },
     userNotOwner() {
-      return this.event ? this.event.getNfOwner(this.ticketTypeId, this.ticketId) !== this.$store.state.user.account : false;
+      return this.event
+        ? this.event.getNfOwner(this.ticketTypeId, this.ticketId) !==
+            this.$store.state.user.account
+        : false;
     },
     nfForSale() {
-      return  this.event ? this.event.hasSellOrders(this.ticketTypeId, this.ticketId) : false;
+      return this.event
+        ? this.event.hasSellOrders(this.ticketTypeId, this.ticketId)
+        : false;
     },
     fSoldOut() {
       return this.event ? !this.event.isAvailable(this.ticketTypeId) : false;

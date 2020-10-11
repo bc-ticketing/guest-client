@@ -1,6 +1,13 @@
-import { argsToCid, getIdAsBigNumber } from "idetix-utils";
-import { NULL_ADDRESS } from "./constants/constants";
-import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
+import {
+  argsToCid,
+  getIdAsBigNumber
+} from "idetix-utils";
+import {
+  NULL_ADDRESS
+} from "./constants/constants";
+import {
+  EVENT_MINTABLE_AFTERMARKET_ABI
+} from "./../util/abi/eventMintableAftermarket";
 
 const BigNumber = require("bignumber.js");
 
@@ -65,12 +72,12 @@ export async function loadSellOrders(ticket, web3Instance, ABI) {
  * @param {Ticket} ticket
  */
 export function hasSellOrder(ticket) {
-  if(!ticket.isNf) {
+  if (!ticket.isNf) {
     return ticket.sellOrders.length != 0;
   } else {
     return new BigNumber(ticket.sellOrder.address).isZero() ? false : true;
   }
-  
+
 }
 
 /**
@@ -79,7 +86,7 @@ export function hasSellOrder(ticket) {
  * @returns highestBuyOrder or 0 if none
  */
 export function getHighestBuyOrder(ticket) {
-  const sorted =  ticket.buyOrders.sort((a,b) => {
+  const sorted = ticket.buyOrders.sort((a, b) => {
     a.percentage - b.percentage
   });
   return sorted.length > 0 ? sorted[0] : {};
@@ -91,11 +98,11 @@ export function getHighestBuyOrder(ticket) {
  * @returns lowestSellOrder or 0 if none
  */
 export function getLowestSellOrder(ticket) {
-
+  console.log(ticket);
   if (ticket.isNf) {
     return ticket.sellOrder;
   }
-  const sorted =  ticket.buyOrders.sort((a,b) => {
+  const sorted = ticket.sellOrders.sort((a, b) => {
     a.percentage - b.percentage
   });
   return sorted.length > 0 ? sorted[0] : {};
@@ -116,7 +123,7 @@ export async function makeBuyOrderFungible(
     eventContractAddress
   );
   const result = await contract.methods
-    .makeBuyOrder(getFullTicketTypeId(false,ticketType), amount, percentage)
+    .makeBuyOrder(getFullTicketTypeId(false, ticketType), amount, percentage)
     .send({
       from: account,
       value: String(Math.floor(amount * price * percentage / 100)),
@@ -213,16 +220,16 @@ export async function withdrawSellOrderFungible(
   account,
   web3Instance,
   eventContractAddress
-){
+) {
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
   );
   const result = await contract.methods
-    .withdrawSellOrderFungible(getFullTicketTypeId(false, ticketType), amount, percentage,0)
-    .send(
-      {from: account}
-    );
+    .withdrawSellOrderFungible(getFullTicketTypeId(false, ticketType), amount, percentage, 0)
+    .send({
+      from: account
+    });
   console.log(result);
 }
 
@@ -258,7 +265,7 @@ export async function fillSellOrderFungible(
   console.log(amount);
   console.log(percentage);
   console.log(price);
-  const total = amount * price * percentage /100;
+  const total = amount * price * percentage / 100;
   console.log(total);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
@@ -283,7 +290,7 @@ export async function fillSellOrderNonFungible(
   eventContractAddress
 ) {
   //const reducer = (total, ticket, index) =>
-    //total + Math.floor(ticket.ticketType.price * percentages[index]);
+  //total + Math.floor(ticket.ticketType.price * percentages[index]);
   //const total = web3Instance.utils.toWei(String(tickets.reduce(reducer)));
   //const ticketIds = tickets.map((ticket) => ticket.getFullTicketId());
   const contract = new web3Instance.eth.Contract(
@@ -294,57 +301,57 @@ export async function fillSellOrderNonFungible(
     .fillSellOrderFungibles([getFullTicketId(ticket, ticketType)], [percentage])
     .send({
       from: account,
-      value: price * (percentage/100),
+      value: price * (percentage / 100),
     });
   console.log(result);
 }
 
 /* BUY DIRECTLY */
 export async function buyFungible(
-  ticketType, 
+  ticketType,
   amount,
   price,
-  web3Instance, 
-  ABI, 
-  account, 
-  eventContractAddress){
+  web3Instance,
+  ABI,
+  account,
+  eventContractAddress) {
   const eventSC = new web3Instance.eth.Contract(
     ABI,
     eventContractAddress
   );
   const result = await eventSC.methods
-      .mintFungible(
-        getFullTicketTypeId(false, new BigNumber(ticketType)),
-        amount
-      )
-      .send({
-        from: account,
-        value: amount * price,
-      });
-      console.log(result);
+    .mintFungible(
+      getFullTicketTypeId(false, new BigNumber(ticketType)),
+      amount
+    )
+    .send({
+      from: account,
+      value: amount * price,
+    });
+  console.log(result);
 }
 
 export async function buyNonFungible(
   ticketType,
   ticket,
   price,
-  web3Instance, 
-  ABI, 
+  web3Instance,
+  ABI,
   account,
-  eventContractAddress){
-    console.log(ticketType);
-    console.log(ticket);
-    console.log(price);
+  eventContractAddress) {
+  console.log(ticketType);
+  console.log(ticket);
+  console.log(price);
   const eventSC = new web3Instance.eth.Contract(
     ABI,
     eventContractAddress
   );
   const result = await eventSC.methods
-  .mintNonFungibles([getFullTicketId(ticket, ticketType)])
-  .send({
-    from: account,
-    value: price,
-  });
+    .mintNonFungibles([getFullTicketId(ticket, ticketType)])
+    .send({
+      from: account,
+      value: price,
+    });
   console.log(result);
 }
 
@@ -388,7 +395,9 @@ export async function fetchIpfsHash(ticket, web3Instance, ABI) {
     ticket.eventContractAddress
   );
   const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
-    filter: { ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId) },
+    filter: {
+      ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId)
+    },
     fromBlock: 1,
   });
   if (ticketMetadata.length < 1) {
@@ -423,7 +432,7 @@ export function getFullTicketTypeId(isNf, typeId) {
 export function getFullTicketId(ticketId, ticketTypeId) {
   // return nonFungibleBaseId.plus(ticket.ticketTypeId).plus(ticket.ticketId)
   const test = getIdAsBigNumber(true, ticketTypeId, ticketId);
-  console.log('full id: '+test.toFixed());
+  console.log('full id: ' + test.toFixed());
   return getIdAsBigNumber(true, ticketTypeId, ticketId).toFixed();
 }
 
@@ -431,7 +440,7 @@ export function getFullTicketId(ticketId, ticketTypeId) {
  * Checks if a NF ticket is free
  * @param {NonFungibleTicket} ticket
  * @returns {Boolean} isFree 
- */ 
+ */
 export function isFree(ticket) {
   return ticket.owner === NULL_ADDRESS;
 }
@@ -451,7 +460,7 @@ export function addBuyOrders(ticketType, percentage, quantity, address, ticketId
       quantity: quantity
     })
   }
- 
+
 }
 
 export function addSellOrders(ticketType, percentage, quantity, address, ticketId = 0) {
@@ -470,7 +479,7 @@ export function addSellOrders(ticketType, percentage, quantity, address, ticketI
   }
 }
 
-export function removeBuyOrders(ticketType, percentage, quantity, address, ticketId =0) {
+export function removeBuyOrders(ticketType, percentage, quantity, address, ticketId = 0) {
   if (ticketId == 0) {
     let order = ticketType.buyOrders.find(o =>
       o.address === address && o.percentage === percentage);
@@ -483,18 +492,18 @@ export function removeBuyOrders(ticketType, percentage, quantity, address, ticke
   }
 }
 
-export function removeSellOrders(ticketType, percentage, quantity, address, ticketId =0) {
+export function removeSellOrders(ticketType, percentage, quantity, address, ticketId = 0) {
   if (ticketId == 0) {
     let order = ticketType.sellOrders.find(o =>
       o.address === address && Number(o.percentage) == Number(percentage));
-      if( Number(quantity) >= Number(order.quantity)) {
-        ticketType.sellOrders = ticketType.sellOrders.filter(o =>
-          o.address !== address && Number(o.percentage) != Number(percentage)
-          );
-      } else {
-        order.quantity = Math.min(0, Number(order.quantity) - Number(quantity));
+    if (Number(quantity) >= Number(order.quantity)) {
+      ticketType.sellOrders = ticketType.sellOrders.filter(o =>
+        o.address !== address && Number(o.percentage) != Number(percentage)
+      );
+    } else {
+      order.quantity = Math.min(0, Number(order.quantity) - Number(quantity));
 
-      }
+    }
   } else {
     let ticket = ticketType.tickets.find(t => t.ticketId == ticketId);
     ticket.sellOrder = 0;
@@ -504,7 +513,7 @@ export function removeSellOrders(ticketType, percentage, quantity, address, tick
 
 /** 
  * Data Class for Fungible Ticket types
-*/
+ */
 export class FungibleTicketType {
   constructor(eventContractAddress, typeId) {
     this.eventContractAddress = eventContractAddress;
