@@ -81,6 +81,7 @@ export default {
     // being present.
     this.$root.$on("loadedEvents", async () => {
       //await this.$store.dispatch("loadUsers");
+      await this.$store.dispatch("loadApprovers");
       await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("userUpdated");
     });
@@ -92,7 +93,7 @@ export default {
     ticket information for the new account.
     */
     this.$root.$on("accountChanged", async () => {
-      this.$root.$emit('openMessageOverlay');
+      this.$root.$emit("openMessageOverlay");
       await this.$store.dispatch("updateWeb3");
       await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("accountUpdated");
@@ -118,6 +119,8 @@ export default {
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
 
+    await this.$store.dispatch("createIdentity");
+    this.$root.$emit("identityCreated");
     // We register a new, empty shopping cart
     await this.$store.dispatch("createShoppingCart");
 
@@ -142,6 +145,10 @@ export default {
   --bg: white;
   --bg-dark: #584d53;
   --accent: #ff0266;
+  --orange: #d08770;
+  --yellow: #ebcb8b;
+  --green: #a3be8c;
+  --red: #bf616a;
   --button-neutral: #e1ada6;
   --button-confirm: #0f5e59;
   --button-cancel: #3e2737;

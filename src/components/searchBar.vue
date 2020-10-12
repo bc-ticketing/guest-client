@@ -1,13 +1,17 @@
 <template>
-  <div class='search-bar' ref="search">
-    <v-touch @swipeleft='close' @swiperight='openSearchBar' class='search-bar-wrapper'>
-    <div class="search-field">
-      <input v-model="searchInput" />
-    </div>
-    <div class="search-icon" @click="toggle">
-      <md-icon v-if="!isOpen">search</md-icon>
-      <md-icon v-if="isOpen">close</md-icon>
-    </div>
+  <div class="search-bar" ref="search">
+    <v-touch
+      @swipeleft="close"
+      @swiperight="openSearchBar"
+      class="search-bar-wrapper"
+    >
+      <div class="search-field">
+        <input v-model="searchInput" />
+      </div>
+      <div class="search-icon" @click="toggle">
+        <md-icon v-if="!isOpen">search</md-icon>
+        <md-icon v-if="isOpen">close</md-icon>
+      </div>
     </v-touch>
   </div>
 </template>
@@ -18,41 +22,40 @@ export default {
   data() {
     return {
       searchInput: "",
-      isOpen: false,
+      isOpen: false
     };
   },
   props: {
     yPos: Number
   },
-  computed: {
-  },
+  computed: {},
   watch: {
     yPos: function() {
       this.$refs["search"].style.top = `${this.yPos}px`;
     },
     searchInput: function() {
-      this.$root.$emit('searchChange',this.searchInput);
+      this.$root.$emit("searchChange", this.searchInput);
     }
   },
   methods: {
     openSearchBar: function() {
-      this.$refs["search"].classList.remove('invisible');
+      this.$refs["search"].classList.remove("invisible");
       this.$refs["search"].classList.add("open");
       this.isOpen = true;
     },
     close: function() {
-      this.$refs["search"].classList.remove('invisible');
+      this.$refs["search"].classList.remove("invisible");
       this.$refs["search"].classList.remove("open");
       this.isOpen = false;
     },
     toggle: function() {
-      this.$refs["search"].classList.remove('invisible');
-      this.$refs['search'].classList.toggle('open');
+      this.$refs["search"].classList.remove("invisible");
+      this.$refs["search"].classList.toggle("open");
       this.isOpen = !this.isOpen;
     },
     hide: function() {
-      this.$refs["search"].classList.remove('open');
-      this.$refs['search'].classList.add('invisible');
+      this.$refs["search"].classList.remove("open");
+      this.$refs["search"].classList.add("invisible");
       this.isOpen = false;
     }
   },
@@ -63,10 +66,10 @@ export default {
     this.$root.$on("openSearchBar", async () => {
       this.openSearchBar();
     });
-    this.$root.$on('hideSearchBar', async () => {
+    this.$root.$on("hideSearchBar", async () => {
       this.hide();
     });
-    this.$root.$on('closeSearchBar', async () => {
+    this.$root.$on("closeSearchBar", async () => {
       this.close();
     });
   }

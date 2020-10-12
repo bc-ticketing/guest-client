@@ -1,5 +1,5 @@
 const DB_NAME = "events";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let DB;
 
@@ -34,6 +34,12 @@ export default {
           db.createObjectStore("users", {
             autoIncrement: false,
             keyPath: "account"
+          });
+        }
+        if (e.oldVersion < 3) {
+          db.createObjectStore("approvers", {
+            autoIncrement: false,
+            keyPath: "approverAddress"
           });
         }
       };
@@ -170,5 +176,71 @@ export default {
       let store = trans.objectStore("users");
       store.put(user);
     });
-  }
+  },
+
+  /* ----------------------- EVENT STORE -------------------------- */
+
+  async getApprovers() {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["approvers"], "readonly");
+      trans.oncomplete = () => {
+        resolve(approvers);
+      };
+
+      let store = trans.objectStore("approvers");
+      let approvers = [];
+
+      store.openCursor().onsuccess = e => {
+        let cursor = e.target.result;
+        if (cursor) {
+          approvers.push(cursor.value);
+          cursor.continue();
+        }
+      };
+    });
+  },
+
+  async getApprover(approverAddress) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["approvers"], "readonly");
+      trans.oncomplete = () => {
+        resolve(approver);
+      };
+
+      let store = trans.objectStore("approvers");
+      let approver;
+
+      store.openCursor().onsuccess = e => {
+        let cursor = e.target.result;
+        if (cursor) {
+          if (cursor.value.approverAddress === approverAddress) {
+            approver = cursor.value;
+          }
+          cursor.continue();
+        }
+      };
+    });
+  },
+
+  async saveApprover(approver) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["approvers"], "readwrite");
+      trans.oncomplete = () => {
+        resolve(true);
+      };
+
+      trans.onerror = e => {
+        console.log(e);
+        resolve(false);
+      };
+      let store = trans.objectStore("approvers");
+      store.put(approver);
+    });
+  },
 };

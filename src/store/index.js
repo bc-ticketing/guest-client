@@ -3,14 +3,19 @@ import Vuex from "vuex";
 import state from "./state";
 import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
-import { EVENT_FACTORY_ADDRESS } from "./../util/constants/addresses";
+import {
+  EVENT_FACTORY_ADDRESS,
+  IDENTITY_ADDRESS
+} from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
+import { IDENTITY_ABI } from "./../util/abi/identity";
 import getIpfs from "./../util/ipfs/getIpfs";
 import { Event } from "./../util/event";
-import { User } from "./../util/User";
+import { User, setApprovalLevel } from "./../util/User";
 import { ShoppingCart } from "./../util/shoppingCart";
 import { loadTicketsForEvent, loadAftermarketForEvent } from "./../util/User";
 import idb from "./../util/db/idb";
+import { IdentityApprover } from "../util/identity";
 //import { FungibleTicketType, NonFungibleTicketType, NonFungibleTicket } from "../util/tickets";
 
 Vue.use(Vuex);
@@ -30,6 +35,9 @@ export default new Vuex.Store({
     setEventFactory(state, factory) {
       state.eventFactory = factory;
     },
+    setIdentity(state, identity) {
+      state.identity = identity;
+    },
     updateEventStore(state, events) {
       state.events = events;
     },
@@ -45,6 +53,9 @@ export default new Vuex.Store({
     setActiveUser(state, user) {
       state.activeUser = user;
     },
+    updateApproverStore(state, approvers) {
+      state.approvers = approvers;
+    }
   },
   actions: {
     /* 
@@ -69,6 +80,9 @@ export default new Vuex.Store({
             event
           );
           loadAftermarketForEvent(user, event);
+          let approver = state.approvers.find(a => String(a.approverAddress) === String(event.identityContractAddress));
+          const method = await approver.getApprovalLevel(state.identity, user.account);
+          setApprovalLevel(user, approver.approverAddress, method);
         }
         //and update the record in the db
         user.lastFetchedBlock = state.web3.currentBlock;
@@ -85,6 +99,9 @@ export default new Vuex.Store({
             event
           );
           loadAftermarketForEvent(user, event);
+          let approver = state.approvers.find(a => String(a.approverAddress) === String(event.identityContractAddress));
+          const method = await approver.getApprovalLevel(state.identity, user.account);
+          setApprovalLevel(user, approver.approverAddress, method);
         }
         //and save it to the db
         user.lastFetchedBlock = state.web3.currentBlock;
@@ -115,6 +132,14 @@ export default new Vuex.Store({
       );
       commit("setEventFactory", eventFactory);
     },
+    async createIdentity({ commit }) {
+      const identity = new state.web3.web3Instance.eth.Contract(
+        IDENTITY_ABI,
+        IDENTITY_ADDRESS
+      );
+      commit("setIdentity", identity);
+    },
+
     /* 
       Loads all events from the IDB and Blockchain.
       First gets all the event addresses from the eventFactory Smart contract.
@@ -137,6 +162,17 @@ export default new Vuex.Store({
         let event;
         if (!inStore) {
           event = new Event(address);
+          await event.loadIdentityData(
+            EVENT_MINTABLE_AFTERMARKET_ABI,
+            state.web3.web3Instance
+          );
+
+          /* address public erc20Contract;
+
+          // identity approver address => level
+          Identity public identityContract;
+          address public identityApprover;
+          uint8 public identityLevel; */
         } else {
           event = new Event(inStore);
         }
@@ -153,13 +189,31 @@ export default new Vuex.Store({
       }
       commit("updateEventStore", events);
     },
+    async loadApprovers({ commit }) {
+      let approvers = [];
+      for (const event of state.events) {
+        const approverAddress = event.identityContractAddress;
+        console.log(approverAddress);
+        const inStore = await idb.getApprover(approverAddress);
+        let approver;
+        if (inStore) {
+          approver = new IdentityApprover(inStore);
+        } else {
+          approver = new IdentityApprover(approverAddress);
+          await approver.loadData(state.identity, state.ipfsInstance);
+        }
+        await idb.saveApprover(approver);
+        approvers.push(approver);
+      }
+      commit("updateApproverStore", approvers);
+    },
     /* 
       Updates a specific event in the same manner as described in 'updateEvents'.
       This is used, e.g., when a user buys a ticket, in order to display
       the changes in ownership live, without reloading the page.
     */
     async updateEvent({ commit }, address) {
-      let event = state.events.find((e) => e.contractAddress === address);
+      let event = state.events.find(e => e.contractAddress === address);
       let fetch = await event.loadData(
         EVENT_MINTABLE_AFTERMARKET_ABI,
         state.ipfsInstance,
@@ -186,7 +240,7 @@ export default new Vuex.Store({
     async verifyUser({ commit }, payload) {
       await state.user.verify(payload);
       commit("upateUserStore", state.user);
-    },
+    }
   },
-  modules: {},
+  modules: {}
 });

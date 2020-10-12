@@ -14,6 +14,8 @@ let state = {
   eventAddresses: [],
   events: [],
   eventFactory: null,
+  identity: null,
+  approvers: [],
   ipfsInstance: null,
   activeUser: undefined,
   shoppingCart: new ShoppingCart(),

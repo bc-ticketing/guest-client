@@ -57,6 +57,9 @@ export class Event {
     this.title = "";
     this.img_url = "";
     this.ipfsHash = "";
+    this.currency = 0;
+    this.identityContractAddress = "";
+    this.identityLevel = 0;
   }
 
   parseTimeStamp() {
@@ -211,6 +214,16 @@ export class Event {
       this.lastFetchedBlock + 1
     );
     return changed;
+  }
+
+  async loadIdentityData(ABI, web3Instance) {
+    const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
+    const currency = await eventSC.methods.erc20Contract().call();
+    const identityContractAddress = await eventSC.methods.identityApprover().call();
+    const identityLevel = await eventSC.methods.identityLevel().call();
+    this.currency = currency;
+    this.identityContractAddress = identityContractAddress;
+    this.identityLevel = identityLevel;
   }
 
   async loadData(ABI, ipfsInstance, web3Instance) {
@@ -446,6 +459,7 @@ export class Event {
         /* SELL */
       } else {
         if (placedOrFilled === "placed") {
+          console.log('placed');
           addSellOrders(ticketType, percentage, quantity, address);
         } else {
           removeSellOrders(ticketType, percentage, quantity, address);
@@ -540,6 +554,7 @@ export class Event {
       this.lastFetchedBlock + 1
     );
     for (const event of sellOrderFungiblePlaced) {
+      console.log('sell order fungible placed');
       const ticketTypeId = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)

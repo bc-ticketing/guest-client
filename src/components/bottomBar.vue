@@ -47,8 +47,12 @@ export default {
   },
   props: {},
   methods: {
-    navigateTo: function(view) {
-      this.$router.push({ name: view, params: {} });
+    navigateTo: async function(view) {
+      try {
+        await this.$router.push({ name: view, params: {} });
+      } catch {
+        return;
+      }
     },
   },
   mounted: function() {

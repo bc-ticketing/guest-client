@@ -37,6 +37,21 @@
         >
       </div>
       <hr />
+      <div v-if="isNf">
+        <div class="message" v-if="!available">
+          This ticket is sold
+        </div>
+        <div class="message" v-if="nfForSale">
+          This ticket is available on the aftermarket
+        </div>
+      </div>
+      <div v-else>
+        <div class="message" v-if="!available">
+          This ticket is sold out
+        </div>
+      </div>
+
+      <!-- 
       <div class="group" v-if="userNotOwner">
         <div class="percentage-selection">
           <input
@@ -63,6 +78,7 @@
           >Buy from Aftermarket</md-button
         >
       </div>
+       -->
     </div>
   </div>
 </template>
@@ -72,7 +88,7 @@ import {
   fillSellOrderFungible,
   fillSellOrderNonFungible,
   makeBuyOrderNonFungible,
-  makeBuyOrderFungible,
+  makeBuyOrderFungible
 } from "./../util/tickets";
 
 export default {
@@ -81,7 +97,7 @@ export default {
   data() {
     return {
       percentage: 100,
-      amount: 1,
+      amount: 1
     };
   },
   props: {
@@ -89,7 +105,7 @@ export default {
     ticketTypeId: Number,
     isNf: Boolean,
     eventContractAddress: String,
-    open: Boolean,
+    open: Boolean
   },
   beforeCreate: function() {},
   mounted: function() {},
@@ -97,7 +113,7 @@ export default {
     event() {
       if (!this.eventContractAddress) return undefined;
       return this.$store.state.events.find(
-        (e) => e.contractAddress === this.eventContractAddress
+        e => e.contractAddress === this.eventContractAddress
       );
     },
     ticket() {
@@ -168,7 +184,7 @@ export default {
     },
     fSoldOut() {
       return this.event ? !this.event.isAvailable(this.ticketTypeId) : false;
-    },
+    }
   },
   methods: {
     changeSelectionAmount(amount) {
@@ -184,12 +200,12 @@ export default {
         price: this.price,
         eventContractAddress: this.eventContractAddress,
         amount: this.amount,
-        isNf: this.isNf,
+        isNf: this.isNf
       });
       this.$root.$emit("shoppingCartChanged");
       this.$root.$emit("openMessageBus", {
         message: "Ticket added to cart",
-        status: 1,
+        status: 1
       });
       this.close();
     },
@@ -245,8 +261,8 @@ export default {
     },
     close: function() {
       this.$emit("close");
-    },
-  },
+    }
+  }
 };
 </script>
 

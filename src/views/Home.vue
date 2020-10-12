@@ -25,7 +25,7 @@
             rotateControl: false,
             fullscreenControl: false,
             disableDefaultUI: false,
-            styles: mapStyles,
+            styles: mapStyles
           }"
           map-type-id="roadmap"
           style="width: 100%; height: 100%"
@@ -64,7 +64,7 @@
 import Vue from "vue";
 import { gmapApi } from "gmap-vue";
 import { MdContent, MdIcon } from "vue-material/dist/components";
-import {GMAP_STYLES} from "./../util/constants/mapStyles";
+import { GMAP_STYLES } from "./../util/constants/mapStyles";
 
 Vue.use(MdContent);
 Vue.use(MdIcon);
@@ -73,9 +73,9 @@ import * as VueGoogleMaps from "gmap-vue";
 Vue.use(VueGoogleMaps, {
   load: {
     key: "AIzaSyC698VZ_qNCEtFGDRtevgX2f1n9uK4P7Gw",
-    libraries: "places",
+    libraries: "places"
   },
-  installComponents: true,
+  installComponents: true
 });
 // import Button from "./../components/basics/Button";
 export default {
@@ -85,38 +85,31 @@ export default {
   },
   data() {
     return {
-      location: undefined,
       selectedEvent: {},
       tooltipActive: false,
       searchInput: "",
-      events: [],
-      mapStyles: GMAP_STYLES,
+      mapStyles: GMAP_STYLES
     };
   },
   methods: {
     showTooltip: function(e) {
       this.tooltipActive = true;
       this.selectedEvent = e;
-      //this.$refs['tooltip'].style.top = event.clientY;
     },
     hideTooltip: function() {
       this.tooltipActive = false;
-    },
+    }
   },
   computed: {
-    google: gmapApi,
-    eventsWithLocations: function() {
-      return this.events.filter((e) => e.latlong);
-    },
+    google: gmapApi
   },
-  watch: {
-  },
+  watch: {},
   mounted() {
     this.$root.$emit("hideSearchBar");
-    this.$refs.map.$mapPromise.then((map) => {
+    this.$refs.map.$mapPromise.then(map => {
       this.map = map;
     });
-  },
+  }
 };
 </script>
 

@@ -31,7 +31,21 @@ export class User {
       mail: false,
       kyc: false
     };
+    this.approvalLevels = {}; 
   }
+}
+
+export function setApprovalLevel(user, approver, method) {
+  user.approvalLevels[approver] = method;
+} 
+
+export function getApprovalLevelForApprover(user, approver) {
+  return user.approvalLevels[approver];
+}
+
+export function isApproved(user, approver, level) {
+  return user.approvalLevels[approver] &&
+        user.approvalLevels[approver].level >= level;
 }
 
 export function getNumberFungibleOwned(user, event, type) {

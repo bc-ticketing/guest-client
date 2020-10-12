@@ -33,6 +33,13 @@
           Tickets
         </div>
         <div
+          class="nav-entry aftermarket"
+          ref="aftermarket"
+          @click="toggleTab('aftermarket')"
+        >
+          Aftermarket
+        </div>
+        <div
           class="nav-entry checkout"
           ref="checkout"
           @click="toggleTab('checkout')"
@@ -78,6 +85,18 @@
             >Twitter</a
           >
         </div>
+        <h3>Identity</h3>
+        <div class="info-group">
+          <md-icon class="info-title">supervised_user_circle</md-icon>
+          <span class="info-value">{{approverTitle}}</span>
+        </div>
+        <div class="info-group">
+          <md-icon class="info-title">mail_outline</md-icon>
+          <span class="info-value">{{requiredIdentityLevel}} - {{requiredIdentityMethod}}</span>
+        </div>
+        <div class="info-group" v-if="userIsApproved">
+          You are approved with {{approverTitle}} at the required level to buy tickets.
+        </div>
       </div>
 
       <div class="event-info-wrapper" ref="content-tickets-plan">
@@ -88,11 +107,7 @@
               <span>{{ tooltip.price }} ETH</span>
             </span>
             <div style="display: flex; justify-content: space-between;">
-              <span
-                v-if="!tooltip.isNf"
-                class="ticket-supply"
-                ref="supply"
-              >
+              <span v-if="!tooltip.isNf" class="ticket-supply" ref="supply">
                 {{ tooltip.supply }} tickets left
               </span>
               <span v-if="tooltip.isNf"> Seat Number: {{ tooltip.seat }} </span>
@@ -106,22 +121,12 @@
                 >Seat {{ tooltip.seat }}</span
               >
             </div>
+            <span class="ticket-desc"> {{ tooltip.desc }}</span>
             <div v-if="!tooltip.isNf && activeTicketsOwned">
               You own {{ activeTicketsOwned }} tickets of this category
             </div>
             <div v-if="tooltip.isNf && activeTicketsOwned">
               You own this ticket
-            </div>
-            <h3>Ticket Description:</h3>
-            <span class="ticket-desc"> {{ tooltip.desc }}</span>
-            <h3>Aftermarket:</h3>
-            <div class="aftermarket" v-if="tooltip.lowestSellOrder > 0">
-              {{ tooltip.lowestSellOrderAmount }} tickets on sale for
-              {{ tooltip.lowestSellOrder }}%
-            </div>
-            <div class="aftermarket" v-if="tooltip.highestBuyOrder > 0">
-              {{ tooltip.highestBuyOrderAmount }} offers for
-              {{ tooltip.highestBuyOrder }}%
             </div>
           </div>
         </div>
@@ -139,21 +144,174 @@
             ></div>
           </div>
         </div>
+      </div>
+      <div class="event-info-wrapper" ref="content-aftermarket">
+        <div
+          class="ticket-type-am"
+          v-for="ticket in fungibleTickets"
+          v-bind:key="'fungible_' + ticket.typeId"
+        >
+          <h3>{{ ticket.title }}</h3>
+          <div class="queue-wrapper buying">
+            <div class="queue-label">
+              buy
+            </div>
+            <div class="queue">
+              <div
+                class="step-wrapper"
+                @mouseenter="setActiveQueueTip(ticket)"
+                :style="{
+                  left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
+                    (i - 1)}% - 10px)`
+                }"
+                v-for="i in Number(ticket.aftermarketGranularity)"
+                :key="'fungible_buy_' + i"
+              >
+                <div
+                  class="step"
+                  :data-orders="
+                    numBuyOrdersByPercent(
+                      ticket,
+                      (100 / ticket.aftermarketGranularity) * i
+                    )
+                  "
+                ></div>
+                <md-tooltip>
+                  {{
+                    numBuyOrdersByPercent(
+                      ticket,
+                      (100 / ticket.aftermarketGranularity) * i
+                    )
+                  }}
+                  offers
+                </md-tooltip>
+              </div>
+            </div>
+          </div>
+          <div class="queue-wrapper selling">
+            <div class="queue-label">
+              sell
+            </div>
+            <div class="queue">
+              <div
+                class="step-wrapper"
+                @mouseenter="setActiveQueueTip(ticket)"
+                :style="{
+                  left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
+                    (i - 1)}% - 10px)`
+                }"
+                v-for="i in Number(ticket.aftermarketGranularity)"
+                :key="'fungible_buy_' + i"
+              >
+                <div
+                  class="step"
+                  :data-orders="
+                    numSellOrdersByPercent(
+                      ticket,
+                      (100 / ticket.aftermarketGranularity) * i
+                    )
+                  "
+                ></div>
 
-        
+                <md-tooltip>
+                  {{
+                    numSellOrdersByPercent(
+                      ticket,
+                      (100 / ticket.aftermarketGranularity) * i
+                    )
+                  }}
+                  offers
+                </md-tooltip>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="ticket-type-am"
+          v-for="ticket in nonFungibleTickets"
+          v-bind:key="'nonfungible_' + ticket.typeId"
+        >
+          <h3>{{ ticket.title }}</h3>
+          <div class="queue-wrapper buying">
+            <div class="queue-label">
+              buy
+            </div>
+            <div class="queue">
+              <div
+                class="step-wrapper"
+                :ref="'fungible_buy_' + ticket.typeId + '_' + i"
+                @mouseenter="setActiveQueueTip(ticket)"
+                :style="{
+                  left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
+                    (i - 1)}% - 10px)`
+                }"
+                v-for="i in Number(ticket.aftermarketGranularity)"
+                :key="'fungible_buy_' + i"
+              >
+                <div
+                  class="step"
+                  :data-orders="
+                    numBuyOrdersByPercent(
+                      ticket,
+                      (100 / ticket.aftermarketGranularity) * i
+                    )
+                  "
+                ></div>
+
+                <md-tooltip>
+                  {{
+                    numBuyOrdersByPercent(
+                      ticket,
+                      (100 / ticket.aftermarketGranularity) * i
+                    )
+                  }}
+                  offers
+                </md-tooltip>
+              </div>
+            </div>
+          </div>
+          <div class="selling">
+            <h3>sell</h3>
+            <div class="sell-offers-nf">
+              <div
+                class="sell-offering"
+                v-for="(offering, index) in allSellOferingsNfTicketType(ticket)"
+                v-bind:key="'sellOffering_' + index"
+              >
+                <span class="ticket-number"
+                  >Seat Number {{ offering.ticketId }}</span
+                >
+                <span class="percentage">{{ offering.percentage }}%</span>
+                <span
+                  class="fill-sell"
+                  @click="
+                    fillSellOrderNonFungible(
+                      ticket.typeId,
+                      offering.ticketId,
+                      offering.percentage,
+                      ticket.price
+                    )
+                  "
+                >
+                  <md-icon>shop</md-icon>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
         <ShoppingCart></ShoppingCart>
       </div>
     </div>
     <SelectionView
-          v-bind:ticketId="selection.ticketId"
-          v-bind:ticketTypeId="selection.ticketTypeId"
-          v-bind:eventContractAddress="selection.eventContractAddress"
-          v-bind:isNf="selection.isNf"
-          v-bind:open="selection.active"
-          v-on:close="clearSelection"
-        ></SelectionView>
+      v-bind:ticketId="selection.ticketId"
+      v-bind:ticketTypeId="selection.ticketTypeId"
+      v-bind:eventContractAddress="selection.eventContractAddress"
+      v-bind:isNf="selection.isNf"
+      v-bind:open="selection.active"
+      v-on:close="clearSelection"
+    ></SelectionView>
   </div>
 </template>
 
@@ -166,17 +324,27 @@ import {
   numberFreeSeats,
   isFree,
   getHighestBuyOrder,
+  getNumBuyOrdersByPercent,
+  getNumSellOrdersByPercent,
+  getAllSellOferingsNfTicketType,
+  fillSellOrderNonFungible
 } from "./../util/tickets";
-import {getNumberFungibleOwned, ownsNonFungible} from './../util/User';
+import { getNumberFungibleOwned, ownsNonFungible } from "./../util/User";
 export default {
   name: "Event",
   data() {
     return {
       event: {},
+      activeQueueTip: {
+        ticketType: 0,
+        index: 0,
+        type: "",
+        isNf: false
+      },
       aftermarket_price: 0,
       showDialog: false,
       contractAddress: Number,
-      tabs: ["about", "tickets-plan", "checkout"],
+      tabs: ["about", "tickets-plan", "aftermarket", "checkout"],
       rows: 0,
       cols: 0,
       tooltip: {},
@@ -188,17 +356,47 @@ export default {
         ticketTypeId: 0,
         price: 0,
         eventContractAddress: "",
-        isNf: false,
-      },
+        isNf: false
+      }
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
   components: {
     ShoppingCart,
-    SelectionView,
+    SelectionView
   },
   props: {},
   computed: {
+    approver() {
+      return this.event.identityContractAddress
+        ? this.$store.state.approvers.find(
+            a =>
+              String(a.approverAddress) ===
+              String(this.event.identityContractAddress)
+          )
+        : undefined;
+    },
+    approverTitle() {
+      return this.approver ? this.approver.title : "";
+    },
+    requiredIdentityLevel() {
+      return Number(this.event.identityLevel);
+    },
+    requiredIdentityMethod() {
+      return this.approver && this.approver.getMethodFromLevel(this.requiredIdentityLevel);
+    },
+    userIsApproved() {
+      return this.approver &&
+      this.$store.state.activeUser.approvalLevels &&
+      this.$store.state.activeUser.approvalLevels[this.approver.approverAddress] &&
+      Number(this.$store.state.activeUser.approvalLevels[this.approver.approverAddress].level) >= this.requiredIdentityLevel;
+    },
+    fungibleTickets() {
+      return this.event.fungibleTickets ? this.event.fungibleTickets : [];
+    },
+    nonFungibleTickets() {
+      return this.event.nonFungibleTickets ? this.event.nonFungibleTickets : [];
+    },
     activeTicketsOwned() {
       if (this.toolTipActive) {
         if (this.tooltip.isNf) {
@@ -243,10 +441,34 @@ export default {
     },
     tooltipIsNf() {
       return this.tooltip.isNf == true;
-    },
+    }
   },
   watch: {},
   methods: {
+    async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
+      const result = await fillSellOrderNonFungible(
+        ticketTypeId,
+        ticketId,
+        percentage,
+        price,
+        this.$store.state.activeUser.account,
+        this.$store.state.web3.web3Instance,
+        this.event.contractAddress
+      );
+      this.$root.$emit("openMessageBus", result);
+    },
+    setActiveQueueTip(ticket) {
+      this.activeQueueTip.ticketType = ticket;
+    },
+    numSellOrdersByPercent(ticket, percentage) {
+      return getNumSellOrdersByPercent(ticket, percentage);
+    },
+    numBuyOrdersByPercent(ticket, percentage) {
+      return getNumBuyOrdersByPercent(ticket, percentage);
+    },
+    allSellOferingsNfTicketType(ticket) {
+      return getAllSellOferingsNfTicketType(ticket);
+    },
     getTicketType(ticket) {
       for (const ticketType of this.event.nonFungibleTickets) {
         if (ticketType.typeId == ticket.ticketTypeId) {
@@ -261,7 +483,7 @@ export default {
         price: 0,
         ticketTypeId: 0,
         isNf: false,
-        amount: 1,
+        amount: 1
       };
     },
     findTicketIndex(col, row) {
@@ -307,13 +529,17 @@ export default {
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
     toggleTab: function(tab) {
-      this.tabs.forEach((t) => {
+      this.tabs.forEach(t => {
         this.$refs[t].classList.remove("active");
         this.$refs[`content-${t}`].classList.remove("active");
       });
       this.$refs[tab].classList.add("active");
       this.$refs[`content-${tab}`].classList.add("active");
-      if (tab === "tickets-plan" || tab === "checkout") {
+      if (
+        tab === "tickets-plan" ||
+        tab === "checkout" ||
+        tab == "aftermarket"
+      ) {
         this.navbarHeight =
           this.$refs["navigation"].getBoundingClientRect().height +
           this.$refs["headerTitle"].getBoundingClientRect().height;
@@ -333,7 +559,7 @@ export default {
     },
     fetchEventInfo: function() {
       this.event = this.$store.state.events.filter(
-        (event) => event.contractAddress == this.contractAddress
+        event => event.contractAddress == this.contractAddress
       )[0];
       if (!this.event) {
         this.event = {};
@@ -352,8 +578,8 @@ export default {
       if (!this.event.fungibleTickets) {
         return;
       }
-      this.event.fungibleTickets.forEach((ticket) => {
-        ticket.seatMapping.forEach((mapping) => {
+      this.event.fungibleTickets.forEach(ticket => {
+        ticket.seatMapping.forEach(mapping => {
           max_col =
             Number(mapping.split("/")[0]) > max_col
               ? Number(mapping.split("/")[0])
@@ -364,8 +590,8 @@ export default {
               : max_row;
         });
       });
-      this.event.nonFungibleTickets.forEach((nfticketType) => {
-        nfticketType.tickets.forEach((ticket) => {
+      this.event.nonFungibleTickets.forEach(nfticketType => {
+        nfticketType.tickets.forEach(ticket => {
           max_row =
             max_row > ticket.seatMapping.split("/")[1]
               ? max_row
@@ -384,9 +610,11 @@ export default {
       this.$refs["cont"].style.gridTemplateRows = `repeat(${this.rows}, 20px)`;
     },
     markSeats: function() {
-      if(!this.event.contractAddress) {return;}
-      this.event.fungibleTickets.forEach((ticket) => {
-        ticket.seatMapping.forEach((mapping) => {
+      if (!this.event.contractAddress) {
+        return;
+      }
+      this.event.fungibleTickets.forEach(ticket => {
+        ticket.seatMapping.forEach(mapping => {
           let x = Number(mapping.split("/")[0]);
           let y = Number(mapping.split("/")[1]);
           // check if this fungible category still has seats available
@@ -477,7 +705,7 @@ export default {
       setTimeout(() => {
         this.toolTipActive = false;
       }, 1000);
-    },
+    }
   },
   created() {
     this.contractAddress = this.$route.params.id;
@@ -485,13 +713,12 @@ export default {
       this.fetchEventInfo();
       this.fetchTicketInfo();
     });
-
   },
   mounted() {
     this.$root.$emit("hideSearchBar");
     this.fetchEventInfo();
     this.fetchTicketInfo();
-  },
+  }
 };
 </script>
 
@@ -580,7 +807,7 @@ export default {
 }
 
 .nav-entry {
-  padding: 15px 25px;
+  padding: 15px 15px;
   color: white;
   cursor: pointer;
 }
@@ -629,7 +856,7 @@ export default {
 .seating-container {
   position: absolute;
   bottom: 70px;
-  left:0;
+  left: 0;
   padding: 5px;
   margin-top: 2rem;
   width: max-content;
@@ -742,5 +969,57 @@ export default {
 }
 i.shopping-cart {
   color: white !important;
+}
+.queue-wrapper {
+  display: flex;
+  margin-bottom: 3rem;
+}
+.queue-label {
+  width: 10%;
+  margin-right: 2rem;
+}
+.queue-wrapper .queue {
+  width: 80%;
+  position: relative;
+  height: 20px;
+  overflow-x: visible;
+}
+.step {
+  height: 20px;
+  width: 100%;
+  background-color: var(--green);
+}
+.step-wrapper {
+  position: absolute;
+  bottom: 0%;
+  background-color: white;
+  height: 20px;
+  width: 20px;
+  display: flex;
+  align-items: flex-end;
+}
+.step[data-orders="0"] {
+  background-color: var(--red);
+  height: 5px;
+}
+.step[data-orders="1"],
+.step[data-orders="2"],
+.step[data-orders="3"] {
+  background-color: var(--orange);
+  height: 10px;
+}
+.step[data-orders="4"],
+.step[data-orders="5"] {
+  background-color: var(--yellow);
+  height: 15px;
+}
+
+.sell-offering {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.fill-sell {
+  cursor: pointer;
 }
 </style>
