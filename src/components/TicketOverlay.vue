@@ -1,39 +1,79 @@
 <template>
-  <div class="selection" v-bind:class="{ open: open }">
-    <div class="wrapper">
-      <span class="close-icon" @click="close">
+  <div class="overlay" v-bind:class="{ open: open }">
+    <div class="close-bar">
+      <div class="close-icon" @click="$emit('close')">
         <md-icon>close</md-icon>
-      </span>
-      <div class="selection-group percentage-selection">
-        <h3>Price</h3>
-        <input
-          type="range"
-          :min="getStepSize(granularity)"
-          max="100"
-          :step="getStepSize(granularity)"
-          v-model.number="percentage"
-        />
-        {{ percentage }}
-        %
       </div>
-      <div v-if="!isNf" class="selection-group amount-selection">
-        <h3>Amount</h3>
-        <div class="selection-amount">
-          <div class="icon-wrap" @click="changeSelectionAmount(-1)">
-            <md-icon>remove_circle</md-icon>
+    </div>
+    <div class="ticket">
+      <div
+        class="ticket-section image"
+        :style="{
+          backgroundImage: `url(${eventImage})`,
+          backgroundColor: `${eventColor}`,
+        }"
+      ></div>
+      <div class="ticket-section">
+        <div class="group">
+          <div class="label">Ticket Category</div>
+          <div class="value">{{ ticketTitle }}</div>
+        </div>
+        <div class="group">
+          <div class="value">{{ ticketDescription }}</div>
+        </div>
+        <div class="group">
+          <div class="label">Event</div>
+          <div class="value">{{ eventTitle }}</div>
+        </div>
+        <div class="group">
+          <div class="label">Date</div>
+          <div class="value">{{ eventDate }}</div>
+        </div>
+        <div class="group">
+          <div v-if="isNf || amountOwned == 1" class="label">
+            Your Ticket
           </div>
-          <p>{{ amount }}</p>
-          <div class="icon-wrap" @click="changeSelectionAmount(1)">
-            <md-icon>add_circle</md-icon>
+          <div v-if="!isNf && amountOwned > 1" class="label">
+            Your Tickets
           </div>
+          <div class="value">{{ amountOwned }} tickets</div>
         </div>
       </div>
-      <md-button class="md-raised" @click="sellTicket"
-        >Create Sell Order</md-button
-      >
-      <md-button v-if="hasBuyOrder" class="md-raised" @click="fillBuyOrder"
-        >Sell for {{ highestBuyOrder.percentage }}%</md-button
-      >
+      <div class="ticket-section">
+        <h3>Sell this ticket</h3>
+        <div class="group">
+          <div class="selection-group percentage-selection">
+            <h3>Price</h3>
+            <input
+              type="range"
+              :min="getStepSize(granularity)"
+              max="100"
+              :step="getStepSize(granularity)"
+              v-model.number="percentage"
+            />
+            {{ percentage }}
+            %
+          </div>
+          <div v-if="!isNf" class="selection-group amount-selection">
+            <h3>Amount</h3>
+            <div class="selection-amount">
+              <div class="icon-wrap" @click="changeSelectionAmount(-1)">
+                <md-icon>remove_circle</md-icon>
+              </div>
+              <p>{{ amount }}</p>
+              <div class="icon-wrap" @click="changeSelectionAmount(1)">
+                <md-icon>add_circle</md-icon>
+              </div>
+            </div>
+          </div>
+          <md-button class="md-raised" @click="sellTicket"
+            >Create Sell Order</md-button
+          >
+          <md-button v-if="hasBuyOrder" class="md-raised" @click="fillBuyOrder"
+            >Sell for {{ highestBuyOrder.percentage }}%</md-button
+          >
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -48,8 +88,10 @@ import {
   fillBuyOrderFungible,
 } from "./../util/tickets";
 
+import { getNumberFungibleOwned } from "./../util/User";
+
 export default {
-  name: "SellView",
+  name: "TicketOverlay",
   components: {},
   data() {
     return {
@@ -74,6 +116,18 @@ export default {
         (e) => e.contractAddress === this.eventContractAddress
       );
     },
+    eventTitle() {
+      return this.event ? this.event.title : "";
+    },
+    eventDate() {
+      return this.event ? this.event.getTimeAndDate() : "";
+    },
+    eventImage() {
+      return this.event ? this.event.img_url : "";
+    },
+    eventColor() {
+      return this.event ? this.event.color : "";
+    },
     ticket() {
       return this.event
         ? this.event.getNfTicket(this.ticketTypeId, this.ticketId)
@@ -83,6 +137,12 @@ export default {
       return this.event
         ? this.event.getTicketType(this.ticketTypeId, this.isNf)
         : undefined;
+    },
+    ticketTitle() {
+      return this.ticketType ? this.ticketType.title : "";
+    },
+    ticketDescription() {
+      return this.ticketType ? this.ticketType.description : "";
     },
     granularity() {
       return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
@@ -106,8 +166,20 @@ export default {
         ? Object.getOwnPropertyNames(this.ticketType.buyOrders).length > 1
         : false;
     },
-    ticketsOwned() {
-      return this.amount;
+    amountOwned() {
+      if (this.ticketType) {
+        if (this.isNf) {
+          return 1;
+        } else {
+          return getNumberFungibleOwned(
+            this.$store.state.activeUser,
+            this.activeTicketEvent,
+            this.activeTicketType
+          );
+        }
+      } else {
+        return 0;
+      }
     },
   },
   methods: {
@@ -183,46 +255,57 @@ export default {
 </script>
 
 <style scoped>
-.selection {
+.overlay {
   position: absolute;
-  top: 100vh;
+  top: 0;
   left: 0;
-  transition: transform 0.5s ease-in-out;
+  height: 100vh;
+  width: 100vw;
+  transform: translateY(100%);
+  transition: 0.4s transform ease-in-out;
+  background: #4c566a;
+  overflow-y: scroll;
+}
+.overlay.open {
+  transform: translateY(0);
+}
+
+.close-bar {
   width: 100%;
-  background-color: aliceblue;
-  z-index: 9999;
-}
-
-.selection.open {
-  transform: translateY(-100%);
-}
-
-.wrapper {
-  padding: 4rem 1rem;
-  padding-bottom: 8rem;
-
-  position: relative;
-}
-.selection-amount,
-.selection-amount p,
-.selection-amount .icon-wrap {
-  display: inline-block;
-}
-
-.close-icon {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  cursor: pointer;
-}
-.selection-group {
+  background: #a3be8c;
+  padding: 1rem;
   display: flex;
-  align-items: center;
+  justify-content: end;
+  position: sticky;
+  top: 0;
+}
+.close-bar .md-icon {
+  margin: 0;
+}
+.ticket {
+  width: 90%;
+  margin: auto;
+  margin-top: 1rem;
+  padding-bottom: 80px;
+}
+.ticket-section {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.171);
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.171);
+  padding: 2rem;
+  background: #eceff4;
+}
+.ticket-section.image {
+  height: 200px;
+  padding: 0;
+}
+.group {
   margin-bottom: 1rem;
 }
-.selection-group h3 {
-  display: inline-block;
-  margin: 0;
-  margin-right: 1rem;
+.label {
+  color: #4c566a;
+}
+.value {
+  color: #2e3440;
 }
 </style>

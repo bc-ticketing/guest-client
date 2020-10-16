@@ -1,21 +1,16 @@
 <template>
   <div class="event">
-    <div class="event-wrapper">
-      <div class="date-box">
+    <div class="event-wrapper" @click="goToDetails">
+      <div class="date-box" :style="{ backgroundColor: event.color }">
         <div class="wrapper">
           <span class="month">{{ monthName }}</span>
           <span class="day">{{ event.getDay() }}</span>
         </div>
       </div>
       <div class="info-box">
-        <span class="time">{{ weekday }} - {{event.getTime()}}</span>
+        <span class="time">{{ weekday }} - {{ event.getTime() }}</span>
         <span class="title">{{ event.title }}</span>
-        <span class="location"
-          >{{ event.location }}</span
-        >
-      </div>
-      <div class="button-box" @click="goToDetails">
-        <md-icon>arrow_forward_ios</md-icon>
+        <span class="location">{{ event.location }}</span>
       </div>
     </div>
   </div>
@@ -46,6 +41,9 @@ export default {
     monthName: function() {
       return MONTHS[this.event.getMonth()];
     },
+    dateString: function() {
+      return ``;
+    },
   },
   mounted: function() {},
 };
@@ -53,8 +51,7 @@ export default {
 
 <style scoped>
 .event-wrapper {
-  display: grid;
-  grid-template-columns: 80px 1fr 50px;
+  display: flex;
 }
 .button-box {
   display: flex;
@@ -70,12 +67,23 @@ export default {
   justify-content: center;
   align-items: top;
 }
+.date-box {
+  border-radius: 10px;
+  margin-right: 1rem;
+  height: 80px;
+  width: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .date-box .month {
   text-transform: uppercase;
   margin-bottom: 5px;
 }
 .date-box .day {
   font-weight: bold;
+}
+.info-box {
 }
 .date-box span {
   display: block;
@@ -97,6 +105,5 @@ export default {
 }
 .event {
   padding: 20px 0;
-  background-color: white;
 }
 </style>

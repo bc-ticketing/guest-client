@@ -1,7 +1,7 @@
 <template>
   <div class="event">
     <div
-      class="container-fluid header-img"
+      class=" header-img"
       ref="teaser"
       :style="{ backgroundColor: `${event.color}` }"
     >
@@ -78,89 +78,135 @@
         <div class="info-group split">
           <div>
             <md-icon class="info-title">link</md-icon>
-            <a class="info-value" :href="eventWebsite.url" target="_blank">Website</a>
+            <a class="info-value" :href="eventWebsite.url" target="_blank"
+              >Website</a
+            >
           </div>
           <div>
-          <span class="info-value-status">
-                <md-progress-spinner
+            <span class="info-value-status">
+              <md-progress-spinner
                 v-if="eventWebsite.verification === 'pending'"
                 :md-diameter="20"
-                :md-stroke="4" 
-                md-mode="indeterminate"></md-progress-spinner>
-                <span class="danger"><md-icon class="danger" v-if="eventWebsite.verification == false">warning</md-icon></span>
-                <span class="good"><md-icon v-if="eventWebsite.verification == true">done</md-icon></span>
-
-          </span>
+                :md-stroke="4"
+                md-mode="indeterminate"
+              ></md-progress-spinner>
+              <span class="danger"
+                ><md-icon
+                  class="danger"
+                  v-if="eventWebsite.verification == false"
+                  >warning</md-icon
+                ></span
+              >
+              <span class="good"
+                ><md-icon v-if="eventWebsite.verification == true"
+                  >done</md-icon
+                ></span
+              >
+            </span>
           </div>
-
         </div>
         <div class="info-group split">
           <div>
-          <md-icon class="info-title">delete</md-icon>
-          <a class="info-value" :href="eventTwitter.url" target="_blank"
-            >Twitter</a
-          >
+            <md-icon class="info-title">delete</md-icon>
+            <a class="info-value" :href="eventTwitter.url" target="_blank"
+              >Twitter</a
+            >
           </div>
           <div>
-          <span class="info-value-status">
-                <md-progress-spinner 
+            <span class="info-value-status">
+              <md-progress-spinner
                 v-if="eventTwitter.verification === 'pending'"
                 :md-diameter="20"
                 :md-stroke="4"
-                md-mode="indeterminate"></md-progress-spinner>
-                <span class="danger"><md-icon v-if="eventTwitter.verification == false">warning</md-icon></span>
-                <span class="good"><md-icon v-if="eventTwitter.verification == true">done</md-icon></span>
-          </span>
+                md-mode="indeterminate"
+              ></md-progress-spinner>
+              <span class="danger"
+                ><md-icon v-if="eventTwitter.verification == false"
+                  >warning</md-icon
+                ></span
+              >
+              <span class="good"
+                ><md-icon v-if="eventTwitter.verification == true"
+                  >done</md-icon
+                ></span
+              >
+            </span>
           </div>
         </div>
         <h3>Identity</h3>
         <div class="info-group">
           <md-icon class="info-title">supervised_user_circle</md-icon>
-          <span class="info-value">{{approverTitle}}</span>
+          <span class="info-value">{{ approverTitle }}</span>
         </div>
         <div class="info-group split">
           <div>
             <md-icon class="info-title">link</md-icon>
-            <a class="info-value" :href="approverWebsite.url" target="_blank">Website</a>
+            <a class="info-value" :href="approverWebsite.url" target="_blank"
+              >Website</a
+            >
           </div>
           <div>
-          <span class="info-value-status">
-                <md-progress-spinner
+            <span class="info-value-status">
+              <md-progress-spinner
                 v-if="approverWebsite.verification === 'pending'"
                 :md-diameter="20"
-                :md-stroke="4" 
-                md-mode="indeterminate"></md-progress-spinner>
-                <span class="danger"><md-icon class="danger" v-if="approverWebsite.verification == false">warning</md-icon></span>
-                <span class="good"><md-icon v-if="approverWebsite.verification == true">done</md-icon></span>
-          </span>
+                :md-stroke="4"
+                md-mode="indeterminate"
+              ></md-progress-spinner>
+              <span class="danger"
+                ><md-icon
+                  class="danger"
+                  v-if="approverWebsite.verification == false"
+                  >warning</md-icon
+                ></span
+              >
+              <span class="good"
+                ><md-icon v-if="approverWebsite.verification == true"
+                  >done</md-icon
+                ></span
+              >
+            </span>
           </div>
-
         </div>
         <div class="info-group split">
           <div>
-          <md-icon class="info-title">delete</md-icon>
-          <a class="info-value" :href="approverTwitter.url" target="_blank"
-            >Twitter</a
-          >
+            <md-icon class="info-title">delete</md-icon>
+            <a class="info-value" :href="approverTwitter.url" target="_blank"
+              >Twitter</a
+            >
           </div>
           <div>
-          <span class="info-value-status">
-                <md-progress-spinner 
+            <span class="info-value-status">
+              <md-progress-spinner
                 v-if="approverTwitter.verification === 'pending'"
                 :md-diameter="20"
                 :md-stroke="4"
-                md-mode="indeterminate"></md-progress-spinner>
-                <span class="danger"><md-icon class="danger" v-if="approverTwitter.verification == false">warning</md-icon></span>
-                <span class="good"><md-icon v-if="approverTwitter.verification == true">done</md-icon></span>
-          </span>
+                md-mode="indeterminate"
+              ></md-progress-spinner>
+              <span class="danger"
+                ><md-icon
+                  class="danger"
+                  v-if="approverTwitter.verification == false"
+                  >warning</md-icon
+                ></span
+              >
+              <span class="good"
+                ><md-icon v-if="approverTwitter.verification == true"
+                  >done</md-icon
+                ></span
+              >
+            </span>
           </div>
         </div>
         <div class="info-group">
           <md-icon class="info-title">mail_outline</md-icon>
-          <span class="info-value">{{requiredIdentityLevel}} - {{requiredIdentityMethod}}</span>
+          <span class="info-value"
+            >{{ requiredIdentityLevel }} - {{ requiredIdentityMethod }}</span
+          >
         </div>
         <div class="info-group" v-if="userIsApproved">
-          You are approved with {{approverTitle}} at the required level to buy tickets.
+          You are approved with {{ approverTitle }} at the required level to buy
+          tickets.
         </div>
       </div>
 
@@ -223,13 +269,22 @@
             </div>
             <div class="queue">
               <div
-                class="step-wrapper"
-                @click="showJoinButton(ticket, (100 / ticket.aftermarketGranularity) * i)"
+                class="step-wrapper tooltip"
+                :data-tooltip="
+                  numBuyOrdersByPercent(
+                    ticket,
+                    (100 / ticket.aftermarketGranularity) * i
+                  ) +
+                    ' offers for' +
+                    (100 / ticket.aftermarketGranularity) * i
+                "
+                @click="
+                  showJoinButton(
+                    ticket,
+                    (100 / ticket.aftermarketGranularity) * i
+                  )
+                "
                 @mouseenter="setActiveQueueTip(ticket)"
-                :style="{
-                  left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
-                    (i - 1)}% - 10px)`
-                }"
                 v-for="i in Number(ticket.aftermarketGranularity)"
                 :key="'fungible_buy_' + i"
               >
@@ -242,16 +297,11 @@
                     )
                   "
                 ></div>
-                <md-tooltip>
-                  {{
-                    numBuyOrdersByPercent(
-                      ticket,
-                      (100 / ticket.aftermarketGranularity) * i
-                    )
-                  }}
-                  offers for {{(100 / ticket.aftermarketGranularity) * i}}%
-                </md-tooltip>
+                <div class="tooltip--bottom"></div>
               </div>
+            </div>
+            <div class="queue-interact">
+              <button>join at {{ selectedQueue.percentage }}</button>
             </div>
           </div>
           <div class="queue-wrapper selling">
@@ -260,12 +310,22 @@
             </div>
             <div class="queue">
               <div
-                class="step-wrapper"
+                class="step-wrapper tooltip"
+                :data-tooltip="
+                  numBuyOrdersByPercent(
+                    ticket,
+                    (100 / ticket.aftermarketGranularity) * i
+                  ) +
+                    ' offers for' +
+                    (100 / ticket.aftermarketGranularity) * i
+                "
+                @click="
+                  showJoinButton(
+                    ticket,
+                    (100 / ticket.aftermarketGranularity) * i
+                  )
+                "
                 @mouseenter="setActiveQueueTip(ticket)"
-                :style="{
-                  left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
-                    (i - 1)}% - 10px)`
-                }"
                 v-for="i in Number(ticket.aftermarketGranularity)"
                 :key="'fungible_buy_' + i"
               >
@@ -278,16 +338,6 @@
                     )
                   "
                 ></div>
-
-                <md-tooltip>
-                  {{
-                    numSellOrdersByPercent(
-                      ticket,
-                      (100 / ticket.aftermarketGranularity) * i
-                    )
-                  }}
-                  offers
-                </md-tooltip>
               </div>
             </div>
           </div>
@@ -304,13 +354,23 @@
             </div>
             <div class="queue">
               <div
-                class="step-wrapper"
+                class="step-wrapper tooltip"
+                :data-tooltip="
+                  numBuyOrdersByPercent(
+                    ticket,
+                    (100 / ticket.aftermarketGranularity) * i
+                  ) +
+                    ' offers for' +
+                    (100 / ticket.aftermarketGranularity) * i
+                "
+                @click="
+                  showJoinButton(
+                    ticket,
+                    (100 / ticket.aftermarketGranularity) * i
+                  )
+                "
                 :ref="'fungible_buy_' + ticket.typeId + '_' + i"
                 @mouseenter="setActiveQueueTip(ticket)"
-                :style="{
-                  left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
-                    (i - 1)}% - 10px)`
-                }"
                 v-for="i in Number(ticket.aftermarketGranularity)"
                 :key="'fungible_buy_' + i"
               >
@@ -323,16 +383,6 @@
                     )
                   "
                 ></div>
-
-                <md-tooltip>
-                  {{
-                    numBuyOrdersByPercent(
-                      ticket,
-                      (100 / ticket.aftermarketGranularity) * i
-                    )
-                  }}
-                  offers
-                </md-tooltip>
               </div>
             </div>
           </div>
@@ -364,15 +414,12 @@
               </div>
             </div>
           </div>
- 
         </div>
-          <div>
-            <md-button class="md-raised"
-            @click="createBuyOrder(false)"
-            >
-              Join
-            </md-button>
-          </div>
+        <div>
+          <md-button class="md-raised" @click="createBuyOrder(false)">
+            Join
+          </md-button>
+        </div>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
         <ShoppingCart></ShoppingCart>
@@ -403,7 +450,7 @@ import {
   getAllSellOferingsNfTicketType,
   fillSellOrderNonFungible,
   makeBuyOrderNonFungible,
-  makeBuyOrderFungible
+  makeBuyOrderFungible,
 } from "./../util/tickets";
 import { getNumberFungibleOwned, ownsNonFungible } from "./../util/User";
 export default {
@@ -415,7 +462,7 @@ export default {
         ticketType: 0,
         index: 0,
         type: "",
-        isNf: false
+        isNf: false,
       },
       aftermarket_price: 0,
       showDialog: false,
@@ -433,53 +480,72 @@ export default {
         ticketTypeId: 0,
         price: 0,
         eventContractAddress: "",
-        isNf: false
-      }
+        isNf: false,
+      },
       //tickets: [{ name: "fungible", price: 50 }],
     };
   },
   components: {
     ShoppingCart,
-    SelectionView
+    SelectionView,
   },
   props: {},
   computed: {
     approver() {
       return this.event.identityContractAddress
         ? this.$store.state.approvers.find(
-            a =>
+            (a) =>
               String(a.approverAddress) ===
               String(this.event.identityContractAddress)
           )
         : undefined;
     },
     eventWebsite() {
-      return this.event.website ? this.event.website : {verification: 'pending'};
+      return this.event.website
+        ? this.event.website
+        : { verification: "pending" };
     },
     eventTwitter() {
-            return this.event.twitter ? this.event.twitter : {verification: 'pending'};
+      return this.event.twitter
+        ? this.event.twitter
+        : { verification: "pending" };
     },
     approverTitle() {
       return this.approver ? this.approver.title : "";
     },
     approverTwitter() {
-      return this.approver ? this.approver.twitter : {verification: 'pending'};
+      return this.approver
+        ? this.approver.twitter
+        : { verification: "pending" };
     },
     approverWebsite() {
-      return this.approver ? this.approver.website : {verification: 'pending'};
+      return this.approver
+        ? this.approver.website
+        : { verification: "pending" };
     },
     requiredIdentityLevel() {
       return Number(this.event.identityLevel);
     },
     requiredIdentityMethod() {
-      return this.approver && this.approver.getMethodFromLevel(this.requiredIdentityLevel);
+      return (
+        this.approver &&
+        this.approver.getMethodFromLevel(this.requiredIdentityLevel)
+      );
     },
     userIsApproved() {
-      return this.approver &&
-      this.$store.state.activeUser &&
-      this.$store.state.activeUser.approvalLevels &&
-      this.$store.state.activeUser.approvalLevels[this.approver.approverAddress] &&
-      Number(this.$store.state.activeUser.approvalLevels[this.approver.approverAddress].level) >= this.requiredIdentityLevel;
+      return (
+        this.approver &&
+        this.$store.state.activeUser &&
+        this.$store.state.activeUser.approvalLevels &&
+        this.$store.state.activeUser.approvalLevels[
+          this.approver.approverAddress
+        ] &&
+        Number(
+          this.$store.state.activeUser.approvalLevels[
+            this.approver.approverAddress
+          ].level
+        ) >= this.requiredIdentityLevel
+      );
     },
     fungibleTickets() {
       return this.event.fungibleTickets ? this.event.fungibleTickets : [];
@@ -488,7 +554,7 @@ export default {
       return this.event.nonFungibleTickets ? this.event.nonFungibleTickets : [];
     },
     activeTicketsOwned() {
-      if (this.toolTipActive) {
+      if (this.toolTipActive && this.$store.state.activeUser) {
         if (this.tooltip.isNf) {
           return ownsNonFungible(
             this.$store.state.activeUser,
@@ -531,7 +597,7 @@ export default {
     },
     tooltipIsNf() {
       return this.tooltip.isNf == true;
-    }
+    },
   },
   watch: {},
   methods: {
@@ -603,7 +669,7 @@ export default {
         price: 0,
         ticketTypeId: 0,
         isNf: false,
-        amount: 1
+        amount: 1,
       };
     },
     findTicketIndex(col, row) {
@@ -649,7 +715,7 @@ export default {
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
     toggleTab: function(tab) {
-      this.tabs.forEach(t => {
+      this.tabs.forEach((t) => {
         this.$refs[t].classList.remove("active");
         this.$refs[`content-${t}`].classList.remove("active");
       });
@@ -679,7 +745,7 @@ export default {
     },
     fetchEventInfo: function() {
       this.event = this.$store.state.events.filter(
-        event => event.contractAddress == this.contractAddress
+        (event) => event.contractAddress == this.contractAddress
       )[0];
       if (!this.event) {
         this.event = {};
@@ -698,8 +764,8 @@ export default {
       if (!this.event.fungibleTickets) {
         return;
       }
-      this.event.fungibleTickets.forEach(ticket => {
-        ticket.seatMapping.forEach(mapping => {
+      this.event.fungibleTickets.forEach((ticket) => {
+        ticket.seatMapping.forEach((mapping) => {
           max_col =
             Number(mapping.split("/")[0]) > max_col
               ? Number(mapping.split("/")[0])
@@ -710,8 +776,8 @@ export default {
               : max_row;
         });
       });
-      this.event.nonFungibleTickets.forEach(nfticketType => {
-        nfticketType.tickets.forEach(ticket => {
+      this.event.nonFungibleTickets.forEach((nfticketType) => {
+        nfticketType.tickets.forEach((ticket) => {
           max_row =
             max_row > ticket.seatMapping.split("/")[1]
               ? max_row
@@ -733,8 +799,8 @@ export default {
       if (!this.event.contractAddress) {
         return;
       }
-      this.event.fungibleTickets.forEach(ticket => {
-        ticket.seatMapping.forEach(mapping => {
+      this.event.fungibleTickets.forEach((ticket) => {
+        ticket.seatMapping.forEach((mapping) => {
           let x = Number(mapping.split("/")[0]);
           let y = Number(mapping.split("/")[1]);
           // check if this fungible category still has seats available
@@ -825,7 +891,7 @@ export default {
       setTimeout(() => {
         this.toolTipActive = false;
       }, 1000);
-    }
+    },
   },
   created() {
     this.contractAddress = this.$route.params.id;
@@ -838,11 +904,18 @@ export default {
     this.$root.$emit("hideSearchBar");
     this.fetchEventInfo();
     this.fetchTicketInfo();
-  }
+  },
 };
 </script>
 
 <style scoped>
+.container {
+  overflow-y: scroll;
+  max-height: calc(100vh - 250px);
+}
+.event-info-wrapper {
+  padding-bottom: 100px;
+}
 .event {
   height: 100vh;
   overflow-y: hidden;
@@ -1024,11 +1097,7 @@ export default {
 .seat.bought {
   background-color: #bf616a !important;
 }
-.tooltip {
-  padding: 4px;
-  margin-top: 2rem;
-  min-height: 100px;
-}
+
 .tooltip span {
   display: block;
 }
@@ -1092,17 +1161,26 @@ i.shopping-cart {
 }
 .queue-wrapper {
   display: flex;
+  flex-wrap: wrap;
   margin-bottom: 3rem;
 }
 .queue-label {
-  width: 10%;
+  flex-basis: 10%;
+  flex-grow: 0;
   margin-right: 2rem;
 }
 .queue-wrapper .queue {
-  width: 80%;
+  flex-basis: 80%;
+  flex-shrink: 0;
   position: relative;
   height: 20px;
+  display: flex;
   overflow-x: visible;
+}
+.queue-wrappr .queue-interact {
+  flex-basis: 100%;
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 .step {
   height: 20px;
@@ -1110,7 +1188,7 @@ i.shopping-cart {
   background-color: var(--green);
 }
 .step-wrapper {
-  position: absolute;
+  margin-right: 1rem;
   bottom: 0%;
   background-color: white;
   height: 20px;
@@ -1145,12 +1223,48 @@ i.shopping-cart {
 
 .info-group.split {
   display: flex;
-  justify-content:space-between;
+  justify-content: space-between;
 }
 .info-group .danger i {
   color: var(--red);
 }
 .info-group .good i {
   color: var(--green);
+}
+
+.tooltip {
+  position: relative;
+}
+.tooltip:after {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  content: attr(data-tooltip);
+  padding: 6px 10px;
+  top: 1.4em;
+  left: 50%;
+  -webkit-transform: translateX(-50%) translateY(-2px);
+  transform: translateX(-50%) translateY(-2px);
+  background: grey;
+  color: white;
+  white-space: nowrap;
+  z-index: 2;
+  border-radius: 2px;
+  -webkit-transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    -webkit-transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+  transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    -webkit-transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+  transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+  transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    -webkit-transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+}
+.tooltip:hover:after {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  -webkit-transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 </style>

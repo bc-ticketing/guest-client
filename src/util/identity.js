@@ -34,22 +34,25 @@ export class IdentityApprover {
       approverMetadata.size,
       approverMetadata.digest
     );
-    console.log(this.ipfsHash);
     return true;
   }
 
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
-    for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
+    try {
+      for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
+        timeout: 2000,
+      })) {
+        ipfsData = Buffer(chunk, "utf8").toString();
+      }
+      const metadata = JSON.parse(ipfsData);
+      this.title = metadata.approver.title;
+      this.website.url = metadata.approver.url;
+      this.twitter.url = metadata.approver.twitter;
+      this.methods = metadata.approver.methods;
+    } catch {
+      return;
     }
-    const metadata = JSON.parse(ipfsData);
-    this.title = metadata.approver.title;
-    this.website.url = metadata.approver.url;
-    this.twitter.url = metadata.approver.twitter;
-    this.methods = metadata.approver.methods;
   }
 
   async loadData(identitySC, ipfsInstance) {
@@ -129,14 +132,14 @@ export async function requestWebsiteVerification(url) {
 
 export async function requestMailValidationCode(mail) {
   console.log(mail);
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     try {
       setTimeout(function() {
         console.log("faking API call");
         resolve(true);
       }, 1000);
     } catch {
-      resolve('api call error');
+      resolve("api call error");
     }
   });
 }

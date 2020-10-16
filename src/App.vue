@@ -17,9 +17,10 @@
     </div>
     -->
     <div class="content" ref="content">
+      <overlayMessage></overlayMessage>
+
       <router-view />
     </div>
-    <overlayMessage></overlayMessage>
     <messageBus v-bind:yPos="messagePos"></messageBus>
     <searchBar v-bind:yPos="navHeight"></searchBar>
     <bottomBar ref="nav" v-on:height="setNavHeight"></bottomBar>
@@ -51,12 +52,12 @@ export default {
     searchBar,
     //walletInfo,
     overlayMessage,
-    messageBus
+    messageBus,
   },
   data() {
     return {
       navHeight: 100,
-      messagePos: 0
+      messagePos: 0,
       //infoOpen: false
     };
   },
@@ -67,7 +68,7 @@ export default {
     loadEvents: async function() {
       await this.$store.dispatch("loadEvents");
       this.$root.$emit("loadedEvents");
-    }
+    },
   },
   /* handles the initial data loading logic */
   async beforeCreate() {
@@ -116,9 +117,14 @@ export default {
      this triggers the 'loadEvents' action, which in turn triggers
      the user ticket loading action 
      */
-    await this.$store.dispatch("setEventFactoryContractAddress",process.env.VUE_APP_EVENT_FACTORY_CONTRACT_ADDRESS);
-    await this.$store.dispatch("setIdentityContractAddress",process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);
-
+    await this.$store.dispatch(
+      "setEventFactoryContractAddress",
+      process.env.VUE_APP_EVENT_FACTORY_CONTRACT_ADDRESS
+    );
+    await this.$store.dispatch(
+      "setIdentityContractAddress",
+      process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS
+    );
 
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
@@ -131,12 +137,12 @@ export default {
     //finally a message confirms that all the data is loaded
     this.$root.$emit("openMessageBus", {
       message: "Loaded all data",
-      status: "success"
+      status: "success",
     });
   },
   mounted: async function() {
     console.log(process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);
-  }
+  },
 };
 </script>
 
@@ -150,7 +156,6 @@ export default {
   --fg-light: hsl(9, 36%, 85%);
   --bg: white;
   --bg-dark: #584d53;
-  --accent: #ff0266;
   --orange: #d08770;
   --yellow: #ebcb8b;
   --green: #a3be8c;
@@ -200,6 +205,10 @@ h5 {
   margin-bottom: 1rem;
 }
 */
+h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
 p {
   font-size: 1rem;
 }
@@ -220,15 +229,27 @@ a:hover {
   width: 100%;
   max-width: 1440px;
 }
+.container-fluid,
+.container {
+  height: calc(100vh - 56px);
+  overflow-y: scroll;
+  overflow-x: invisible;
+}
 
 /* ---------- Navigation Bar ---------- */
 
 /* ---------- Basic Components ---------- */
-.content {
+.content,
+#app {
   padding-top: 0;
   overflow-x: hidden;
   min-height: 100vh;
   position: relative;
+  width: 100vw;
+  max-width: 100vw;
+}
+.container-fluid {
+  width: 100%;
 }
 /* ---------- Media Queries ---------- */
 /* TODO: Define breakpoints */

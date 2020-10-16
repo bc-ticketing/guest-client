@@ -1,24 +1,51 @@
 <template>
   <div class="container-fluid inventory">
-    <div class="position-relative">
-      <div class="ticket-preview">
+    <h1>Tickets</h1>
+    <div class="tabs">
+      <div class="tab active">Live</div>
+      <div class="tab">Past</div>
+      <div class="underline"></div>
+    </div>
+    <div class="empty-message" v-if="noTicketsOwned">
+      <div class="empty-icon">
+        <md-icon>confirmation_number</md-icon>
+      </div>
+      <p>
+        Looks like its empty here! Checkout some of our events to get your first
+        ticket!
+      </p>
+    </div>
+    <div class="container ticket-list" v-if="$store.state.activeUser">
+      <div
+        class="ticket"
+        v-for="(ticket, index) in $store.state.activeUser.fungibleTickets"
+        v-bind:key="'fungible_' + index"
+      >
         <Ticket
-          v-if="activeTicketType != 0"
-          v-bind:ticketTypeId="activeTicketType"
-          v-bind:ticketId="activeTicket"
-          v-bind:eventContractAddress="activeTicketEvent"
-          v-bind:isNf="activeIsNf"
-          v-bind:ticketIndex="activeSlide"
+          v-bind:ticketTypeId="ticket.ticketType"
+          v-bind:ticketId="ticket.ticketId"
+          v-bind:eventContractAddress="ticket.eventContractAddress"
+          v-bind:isNf="false"
+          v-on:openOverlay="openTicketOverlay(ticket)"
         />
       </div>
-
-      <div class="container-fluid empty-message" v-if="noTicketsOwned">
-        <p>
-          Looks like its empty here! Checkout some of our events to get your
-          first ticket!
-        </p>
-         
+      <div
+        class="ticket"
+        v-for="(ticket, index) in $store.state.activeUser.nonFungibleTickets"
+        v-bind:key="'nonfungible_' + index"
+      >
+        <Ticket
+          v-bind:ticketTypeId="ticket.ticketType"
+          v-bind:ticketId="ticket.ticketId"
+          v-bind:eventContractAddress="ticket.eventContractAddress"
+          v-bind:isNf="true"
+          v-on:openOverlay="openTicketOverlay(ticket)"
+        />
       </div>
+    </div>
+    <!--
+    <div class="position-relative">
+      <div class="ticket-preview"></div>
 
       <div class="container ticket-sell">
         <div v-if="activeSellOrders.length > 0">
@@ -51,60 +78,66 @@
         <div class="pagination"></div>
         <div v-if="$store.state.activeUser">
           <div class="swiper-container">
-          <!-- Additional required wrapper -->
-          <div class="swiper-wrapper">
-            <!-- Slides -->
-            <div
-              class="swiper-slide"
-              v-for="(ticket, index) in $store.state.activeUser.fungibleTickets"
-              v-bind:key="'fungible_' + index"
-            >
+            <div class="swiper-wrapper">
               <div
-                class="img"
-                :style="{
-                  backgroundImage: `url(${getEventForTicket(ticket).img_url})`
-                }"
+                class="swiper-slide"
+                v-for="(ticket, index) in $store.state.activeUser
+                  .fungibleTickets"
+                v-bind:key="'fungible_' + index"
               >
-                <span class="nrTickets"> {{ ticket.amount }}</span>
-              </div>
-              <div class="info">
-                <span class="title">{{ getEventForTicket(ticket).title }}</span>
-                <span class="date">
-                  {{ getEventForTicket(ticket).getTimeAndDate() }}</span
+                <div
+                  class="img"
+                  :style="{
+                    backgroundImage: `url(${
+                      getEventForTicket(ticket).img_url
+                    })`,
+                  }"
                 >
-                <span class="location">{{
-                  getEventForTicket(ticket).location
-                }}</span>
+                  <span class="nrTickets"> {{ ticket.amount }}</span>
+                </div>
+                <div class="info">
+                  <span class="title">{{
+                    getEventForTicket(ticket).title
+                  }}</span>
+                  <span class="date">
+                    {{ getEventForTicket(ticket).getTimeAndDate() }}</span
+                  >
+                  <span class="location">{{
+                    getEventForTicket(ticket).location
+                  }}</span>
+                </div>
               </div>
-            </div>
-            <div
-              class="swiper-slide"
-              v-for="(ticket, index) in $store.state.activeUser
-                .nonFungibleTickets"
-              v-bind:key="'nonfungible_' + index"
-            >
               <div
-                class="img"
-                :style="{
-                  backgroundImage: `url(${getEventForTicket(ticket).img_url})`
-                }"
-              ></div>
-              <div class="info">
-                <span class="title">{{ getEventForTicket(ticket).title }}</span>
-                <span class="date">
-                  {{ getEventForTicket(ticket).getTimeAndDate() }}</span
-                >
-                <span class="location">{{
-                  getEventForTicket(ticket).location
-                }}</span>
+                class="swiper-slide"
+                v-for="(ticket, index) in $store.state.activeUser
+                  .nonFungibleTickets"
+                v-bind:key="'nonfungible_' + index"
+              >
+                <div
+                  class="img"
+                  :style="{
+                    backgroundImage: `url(${
+                      getEventForTicket(ticket).img_url
+                    })`,
+                  }"
+                ></div>
+                <div class="info">
+                  <span class="title">{{
+                    getEventForTicket(ticket).title
+                  }}</span>
+                  <span class="date">
+                    {{ getEventForTicket(ticket).getTimeAndDate() }}</span
+                  >
+                  <span class="location">{{
+                    getEventForTicket(ticket).location
+                  }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        </div>
-        
       </div>
-    </div>
+    </div> -->
     <SellView
       v-bind:eventContractAddress="activeTicketEvent"
       v-bind:ticketId="activeTicket"
@@ -114,17 +147,29 @@
       v-bind:open="sellOpen"
       v-on:close="sellOpen = false"
     ></SellView>
+    <TicketOverlay
+      v-bind:eventContractAddress="activeTicketEvent"
+      v-bind:ticketId="activeTicket"
+      v-bind:ticketTypeId="activeTicketType"
+      v-bind:isNf="activeIsNf"
+      v-bind:open="ticketOverlay.open"
+      v-on:close="ticketOverlay.open = false"
+    />
   </div>
 </template>
 
 <script>
+import TicketOverlay from "./../components/TicketOverlay";
 import Ticket from "./../components/Ticket";
 import SellView from "./SellView";
 import { getNumberFungibleOwned } from "./../util/User";
 import Swiper, { Pagination } from "swiper";
 Swiper.use([Pagination]);
 import "swiper/swiper-bundle.css";
-import { withdrawSellOrderFungible, withdrawSellOrderNonFungible } from "../util/tickets";
+import {
+  withdrawSellOrderFungible,
+  withdrawSellOrderNonFungible,
+} from "../util/tickets";
 
 export default {
   name: "Inventory",
@@ -138,39 +183,45 @@ export default {
       aftermarketPercentage: 100,
       aftermarketAmount: 0,
       sellOpen: false,
-      swiper: {},
+      ticketOverlay: { open: false, ticket: undefined },
     };
   },
   components: {
     Ticket,
-    SellView
+    SellView,
+    TicketOverlay,
   },
   computed: {
     noTicketsOwned() {
-      return !this.$store.state.activeUser ||
-      (this.$store.state.activeUser.fungibleTickets.length == 0 &&
-      this.$store.state.activeUser.nonFungibleTickets.length == 0)
+      return (
+        !this.$store.state.activeUser ||
+        (this.$store.state.activeUser.fungibleTickets.length == 0 &&
+          this.$store.state.activeUser.nonFungibleTickets.length == 0)
+      );
     },
     activeSellOrders() {
-      if (!this.$store.state.activeUser) {return [];}
-      try{
-      if (this.activeIsNf) {
-        let order = this.$store.state.activeUser.nonFungibleTickets[
-          this.activeSlide - this.$store.state.activeUser.fungibleTickets.length
-        ].sellOrder;
-        order.quantity = 1;
-        return order.percentage ? [order] : [];
-      } else {
-        return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
-          .sellOrders;
+      if (!this.$store.state.activeUser) {
+        return [];
       }
-      } catch(e) {
+      try {
+        if (this.activeIsNf) {
+          let order = this.$store.state.activeUser.nonFungibleTickets[
+            this.activeSlide -
+              this.$store.state.activeUser.fungibleTickets.length
+          ].sellOrder;
+          order.quantity = 1;
+          return order.percentage ? [order] : [];
+        } else {
+          return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
+            .sellOrders;
+        }
+      } catch (e) {
         return [];
       }
     },
     ticketsLeftToSell() {
       let total = 0;
-      this.activeSellOrders.forEach(o => {
+      this.activeSellOrders.forEach((o) => {
         total += o.quantity;
       });
       return this.amountOwned - total;
@@ -189,9 +240,14 @@ export default {
       } else {
         return 0;
       }
-    }
+    },
   },
   methods: {
+    openTicketOverlay(ticket) {
+      this.setActiveTicket(ticket);
+      this.ticketOverlay.open = true;
+      this.ticketOverlay.ticket = ticket;
+    },
     async withdrawSellOrder(index) {
       let result;
       if (this.activeIsNf) {
@@ -212,12 +268,12 @@ export default {
           this.activeTicketEvent
         );
       }
-        if(result.status ==1) {
-          await this.$store.dispatch('updateEvent', result.event);
-          await this.$store.dispatch("registerActiveUser");
-          this.$root.$emit('userUpdated');
-        }
-        this.$root.$emit("openMessageBus", result);
+      if (result.status == 1) {
+        await this.$store.dispatch("updateEvent", result.event);
+        await this.$store.dispatch("registerActiveUser");
+        this.$root.$emit("userUpdated");
+      }
+      this.$root.$emit("openMessageBus", result);
     },
     getTicketType(ticket) {
       for (const ticketType of this.event.nonFungibleTickets) {
@@ -228,73 +284,74 @@ export default {
     },
     getEventForTicket: function(ticket) {
       return this.$store.state.events.filter(
-        event => event.contractAddress === ticket.eventContractAddress
+        (event) => event.contractAddress === ticket.eventContractAddress
       )[0];
     },
-    setActiveTicket: function() {
-      if (
-        !this.$store.state.activeUser ||
-        (this.$store.state.activeUser.fungibleTickets.length == 0 &&
-        this.$store.state.activeUser.nonFungibleTickets.length == 0)
-      ) {
-        this.activeTicketType = 0;
-        return;
-      }
-      let t;
-      if (
-        this.activeSlide >= this.$store.state.activeUser.fungibleTickets.length
-      ) {
-        t = this.$store.state.activeUser.nonFungibleTickets[
-          this.activeSlide - this.$store.state.activeUser.fungibleTickets.length
-        ];
-        this.activeTicket = t.ticketId;
+    setActiveTicket: function(ticket) {
+      if (ticket.isNF) {
+        this.activeTicket = ticket.ticketId;
         this.activeIsNf = true;
       } else {
-        t = this.$store.state.activeUser.fungibleTickets[this.activeSlide];
         this.activeIsNf = false;
       }
-      this.activeTicketEvent = t.eventContractAddress;
-      this.activeTicketType = t.ticketType;
-    }
+
+      this.activeTicketEvent = ticket.eventContractAddress;
+      this.activeTicketType = ticket.ticketType;
+    },
   },
-  beforeCreate: async function() {
-    this.$root.$on("userUpdated", () => {
-      this.activeSlide =0;
-      this.activeTicket = 0;
-      this.setActiveTicket();
-      setTimeout(() => {
-        this.swiper.update();
-    }, 2000);
-    });
-  },
+  beforeCreate: async function() {},
   mounted: function() {
     this.$root.$emit("hideSearchBar");
-    this.setActiveTicket();
-    this.swiper = new Swiper(".swiper-container", {
-      slidesPerView: 1,
-      spaceBetween: 10,
-      pagination: {
-        el: ".pagination",
-        clickable: true
-      }
-    });
-    this.swiper.on("slideChange", () => {
-      this.activeSlide = this.swiper.activeIndex;
-      this.setActiveTicket();
-    });
-  }
+  },
 };
 </script>
 
 <style>
+h1 {
+  margin-left: 1rem;
+  margin-top: 2rem;
+}
+.tabs {
+  width: 100%;
+  display: flex;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.tabs .tab {
+  flex-basis: 50%;
+  padding-bottom: 1rem;
+  text-align: center;
+  transition: color 0.3s ease-in-out;
+}
+.tabs .tab.active {
+  color: var(--orange);
+}
+.tabs .underline {
+  position: absolute;
+  width: 50%;
+  height: 2px;
+  background: var(--orange);
+  left: 0;
+  bottom: 0;
+  transition: transform 0.3s ease-in-out;
+}
+.tabs .underline.moved {
+  transform: translateX(100%);
+}
 .empty-message {
   padding: 2rem;
-  background-color: var(--button-confirm);
+  opacity: 0.7;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  display: flex;
+}
+.empty-message .empty-icon {
+  padding: 2rem;
+  border: 2px solid;
+  border-radius: 50%;
 }
 .empty-message p {
-  color: white;
-  width: 80%;
-  margin: auto;
   text-align: center;
 }
 .sell-order {

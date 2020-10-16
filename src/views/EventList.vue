@@ -1,7 +1,7 @@
 <template>
   <div class="events">
-
-    <div class="container-fluid">
+    <div class="container">
+      <h3>{{ $store.state.events.length }} events</h3>
       <isotope
         ref="isotope"
         class="event-list"
@@ -42,15 +42,14 @@ export default {
       filterText: "",
     };
   },
-  watch: {
-  },
+  watch: {},
   beforeCreate: async function() {
     this.$root.$on("searchChange", (val) => {
       this.updateFilters(val);
     });
   },
   mounted: function() {
-    this.$root.$emit('openSearchBar');
+    this.$root.$emit("openSearchBar");
   },
   methods: {
     updateFilters: function(value) {
@@ -101,40 +100,21 @@ export default {
       this.isotopeFilter(key);
       this.filterOption = key;
     },
-    handleScroll: function() {
-      var scrollTop = window.scrollY;
-      //var nav_height = document.getElementById("nav").offsetHeight;
-      var nav_height = 0;
-      if (scrollTop > nav_height) {
-        var scrollbox = document.getElementById("search-container");
-        scrollbox.classList.add("sticky");
-        scrollbox.style.top = nav_height + "px";
-      }
-      var window_height = window.screen.height / 2;
-
-      var cards = document.getElementsByClassName("event");
-      cards.forEach((card) => {
-        var card_center =
-          (card.getBoundingClientRect().top + card.offsetHeight) / 2;
-        if (Math.abs(window_height - card_center) < 80) {
-          card.classList.add("raised");
-        } else {
-          card.classList.remove("raised");
-        }
-      });
-    },
   },
 };
 </script>
 
 <style scoped>
 .events {
-  background-color: rgb(241, 235, 235);
+  background-color: #eceff4;
   min-height: 100vh;
+  padding-top: 2rem;
 }
 .item {
   width: 100%;
   margin-bottom: 7px;
+  padding: 0;
+  margin-bottom: 1rem;
 }
 .search-filter-wrapper {
   margin-bottom: 2rem;

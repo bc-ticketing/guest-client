@@ -1,32 +1,40 @@
 <template>
   <div class="ticket-wrapper">
+    <div class="ticket-info">
+      <div class="ticket-date">
+        <div>
+          <div class="month">{{ monthName }}</div>
+          <div class="day">{{ event.getDay() }}</div>
+        </div>
+      </div>
+      <div class="ticket-content">
+        <h2>{{ eventTitle }}</h2>
+        <h3>{{ ticketTitle }}</h3>
+        <p class="date">
+          {{ timeAndDate }}
+        </p>
+        <p @click="openTicketOverlay" class="seat-info" v-if="isNf">
+          See your seat: {{ seat }}
+        </p>
+        <p @click="openTicketOverlay" class="seat-info" v-if="!isNf">
+          See {{ amount }} tickets
+        </p>
+      </div>
+    </div>
     <div
       class="ticket-img"
       :style="{
         backgroundImage: `url(${eventImage})`,
-        backgroundColor: `${eventColor}`
+        backgroundColor: `${eventColor}`,
       }"
     ></div>
-    <div class="ticket-content">
-      <div class="event-title">
-        <h3>{{ eventTitle }}</h3>
-        <span class="date">
-          {{ timeAndDate }}
-        </span>
-      </div>
-      <div class="ticket-info">
-        <h3>{{ ticketTitle }}</h3>
-        <p v-if="isNf">{{ ticketDescription }}</p>
-        <p v-if="!isNf">{{ ticketDescription }}</p>
-        <p v-if="isNf">Seat Number: {{ seat }}</p>
-        <p v-if="!isNf">Number of tickets: {{ amount }}</p>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 import { getNumberFungibleOwned } from "./../util/User";
+import { MONTHS } from "./../util/constants/constants.js";
+
 export default {
   name: "Ticket",
   data() {
@@ -37,23 +45,27 @@ export default {
     ticketId: Number,
     eventContractAddress: String,
     isNf: Boolean,
-    ticketIndex: Number
   },
-  watch: {
-  },
+  watch: {},
   methods: {
     goToDetails: function() {
       this.$router.push({
         name: "event",
-        params: { id: this.ticketData.eventAddress }
+        params: { id: this.ticketData.eventAddress },
       });
-    }
+    },
+    openTicketOverlay: function() {
+      this.$emit("openOverlay");
+    },
   },
   computed: {
+    monthName: function() {
+      return MONTHS[this.event.getMonth()];
+    },
     event() {
       if (!this.eventContractAddress) return undefined;
       return this.$store.state.events.find(
-        e => e.contractAddress === this.eventContractAddress
+        (e) => e.contractAddress === this.eventContractAddress
       );
     },
     ticket() {
@@ -89,7 +101,7 @@ export default {
         if (this.isNf) {
           return this.ticket
             ? this.$store.state.activeUser.nonFungibleTickets.filter(
-                t => t.ticketTypeID == this.ticketTypeId
+                (t) => t.ticketTypeID == this.ticketTypeId
               ).length
             : 0;
         } else {
@@ -105,45 +117,79 @@ export default {
     },
     seat() {
       return this.ticket ? this.ticket.ticketId : 0;
-    }
+    },
   },
-  mounted: function() {}
+  mounted: function() {},
 };
 </script>
 
 <style scoped>
-.ticket-content {
-  padding: 10px;
-  z-index: 1;
-  position: relative;
-}
-.event-title {
-  color: white !important;
+.ticket-wrapper {
   display: flex;
-  justify-content: space-between;
 }
-.event-title h3 {
+.ticket-info {
+  border: 1px solid rgba(0, 0, 0, 0.329);
+  border-radius: 10px;
+
+  flex-basis: 80%;
+  display: flex;
+  padding: 1rem;
+}
+.ticket-date {
+  flex-basis: 10%;
+  flex-grow: 0;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-right: 0.5rem;
+}
+.ticket-date .month {
+  color: var(--orange);
+}
+.ticket-content {
+  flex-grow: 0;
+  flex-basis: 90%;
+}
+
+.ticket-img {
+  border: 1px solid rgba(0, 0, 0, 0.329);
+  border-radius: 10px;
+  flex-basis: 20%;
+}
+
+.ticket-content h2 {
+  font-size: 1.2rem;
+  margin-top: 0;
+  margin-bottom: 0.2rem;
+}
+.ticket-content h3 {
+  font-size: 0.8rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  opacity: 0.8;
+  font-style: normal;
+}
+.ticket-content .date {
+  font-size: 0.7rem;
   margin-top: 0;
 }
-.ticket-wrapper {
-  height: 200px;
 
-  position: relative;
+.ticket-content .seat-info {
+  font-size: 0.9rem;
+  margin: 0;
+  color: var(--red);
+  cursor: pointer;
 }
-.ticket-img {
+
+.ticket-img img {
   filter: blur(4px);
-  height: 200px;
   background-position: center;
   background-size: contain;
-  position: absolute;
-  width: 100%;
+}
 
-  top: 0;
-}
-.ticket-img .nrTickets {
-  color: white;
-  font-size: 2rem;
-}
 .background-overlay {
   position: absolute;
   height: 100%;

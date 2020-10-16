@@ -6,7 +6,11 @@
       class="search-bar-wrapper"
     >
       <div class="search-field">
-        <input v-model="searchInput" />
+        <input
+          v-model="searchInput"
+          type="text"
+          placeholder="What are you looking for?"
+        />
       </div>
       <div class="search-icon" @click="toggle">
         <md-icon v-if="!isOpen">search</md-icon>
@@ -22,11 +26,11 @@ export default {
   data() {
     return {
       searchInput: "",
-      isOpen: false
+      isOpen: false,
     };
   },
   props: {
-    yPos: Number
+    yPos: Number,
   },
   computed: {},
   watch: {
@@ -35,7 +39,7 @@ export default {
     },
     searchInput: function() {
       this.$root.$emit("searchChange", this.searchInput);
-    }
+    },
   },
   methods: {
     openSearchBar: function() {
@@ -57,7 +61,7 @@ export default {
       this.$refs["search"].classList.remove("open");
       this.$refs["search"].classList.add("invisible");
       this.isOpen = false;
-    }
+    },
   },
   mounted: function() {
     //this.openSearchBar();
@@ -72,7 +76,7 @@ export default {
     this.$root.$on("closeSearchBar", async () => {
       this.close();
     });
-  }
+  },
 };
 </script>
 
@@ -82,18 +86,25 @@ export default {
 }
 .search-bar {
   z-index: 99;
-  background-color: var(--fg-light);
-
   padding: 0.5rem 0.5rem;
   position: fixed;
-  transform: translate(-90%, -100%);
+  transform: translate(-80%, -100%);
   transition: transform 0.4s ease-in-out;
   width: 100vw;
+  padding: 1rem;
 }
 .search-bar-wrapper {
+  border-radius: 12px;
+  padding: 1rem;
+  background-color: #4c566a;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.search-bar-wrapper input {
+  background-color: #4c566a !important;
+  color: #eceff4;
+  border: none;
 }
 .search-bar.open {
   transform: translate(0, -100%);
