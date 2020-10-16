@@ -26,10 +26,11 @@ export function numberFreeSeats(ticket) {
 export function getNumBuyOrdersByPercent(ticket, percentage) {
   let total = 0;
   ticket.buyOrders.forEach(o => {
-    if (o.percentage === percentage) {
-      total += o.quantity;
+    if (Number(o.percentage) === Number(percentage)) {
+      total += Number(o.quantity);
     }
   });
+  
   return total;
 }
 
@@ -126,6 +127,7 @@ export function getHighestBuyOrder(ticket) {
   const sorted = ticket.buyOrders.sort((a, b) => {
     a.percentage - b.percentage;
   });
+  console.log(sorted);
   return sorted.length > 0 ? sorted[0] : {};
 }
 
@@ -167,6 +169,7 @@ export async function makeBuyOrderFungible(
       });
     console.log(result);
   } catch (e) {
+    console.log(e);
     return decodeError(e);
   }
 }
@@ -221,6 +224,7 @@ export async function fillBuyOrderFungible(
       });
     console.log(result);
   } catch (e) {
+    console.log(e);
     return decodeError(e);
   }
 }
@@ -309,6 +313,19 @@ export async function withdrawSellOrderFungible(
     getFullTicketTypeId(false, ticketType),
     percentage
   ).call();
+  let foundIndex;
+  for(let i  = queue.head; i<=queue.tail;i++) {
+    const queuedUser = await contract.methods.getQueuedUserSelling(
+      getFullTicketTypeId(false, ticketType),
+      percentage,
+      i).call();
+      console.log(queuedUser)
+    if( queuedUser.userAddress === account && Number(queuedUser.quantity) >= amount) {
+      console.log('found user index');
+      foundIndex = i;
+    }
+    console.log(`found index at ${foundIndex}`);
+  }
   console.log(queue);
   let result;
   await contract.methods
@@ -316,7 +333,7 @@ export async function withdrawSellOrderFungible(
       getFullTicketTypeId(false, ticketType),
       amount,
       percentage,
-      queue.tail - 1
+      foundIndex
     )
     .send({
       from: account

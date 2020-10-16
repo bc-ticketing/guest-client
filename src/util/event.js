@@ -39,6 +39,8 @@ import { NULL_ADDRESS } from "./constants/constants";
 
 import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 
+import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
+
 const BigNumber = require("bignumber.js");
 
 export class Event {
@@ -60,6 +62,14 @@ export class Event {
     this.currency = 0;
     this.identityContractAddress = "";
     this.identityLevel = 0;
+    this.website = {
+      url: '',
+      verification: 'pending'
+    }
+    this.twitter = {
+      url: '',
+      verification: 'pending'
+    }
   }
 
   parseTimeStamp() {
@@ -234,6 +244,8 @@ export class Event {
         await this.loadIPFSMetadata(ipfsInstance);
         await this.fetchPosition();
       }
+      this.requestTwitterVerification();
+      this.requestUrlVerification();
       await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
       await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
       await this.loadOwnerShipChanges(web3Instance, ABI);
@@ -244,6 +256,14 @@ export class Event {
       return false;
     }
     return true;
+  }
+
+  async requestTwitterVerification() {
+    this.twitter.verification = await requestTwitterVerification(getHandle(this.twitter.url));
+  }
+
+  async requestUrlVerification() {
+    this.website.verification = await requestWebsiteVerification(this.website.url);
   }
 
   async fetchIPFSHash(ABI, web3Instance) {
@@ -275,8 +295,8 @@ export class Event {
     this.description = metadata.event.description;
     this.category = metadata.event.category;
     this.duration = metadata.event.duration;
-    this.twitter = metadata.event.twitter;
-    this.url = metadata.event.url;
+    this.twitter.url = metadata.event.twitter;
+    this.website.url = metadata.event.url;
     this.timestamp = metadata.event.time;
     this.color = metadata.event.color;
     this.timestamp = metadata.event.time;

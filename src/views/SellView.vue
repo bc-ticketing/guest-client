@@ -32,7 +32,7 @@
         >Create Sell Order</md-button
       >
       <md-button v-if="hasBuyOrder" class="md-raised" @click="fillBuyOrder"
-        >Sell for {{ highestBuyOrder.queue }}%</md-button
+        >Sell for {{ highestBuyOrder.percentage }}%</md-button
       >
     </div>
   </div>
@@ -164,7 +164,7 @@ export default {
         fillBuyOrderFungible(
           this.ticketTypeId,
           1,
-          this.highestBuyOrder.queue,
+          this.highestBuyOrder.percentage,
           this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress,

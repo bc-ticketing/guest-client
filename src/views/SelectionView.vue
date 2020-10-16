@@ -37,6 +37,16 @@
         >
       </div>
       <hr />
+      <div class="group" v-if="ticketHasSellOrders && userNotOwner">
+        <p>
+          {{ lowestSellOrderAmount }} Available on the aftermarket for
+          {{ lowestSellOrder }}%
+        </p>
+        <md-button class="md-raised" @click="fillSellOrder"
+          >Buy from Aftermarket</md-button
+        >
+      </div>
+      <hr />
       <div v-if="isNf">
         <div class="message" v-if="!available">
           This ticket is sold

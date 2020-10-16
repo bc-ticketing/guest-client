@@ -1,4 +1,4 @@
-const DB_NAME = "events";
+const DB_NAME = "idetix";
 const DB_VERSION = 3;
 
 let DB;

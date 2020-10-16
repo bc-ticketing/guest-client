@@ -36,7 +36,8 @@ export class User {
 }
 
 export function setApprovalLevel(user, approver, method) {
-  user.approvalLevels[approver] = method;
+  
+  user.approvalLevels[approver] = method ? method : 0;
 } 
 
 export function getApprovalLevelForApprover(user, approver) {

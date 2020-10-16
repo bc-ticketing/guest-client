@@ -1,93 +1,100 @@
 <template>
   <div id="identity">
     <div class="container">
-      <div class="title">
-        <h3>Idetix Identifiation</h3>
-        <p>Some information text</p>
-      </div>
-      <div class="identification-option">
-        <div>
-          <md-icon class="icon">mail</md-icon>
-          <span class="status">{{ mailVerification }}</span>
-        </div>
+      <div
+        class="approver"
+        v-for="approver in $store.state.approvers"
+        v-bind:key="approver.approverAddress"
+      >
+        <h3>{{ approver.title }}</h3>
+        <div
+          class="method"
+          v-for="method in approver.methods"
+          v-bind:key="method.value"
+        >
+          <h4>{{ method.value }}</h4>
 
-        <md-button class="md-raised" @click="openForm('mail')">Verify</md-button>
-      </div>
-      <hr />
-      <div class="identification-option">
-        <div>
-          <md-icon class="icon">phone</md-icon>
-          <span class="status">{{ phoneVerification }}</span>
+          <md-button
+            v-if="!userVerified(approver, method.level)"
+            class="md-raised"
+            @click="openForm(approver, method.level, method.value)"
+            >Verify</md-button
+          >
+          <span class="status good" v-else>
+            <md-icon>done</md-icon>
+          </span>
         </div>
-        <md-button class="md-raised" @click="openForm('phone')">Verify</md-button>
-      </div>
-      <hr />
-      <div class="identification-option">
-        <div>
-          <md-icon class="icon">person</md-icon>
-          <span class="status">{{ kycVerification }}</span>
-        </div>
-        <md-button class="md-raised" @click="openForm('kyc')">Verify</md-button>
       </div>
     </div>
     <IdentificationForm
-    v-bind:method="identificationMethod"
-    v-bind:open="formOpen"
-    v-on:close="closeForm()"></IdentificationForm>
+      v-bind:method="desiredMethod"
+      v-bind:level="desiredLevel"
+      v-bind:approver="approver"
+      v-bind:open="formOpen"
+      v-on:close="closeForm()"
+    ></IdentificationForm>
   </div>
 </template>
 
 <script>
-import IdentificationForm from './../components/IdentificationForm';
+import IdentificationForm from "./../components/IdentificationForm";
 
 export default {
   name: "Identification",
   components: {
-    IdentificationForm,
+    IdentificationForm
   },
   data() {
     return {
-      identificationMethod: '',
-      formOpen: false,
+      desiredMethod: "",
+      desiredLevel: 0,
+      approver: undefined,
+      formOpen: false
     };
   },
   watch: {},
   methods: {
-    openForm(method) {
-      this.identificationMethod = method;
+    userVerified(approver, level) {
+      return (
+        this.$store.state.activeUser && 
+        this.$store.state.activeUser.approvalLevels[approver.approvalLevels] && 
+        this.$store.state.activeUser.approvalLevels[approver.approverAddress]
+          .level >= level
+      );
+    },
+    openForm(approver, level, name) {
+      this.desiredMethod = name;
+      this.approver = approver;
+      this.desiredLevel = level;
       this.formOpen = true;
     },
     closeForm() {
       this.formOpen = false;
     }
   },
-  computed: {
-    mailVerification() {
-      return this.$store.state.activeUser.idetixIdentity ? this.$store.state.activeUser.idetixIdentity.mail : false;
-    },
-    phoneVerification() {
-      return this.$store.state.activeUser.idetixIdentity ? this.$store.state.activeUser.idetixIdentity.phone : false;
-    },
-    kycVerification() {
-      return this.$store.state.activeUser.idetixIdentity ? this.$store.state.activeUser.idetixIdentity.kyc : false;
-    },
-  },
+  computed: {},
   mounted: function() {
-    this.$root.$emit('hideSearchBar');
+    this.$root.$emit("hideSearchBar");
   }
 };
 </script>
 
 <style>
-.identification-option {
+.method {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.identification-option .icon {
+
+.method h4 {
+  display: inline-block;
   margin-right: 1rem;
 }
 hr {
   margin-bottom: 2rem;
+}
+.good i.md-icon {
+  font-size: 2rem !important;
+  color: var(--green) !important;
 }
 </style>

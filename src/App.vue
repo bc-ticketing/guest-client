@@ -116,6 +116,10 @@ export default {
      this triggers the 'loadEvents' action, which in turn triggers
      the user ticket loading action 
      */
+    await this.$store.dispatch("setEventFactoryContractAddress",process.env.VUE_APP_EVENT_FACTORY_CONTRACT_ADDRESS);
+    await this.$store.dispatch("setIdentityContractAddress",process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);
+
+
     await this.$store.dispatch("createEventFactory");
     this.$root.$emit("eventFactoryCreated");
 
@@ -130,7 +134,9 @@ export default {
       status: "success"
     });
   },
-  mounted: async function() {}
+  mounted: async function() {
+    console.log(process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);
+  }
 };
 </script>
 

@@ -5,44 +5,88 @@
         <md-icon>close</md-icon>
       </span>
 
-      <div class="form-version mail" v-bind:class="{ active: this.method === 'mail' }">
-        <div class="form-group">
-          <label for="mail">Mail</label>
-          <input type="text" name="mail" v-model="mail"/>
-        </div>
+      <div
+        class="form-version mail"
+        v-bind:class="{ active: this.method === 'email' }"
+      >
+        <md-steppers md-linear
+        :md-active-step.sync = mailForm.progress.active>
+          <md-step 
+          id="mail_submit"
+          :md-done.sync="mailForm.progress.mail_submit"
+          :md-editable="false"
+          >
+            <div class="form-group">
+              <p>
+                In this first step of the approval process we will send you a
+                mail with a code! Please provide your email address so that we
+                can contact you.
+              </p>
+              <input
+                type="text"
+                name="mail"
+                placeholder="mail"
+                v-model="mailForm.mail"
+              />
+              <md-button class="md-raised" @click="submitMail">Submit</md-button>
+            </div>
+          </md-step>
+          <md-step id='mail_verify'
+          :md-editable="false"
+          :md-done="mailForm.progress.mail_verify"></md-step>
+        </md-steppers>
       </div>
 
-      <div class="form-version phone" v-bind:class="{ active: this.method === 'phone' }">
+      <div
+        class="form-version phone"
+        v-bind:class="{ active: this.method === 'phone' }"
+      >
         <div class="form-group">
           <label for="phone">Phone</label>
-          <input type="text" name="phone" v-model="phone"/>
+          <input type="text" name="phone" v-model="phoneForm.phone" />
         </div>
       </div>
 
-      <div class="form-version kyc" v-bind:class="{ active: this.method === 'kyc' }">
+      <div
+        class="form-version kyc"
+        v-bind:class="{ active: this.method === 'kyc' }"
+      >
         <div class="form-group mail">
           <label for="mail">KYC</label>
         </div>
       </div>
-      <md-button class="md-raised" @click="submit">Submit</md-button>
     </div>
   </div>
 </template>
 
 <script>
+import { requestMailValidationCode } from './../util/identity';
+
 export default {
   name: "IdentificationForm",
   components: {},
   data() {
     return {
-      mail: '',
-      phone: '',
-      kyc: {}
+      mailForm: {
+        mail: '',
+        progress: {
+          active: 'mail_submit',
+          mail_submit: false,
+          mail_verify: false,
+          // secondStepError: null
+    }
+      },
+      phoneForm: {
+        phone: '',
+        step: 0,
+      },
     };
   },
   props: {
     open: Boolean,
+    approver: Object,
     method: String,
+    level: Number
   },
   mounted: function() {},
   computed: {},
@@ -52,20 +96,22 @@ export default {
     },
     isValidMail: function() {
       //todo: make real check
-      return this.mail.indexOf('@') != -1;
+      return this.mailForm.mail.indexOf("@") != -1;
     },
-    submit: async function() {
-      if(this.method === 'mail') {
-        if (this.isValidMail()){
-          await this.$store.dispatch('verifyUser', {mail: this.mail, method: this.method});
-        }
-      } else if (this.method === 'phone') {
-        await this.$store.dispatch('verifyUser', {phone: this.phone, method: this.method});
-      } else {
-        console.log('kyc');
+    submitMail: async function() {
+      if (this.isValidMail()) {
+          const result = await requestMailValidationCode(this.mailForm.mail);
+          console.log(result);
       }
-    }
-  },
+    },
+    submitPhone: async function() {
+
+        await this.$store.dispatch("verifyUser", {
+          phone: this.phone,
+          method: 'phone'
+        });
+  }
+  }
 };
 </script>
 
@@ -86,7 +132,7 @@ export default {
 
 .wrapper {
   position: relative;
-  padding: 2rem;
+  padding: 0.5rem;
   padding-bottom: 4rem;
 }
 

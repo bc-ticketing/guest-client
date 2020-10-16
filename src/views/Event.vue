@@ -75,20 +75,85 @@
           <md-icon class="info-title">local_offer</md-icon>
           <span class="info-value">From {{ lowest_price }} ETH</span>
         </div>
-        <div class="info-group">
-          <md-icon class="info-title">link</md-icon>
-          <a class="info-value" :href="event.url" target="_blank">Website</a>
+        <div class="info-group split">
+          <div>
+            <md-icon class="info-title">link</md-icon>
+            <a class="info-value" :href="eventWebsite.url" target="_blank">Website</a>
+          </div>
+          <div>
+          <span class="info-value-status">
+                <md-progress-spinner
+                v-if="eventWebsite.verification === 'pending'"
+                :md-diameter="20"
+                :md-stroke="4" 
+                md-mode="indeterminate"></md-progress-spinner>
+                <span class="danger"><md-icon class="danger" v-if="eventWebsite.verification == false">warning</md-icon></span>
+                <span class="good"><md-icon v-if="eventWebsite.verification == true">done</md-icon></span>
+
+          </span>
+          </div>
+
         </div>
-        <div class="info-group">
+        <div class="info-group split">
+          <div>
           <md-icon class="info-title">delete</md-icon>
-          <a class="info-value" :href="event.twitter" target="_blank"
+          <a class="info-value" :href="eventTwitter.url" target="_blank"
             >Twitter</a
           >
+          </div>
+          <div>
+          <span class="info-value-status">
+                <md-progress-spinner 
+                v-if="eventTwitter.verification === 'pending'"
+                :md-diameter="20"
+                :md-stroke="4"
+                md-mode="indeterminate"></md-progress-spinner>
+                <span class="danger"><md-icon v-if="eventTwitter.verification == false">warning</md-icon></span>
+                <span class="good"><md-icon v-if="eventTwitter.verification == true">done</md-icon></span>
+          </span>
+          </div>
         </div>
         <h3>Identity</h3>
         <div class="info-group">
           <md-icon class="info-title">supervised_user_circle</md-icon>
           <span class="info-value">{{approverTitle}}</span>
+        </div>
+        <div class="info-group split">
+          <div>
+            <md-icon class="info-title">link</md-icon>
+            <a class="info-value" :href="approverWebsite.url" target="_blank">Website</a>
+          </div>
+          <div>
+          <span class="info-value-status">
+                <md-progress-spinner
+                v-if="approverWebsite.verification === 'pending'"
+                :md-diameter="20"
+                :md-stroke="4" 
+                md-mode="indeterminate"></md-progress-spinner>
+                <span class="danger"><md-icon class="danger" v-if="approverWebsite.verification == false">warning</md-icon></span>
+                <span class="good"><md-icon v-if="approverWebsite.verification == true">done</md-icon></span>
+          </span>
+          </div>
+
+        </div>
+        <div class="info-group split">
+          <div>
+          <md-icon class="info-title">delete</md-icon>
+          <a class="info-value" :href="approverTwitter.url" target="_blank"
+            >Twitter</a
+          >
+          </div>
+          <div>
+          <span class="info-value-status">
+                <md-progress-spinner 
+                v-if="approverTwitter.verification === 'pending'"
+                :md-diameter="20"
+                :md-stroke="4"
+                md-mode="indeterminate"></md-progress-spinner>
+                <span class="danger"><md-icon class="danger" v-if="approverTwitter.verification == false">warning</md-icon></span>
+                <span class="good"><md-icon v-if="approverTwitter.verification == true">done</md-icon></span>
+          </span>
+          </div>
         </div>
         <div class="info-group">
           <md-icon class="info-title">mail_outline</md-icon>
@@ -159,6 +224,7 @@
             <div class="queue">
               <div
                 class="step-wrapper"
+                @click="showJoinButton(ticket, (100 / ticket.aftermarketGranularity) * i)"
                 @mouseenter="setActiveQueueTip(ticket)"
                 :style="{
                   left: `calc(${(100 / (ticket.aftermarketGranularity - 1)) *
@@ -183,7 +249,7 @@
                       (100 / ticket.aftermarketGranularity) * i
                     )
                   }}
-                  offers
+                  offers for {{(100 / ticket.aftermarketGranularity) * i}}%
                 </md-tooltip>
               </div>
             </div>
@@ -298,7 +364,15 @@
               </div>
             </div>
           </div>
+ 
         </div>
+          <div>
+            <md-button class="md-raised"
+            @click="createBuyOrder(false)"
+            >
+              Join
+            </md-button>
+          </div>
       </div>
       <div class="event-info-wrapper" ref="content-checkout">
         <ShoppingCart></ShoppingCart>
@@ -327,7 +401,9 @@ import {
   getNumBuyOrdersByPercent,
   getNumSellOrdersByPercent,
   getAllSellOferingsNfTicketType,
-  fillSellOrderNonFungible
+  fillSellOrderNonFungible,
+  makeBuyOrderNonFungible,
+  makeBuyOrderFungible
 } from "./../util/tickets";
 import { getNumberFungibleOwned, ownsNonFungible } from "./../util/User";
 export default {
@@ -350,6 +426,7 @@ export default {
       tooltip: {},
       toolTipActive: false,
       navbarHeight: 0,
+      selectedQueue: {},
       selection: {
         active: false,
         ticketId: 0,
@@ -376,8 +453,20 @@ export default {
           )
         : undefined;
     },
+    eventWebsite() {
+      return this.event.website ? this.event.website : {verification: 'pending'};
+    },
+    eventTwitter() {
+            return this.event.twitter ? this.event.twitter : {verification: 'pending'};
+    },
     approverTitle() {
       return this.approver ? this.approver.title : "";
+    },
+    approverTwitter() {
+      return this.approver ? this.approver.twitter : {verification: 'pending'};
+    },
+    approverWebsite() {
+      return this.approver ? this.approver.website : {verification: 'pending'};
     },
     requiredIdentityLevel() {
       return Number(this.event.identityLevel);
@@ -387,6 +476,7 @@ export default {
     },
     userIsApproved() {
       return this.approver &&
+      this.$store.state.activeUser &&
       this.$store.state.activeUser.approvalLevels &&
       this.$store.state.activeUser.approvalLevels[this.approver.approverAddress] &&
       Number(this.$store.state.activeUser.approvalLevels[this.approver.approverAddress].level) >= this.requiredIdentityLevel;
@@ -445,6 +535,36 @@ export default {
   },
   watch: {},
   methods: {
+    showJoinButton(ticketType, percentage) {
+      this.selectedQueue.ticketType = ticketType;
+      this.selectedQueue.percentage = percentage;
+    },
+    async createBuyOrder(isNf) {
+      if (isNf) {
+        const result = await makeBuyOrderNonFungible(
+          this.selectedQueue.ticketType.typeId,
+          1,
+          this.selectedQueue.percentage,
+          this.selectedQueue.ticketType.price,
+          this.$store.state.activeUser.account,
+          this.$store.state.web3.web3Instance,
+          this.selectedQueue.ticketType.eventContractAddress
+        );
+        this.$root.$emit("openMessageBus", result);
+      } else {
+        const result = await makeBuyOrderFungible(
+          this.selectedQueue.ticketType.typeId,
+          1,
+          this.selectedQueue.percentage,
+          this.selectedQueue.ticketType.price,
+          this.$store.state.activeUser.account,
+          this.$store.state.web3.web3Instance,
+          this.selectedQueue.ticketType.eventContractAddress
+        );
+        this.$root.$emit("openMessageBus", result);
+      }
+    },
+
     async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
       const result = await fillSellOrderNonFungible(
         ticketTypeId,
@@ -552,7 +672,7 @@ export default {
         this.$refs["teaser"].style.justifyContent = `start`;
         this.$refs["headerTitle"].style.transform = `translateX(0)`;
 
-        this.$refs["teaser"].style.minHeight = "300px";
+        this.$refs["teaser"].style.minHeight = "250px";
         //this.$refs['parallax'].classList.remove('hidden');
         this.$refs["navigation"].classList.remove("top");
       }
@@ -765,7 +885,7 @@ export default {
   display: block;
 }
 .header-img {
-  min-height: 300px;
+  min-height: 250px;
   position: relative;
   display: flex;
   align-items: center;
@@ -1021,5 +1141,16 @@ i.shopping-cart {
 }
 .fill-sell {
   cursor: pointer;
+}
+
+.info-group.split {
+  display: flex;
+  justify-content:space-between;
+}
+.info-group .danger i {
+  color: var(--red);
+}
+.info-group .good i {
+  color: var(--green);
 }
 </style>

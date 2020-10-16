@@ -3,10 +3,6 @@ import Vuex from "vuex";
 import state from "./state";
 import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
-import {
-  EVENT_FACTORY_ADDRESS,
-  IDENTITY_ADDRESS
-} from "./../util/constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import { IDENTITY_ABI } from "./../util/abi/identity";
 import getIpfs from "./../util/ipfs/getIpfs";
@@ -55,9 +51,21 @@ export default new Vuex.Store({
     },
     updateApproverStore(state, approvers) {
       state.approvers = approvers;
+    },
+    setIdentityContractAddress(state, address) {
+      state.IDENTITY_ADDRESS = address;
+    },
+    setEventFactoryContractAddress(state, address) {
+      state.EVENT_FACTORY_ADDRESS = address;
     }
   },
   actions: {
+    async setIdentityContractAddress({ commit }, address){
+      commit('setIdentityContractAddress', address);
+    },
+    async setEventFactoryContractAddress({commit}, address) {
+      commit('setEventFactoryContractAddress', address);
+    },
     /* 
       Responsible for getting the current user object.
       First checks if the IDB contains a user with the account
@@ -128,14 +136,14 @@ export default new Vuex.Store({
     async createEventFactory({ commit }) {
       const eventFactory = new state.web3.web3Instance.eth.Contract(
         EVENT_FACTORY_ABI,
-        EVENT_FACTORY_ADDRESS
+        state.EVENT_FACTORY_ADDRESS
       );
       commit("setEventFactory", eventFactory);
     },
     async createIdentity({ commit }) {
       const identity = new state.web3.web3Instance.eth.Contract(
         IDENTITY_ABI,
-        IDENTITY_ADDRESS
+        state.IDENTITY_ADDRESS
       );
       commit("setIdentity", identity);
     },
@@ -157,34 +165,35 @@ export default new Vuex.Store({
         .call();
       var events = [];
       for (let i = 0; i < eventAddresses.length; i++) {
+        
         const address = eventAddresses[i];
+        console.log('loading event; '+ address);
         const inStore = await idb.getEvent(address);
         let event;
         if (!inStore) {
+          console.log('not in store');
           event = new Event(address);
           await event.loadIdentityData(
             EVENT_MINTABLE_AFTERMARKET_ABI,
             state.web3.web3Instance
           );
-
-          /* address public erc20Contract;
-
-          // identity approver address => level
-          Identity public identityContract;
-          address public identityApprover;
-          uint8 public identityLevel; */
         } else {
+          console.log('in store');
           event = new Event(inStore);
         }
+        console.log('loading event data');
         let fetch = await event.loadData(
           EVENT_MINTABLE_AFTERMARKET_ABI,
           state.ipfsInstance,
           state.web3.web3Instance
         );
+        console.log('loaded event data');
         if (fetch) {
           event.lastFetchedBlock = state.web3.currentBlock;
         }
+        console.log('saving event data');
         await idb.saveEvent(event);
+        console.log('saved event data');
         events.push(event);
       }
       commit("updateEventStore", events);
@@ -198,6 +207,8 @@ export default new Vuex.Store({
         let approver;
         if (inStore) {
           approver = new IdentityApprover(inStore);
+          approver.requestUrlVerification();
+          approver.requestTwitterVerification();
         } else {
           approver = new IdentityApprover(approverAddress);
           await approver.loadData(state.identity, state.ipfsInstance);
@@ -237,10 +248,6 @@ export default new Vuex.Store({
       state.shoppingCart.clear();
       commit("updateShoppingCartStore", state.shoppingCart);
     },
-    async verifyUser({ commit }, payload) {
-      await state.user.verify(payload);
-      commit("upateUserStore", state.user);
-    }
   },
   modules: {}
 });
