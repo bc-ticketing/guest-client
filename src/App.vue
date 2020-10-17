@@ -231,8 +231,8 @@ a:hover {
 }
 .container-fluid,
 .container {
-  height: calc(100vh - 56px);
-  overflow-y: scroll;
+  /*height: calc(100vh - 56px);*/
+  /* overflow-y: scroll; */
   overflow-x: invisible;
 }
 

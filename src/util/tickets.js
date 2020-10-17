@@ -118,6 +118,14 @@ export function hasSellOrder(ticket) {
   }
 }
 
+export function hasBuyOrder(ticket) {
+  if (!ticket.isNf) {
+    return ticket.buyOrders.length != 0;
+  } else {
+    return ticket.buyOrder.address != undefined;
+  }
+}
+
 /**
  * Checks for the highest available buy order for a ticketType or NF Ticket
  * @param {FungibleTicketType} ticket
@@ -127,7 +135,6 @@ export function getHighestBuyOrder(ticket) {
   const sorted = ticket.buyOrders.sort((a, b) => {
     a.percentage - b.percentage;
   });
-  console.log(sorted);
   return sorted.length > 0 ? sorted[0] : {};
 }
 

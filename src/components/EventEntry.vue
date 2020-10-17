@@ -52,6 +52,7 @@ export default {
 <style scoped>
 .event-wrapper {
   display: flex;
+  cursor: pointer;
 }
 .button-box {
   display: flex;

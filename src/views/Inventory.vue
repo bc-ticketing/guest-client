@@ -138,7 +138,7 @@
         </div>
       </div>
     </div> -->
-    <SellView
+    <!--    <SellView
       v-bind:eventContractAddress="activeTicketEvent"
       v-bind:ticketId="activeTicket"
       v-bind:ticketTypeId="activeTicketType"
@@ -146,7 +146,7 @@
       v-bind:isNf="activeIsNf"
       v-bind:open="sellOpen"
       v-on:close="sellOpen = false"
-    ></SellView>
+    ></SellView> -->
     <TicketOverlay
       v-bind:eventContractAddress="activeTicketEvent"
       v-bind:ticketId="activeTicket"
@@ -161,7 +161,7 @@
 <script>
 import TicketOverlay from "./../components/TicketOverlay";
 import Ticket from "./../components/Ticket";
-import SellView from "./SellView";
+// import SellView from "./SellView";
 import { getNumberFungibleOwned } from "./../util/User";
 import Swiper, { Pagination } from "swiper";
 Swiper.use([Pagination]);
@@ -188,7 +188,7 @@ export default {
   },
   components: {
     Ticket,
-    SellView,
+    // SellView,
     TicketOverlay,
   },
   computed: {

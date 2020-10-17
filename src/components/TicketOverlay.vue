@@ -1,10 +1,10 @@
 <template>
   <div class="overlay" v-bind:class="{ open: open }">
-    <div class="close-bar">
+    <v-touch v-on:swipedown="$emit('close')" class="close-bar">
       <div class="close-icon" @click="$emit('close')">
         <md-icon>close</md-icon>
       </div>
-    </div>
+    </v-touch>
     <div class="ticket">
       <div
         class="ticket-section image"
@@ -26,6 +26,10 @@
           <div class="value">{{ eventTitle }}</div>
         </div>
         <div class="group">
+          <div class="label">Location</div>
+          <div class="value">{{ eventLocation }}</div>
+        </div>
+        <div class="group">
           <div class="label">Date</div>
           <div class="value">{{ eventDate }}</div>
         </div>
@@ -41,36 +45,49 @@
       </div>
       <div class="ticket-section">
         <h3>Sell this ticket</h3>
+        <div class="group" v-if="hasBuyOrder">
+          <div class="label">
+            People want your ticket! If you don't plan on using it, you can sell
+            it right now for
+            {{ highestBuyOrder.percentage }}% of it's original price.
+          </div>
+          <md-button class="md-raised" @click="fillBuyOrder">Sell</md-button>
+        </div>
         <div class="group">
+          <div class="label">
+            You can always put your ticket on the market to see if anyone wants
+            to buy it. <br />
+            Tip: You can check how many people are queued up for buying and
+            selling in the <i>aftermaket</i>
+            tab of the event!
+          </div>
+          <div v-if="!isNf" class="selection-group amount-selection">
+            <p>Sell</p>
+            <div class="selection-amount">
+              <div class="icon-wrap" @click="changeSelectionAmount(-1)">
+                <md-icon>remove_circle</md-icon>
+              </div>
+              <p>{{ amountToSell }}</p>
+              <div class="icon-wrap" @click="changeSelectionAmount(1)">
+                <md-icon>add_circle</md-icon>
+              </div>
+            </div>
+            <p>tickets for</p>
+          </div>
           <div class="selection-group percentage-selection">
-            <h3>Price</h3>
             <input
               type="range"
               :min="getStepSize(granularity)"
               max="100"
               :step="getStepSize(granularity)"
-              v-model.number="percentage"
+              v-model.number="percentageToSell"
             />
-            {{ percentage }}
-            %
+            {{ percentageToSell }}
+            % of the price
           </div>
-          <div v-if="!isNf" class="selection-group amount-selection">
-            <h3>Amount</h3>
-            <div class="selection-amount">
-              <div class="icon-wrap" @click="changeSelectionAmount(-1)">
-                <md-icon>remove_circle</md-icon>
-              </div>
-              <p>{{ amount }}</p>
-              <div class="icon-wrap" @click="changeSelectionAmount(1)">
-                <md-icon>add_circle</md-icon>
-              </div>
-            </div>
-          </div>
+
           <md-button class="md-raised" @click="sellTicket"
             >Create Sell Order</md-button
-          >
-          <md-button v-if="hasBuyOrder" class="md-raised" @click="fillBuyOrder"
-            >Sell for {{ highestBuyOrder.percentage }}%</md-button
           >
         </div>
       </div>
@@ -86,6 +103,7 @@ import {
   makeSellOrderNonFungible,
   fillBuyOrderNonFungible,
   fillBuyOrderFungible,
+  hasBuyOrder,
 } from "./../util/tickets";
 
 import { getNumberFungibleOwned } from "./../util/User";
@@ -97,13 +115,14 @@ export default {
     return {
       percentage: 100,
       amount: 1,
+      amountToSell: 1,
+      percentageToSell: 100,
     };
   },
   props: {
     ticketId: Number,
     ticketTypeId: Number,
     eventContractAddress: String,
-    leftToSell: Number,
     isNf: Boolean,
     open: Boolean,
   },
@@ -124,6 +143,9 @@ export default {
     },
     eventImage() {
       return this.event ? this.event.img_url : "";
+    },
+    eventLocation() {
+      return this.event ? this.event.location : "";
     },
     eventColor() {
       return this.event ? this.event.color : "";
@@ -152,6 +174,33 @@ export default {
         ? Object.getOwnPropertyNames(this.ticketType.sellOrders).length > 1
         : false;
     },
+    ticketsLeftToSell() {
+      let total = 0;
+      this.activeSellOrders.forEach((o) => {
+        total += o.quantity;
+      });
+      return this.amountOwned - total;
+    },
+    activeSellOrders() {
+      if (!this.$store.state.activeUser) {
+        return [];
+      }
+      try {
+        if (this.activeIsNf) {
+          let order = this.$store.state.activeUser.nonFungibleTickets[
+            this.activeSlide -
+              this.$store.state.activeUser.fungibleTickets.length
+          ].sellOrder;
+          order.quantity = 1;
+          return order.percentage ? [order] : [];
+        } else {
+          return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
+            .sellOrders;
+        }
+      } catch (e) {
+        return [];
+      }
+    },
     lowestSellOrder() {
       return this.ticketType ? getLowestSellOrder(this.ticketType).queue : 0;
     },
@@ -162,9 +211,7 @@ export default {
       return this.ticketType ? getHighestBuyOrder(this.ticketType) : 0;
     },
     hasBuyOrder() {
-      return this.ticketType
-        ? Object.getOwnPropertyNames(this.ticketType.buyOrders).length > 1
-        : false;
+      return this.ticketType ? hasBuyOrder(this.ticketType) : false;
     },
     amountOwned() {
       if (this.ticketType) {
@@ -173,8 +220,8 @@ export default {
         } else {
           return getNumberFungibleOwned(
             this.$store.state.activeUser,
-            this.activeTicketEvent,
-            this.activeTicketType
+            this.eventContractAddress,
+            this.ticketTypeId
           );
         }
       } else {
@@ -184,8 +231,11 @@ export default {
   },
   methods: {
     changeSelectionAmount(amount) {
-      this.amount += amount;
-      this.amount = Math.max(Math.min(this.amount, Number(this.leftToSell)), 1);
+      this.amountToSell += amount;
+      this.amountToSell = Math.max(
+        Math.min(this.amountToSell, Number(this.ticketsLeftToSell)),
+        1
+      );
     },
     getStepSize(granularity) {
       return Math.floor(100 / granularity);
@@ -281,6 +331,7 @@ export default {
 }
 .close-bar .md-icon {
   margin: 0;
+  cursor: pointer;
 }
 .ticket {
   width: 90%;
@@ -307,5 +358,14 @@ export default {
 }
 .value {
   color: #2e3440;
+}
+.selection-group p,
+.selection-group .selection-amount {
+  display: inline-block;
+  margin: 0;
+}
+.selection-group .selection-amount i {
+  margin-left: 0.4rem;
+  margin-right: 0.4rem;
 }
 </style>

@@ -1,65 +1,58 @@
 <template>
   <div class="selection" v-bind:class="{ open: open }">
-    <div class="wrapper">
+    <v-touch v-on:swipedown="close" class="wrapper">
       <span class="close-icon" @click="close">
         <md-icon>close</md-icon>
       </span>
-      <h3>{{ ticketTitle }}</h3>
-      <div v-if="!userNotOwner">
-        You are the owner of this ticket, you can create a sell offering in your
-        inventory!
-      </div>
-      <div class="group" v-if="available">
-        <div v-if="!isNf" class="amount-selection">
-          <div class="icon-wrap" @click="changeSelectionAmount(-1)">
-            <md-icon>remove_circle</md-icon>
-          </div>
-          <input type="number" v-model="amount" />
-          <div class="icon-wrap" @click="changeSelectionAmount(1)">
-            <md-icon>add_circle</md-icon>
+      <section>
+        <h3>{{ ticketTitle }}</h3>
+        <p>{{ ticketDescription }}</p>
+        <p v-if="isNf">Seat Number {{ seatNumber }}</p>
+        <div class="group">
+          <div class="label">Price</div>
+          <div class="value">
+            <div>{{ price }} wei</div>
+            <div v-if="!isNf">{{ ticketsAvailable }} available</div>
+            <div v-else>
+              {{ available ? "available" : "sold" }}
+            </div>
           </div>
         </div>
 
-        <div v-if="!available && !nfForSale">
-          This Ticket has already been sold, you can create an aftermarket
-          listing if you want to queue up for it.
+        <div class="availability">
+          <div v-if="!userNotOwner">
+            You are the owner of this ticket, you can create a sell offering in
+            your inventory!
+          </div>
+          <div v-if="!available && !nfForSale">
+            This Ticket has already been sold, you can create an aftermarket
+            listing if you want to queue up for it.
+          </div>
+          <div v-if="!available && nfForSale">
+            This ticket is sold but listed on the aftermarket, you can buy it
+            from there or create your own listing.
+          </div>
+          <div v-if="!available">
+            This Ticket Category is sold out, you can create an aftermarket
+            listing if you want to queue up for it.
+          </div>
         </div>
-        <div v-if="!available && nfForSale">
-          This ticket is sold but listed on the aftermarket, you can buy it from
-          there or create your own listing.
+        <div class="group" v-if="available">
+          <div v-if="!isNf" class="amount-selection">
+            <div class="icon-wrap" @click="changeSelectionAmount(-1)">
+              <md-icon>remove_circle</md-icon>
+            </div>
+            <input type="number" v-model="amount" />
+            <div class="icon-wrap" @click="changeSelectionAmount(1)">
+              <md-icon>add_circle</md-icon>
+            </div>
+          </div>
+
+          <md-button v-if="available" class="md-raised" @click="addToCart"
+            >Buy</md-button
+          >
         </div>
-        <div v-if="fSoldOut">
-          This Ticket Category is sold out, you can create an aftermarket
-          listing if you want to queue up for it.
-        </div>
-        <md-button v-if="available" class="md-raised" @click="addToCart"
-          >Add To Cart</md-button
-        >
-      </div>
-      <hr />
-      <div class="group" v-if="ticketHasSellOrders && userNotOwner">
-        <p>
-          {{ lowestSellOrderAmount }} Available on the aftermarket for
-          {{ lowestSellOrder }}%
-        </p>
-        <md-button class="md-raised" @click="fillSellOrder"
-          >Buy from Aftermarket</md-button
-        >
-      </div>
-      <hr />
-      <div v-if="isNf">
-        <div class="message" v-if="!available">
-          This ticket is sold
-        </div>
-        <div class="message" v-if="nfForSale">
-          This ticket is available on the aftermarket
-        </div>
-      </div>
-      <div v-else>
-        <div class="message" v-if="!available">
-          This ticket is sold out
-        </div>
-      </div>
+      </section>
 
       <!-- 
       <div class="group" v-if="userNotOwner">
@@ -89,7 +82,7 @@
         >
       </div>
        -->
-    </div>
+    </v-touch>
   </div>
 </template>
 
@@ -138,6 +131,17 @@ export default {
     },
     ticketTitle() {
       return this.ticketType ? this.ticketType.title : "";
+    },
+    ticketsAvailable() {
+      return this.ticketType
+        ? this.ticketType.supply - this.ticketType.ticketsSold
+        : 0;
+    },
+    seatNumber() {
+      return this.ticket ? this.ticketId : 0;
+    },
+    ticketDescription() {
+      return this.ticketType ? this.ticketType.description : "";
     },
     price() {
       return this.ticketType ? this.ticketType.price : 0;
@@ -278,13 +282,13 @@ export default {
 
 <style scoped>
 .selection {
-  position: absolute;
+  position: fixed;
   top: 100vh;
   left: 0;
   transition: transform 0.5s ease-in-out;
   width: 100%;
-  background-color: aliceblue;
   z-index: 9999;
+  padding: 1rem;
 }
 
 .selection.open {
@@ -292,9 +296,10 @@ export default {
 }
 
 .wrapper {
+  background: #eceff4;
+  border-radius: 15px;
   position: relative;
   padding: 2rem;
-  padding-bottom: 4rem;
 }
 
 .amount-selection {
