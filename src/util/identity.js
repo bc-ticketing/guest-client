@@ -1,6 +1,8 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
 
+const IDETIX_APPROVAL_SERVER = "http://localhost:9191";
+
 export class IdentityApprover {
   constructor(approverAddress) {
     if (typeof approverAddress === "object") {
@@ -132,14 +134,33 @@ export async function requestWebsiteVerification(url) {
 
 export async function requestMailValidationCode(mail) {
   console.log(mail);
-  return new Promise((resolve) => {
-    try {
-      setTimeout(function() {
-        console.log("faking API call");
-        resolve(true);
-      }, 1000);
-    } catch {
-      resolve("api call error");
-    }
-  });
+  let response;
+  try {
+    response = await axios.post(
+      `${IDETIX_APPROVAL_SERVER}/addEmailIdentity/?eMail=${mail}`
+    );
+    console.log(response);
+  } catch {
+    console.log("api call error");
+  }
+  return response;
+}
+
+export async function requestMailVerification(
+  mail,
+  secret,
+  signedSecret,
+  address
+) {
+  let response;
+  const paramString = `?eMail=${mail}&secret=${secret}&signedSecret=${signedSecret}&ethAddress=${address}`;
+  try {
+    response = await axios.post(
+      `${IDETIX_APPROVAL_SERVER}/EmailIdentity/${paramString}`
+    );
+    console.log(response);
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 }

@@ -8,6 +8,7 @@ import { Chart } from "chart.js";
 export default {
   data() {
     return {
+      chart: {},
       options: {
         responsive: true,
         maintainAspectRation: true,
@@ -62,6 +63,8 @@ export default {
                 display: false,
               },
               ticks: {
+                beginAtZero: true,
+                suggestedMax: 20,
                 callback: function() {},
               },
             },
@@ -74,15 +77,21 @@ export default {
   mounted() {
     this.createChart();
   },
+  beforeCreate() {
+    this.$root.$on("updateCharts", () => {
+      console.log("updating");
+      this.chart.data.datasets = this.chartdata.datasets;
+      this.chart.update();
+    });
+  },
   methods: {
     createChart() {
       const ctx = document.getElementById("canvas_" + this.chartId);
-      const myChart = new Chart(ctx, {
+      this.chart = new Chart(ctx, {
         type: "line",
         data: this.chartdata,
         options: this.options,
       });
-      console.log(myChart);
     },
   },
 };

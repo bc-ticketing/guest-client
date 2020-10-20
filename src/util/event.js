@@ -6,7 +6,7 @@ import {
   getTicketId,
   getTicketTypeIndex,
   argsToCid,
-  isNf
+  isNf,
 } from "idetix-utils";
 import {
   NonFungibleTicket,
@@ -16,7 +16,7 @@ import {
   removeBuyOrders,
   addSellOrders,
   removeSellOrders,
-  getLowestSellOrder
+  getLowestSellOrder,
 } from "./tickets";
 import axios from "axios";
 import {
@@ -33,13 +33,17 @@ import {
   SellOrderNonFungibleWithdrawn,
   BuyOrderWithdrawn,
   SellOrderFungibleFilled,
-  eventMetadataChanged
+  eventMetadataChanged,
 } from "./blockchainEventHandler";
 import { NULL_ADDRESS } from "./constants/constants";
 
 import { fetchIpfsHash, loadIPFSMetadata } from "./tickets";
 
-import { requestTwitterVerification, requestWebsiteVerification, getHandle } from './identity';
+import {
+  requestTwitterVerification,
+  requestWebsiteVerification,
+  getHandle,
+} from "./identity";
 
 const BigNumber = require("bignumber.js");
 
@@ -63,13 +67,13 @@ export class Event {
     this.identityContractAddress = "";
     this.identityLevel = 0;
     this.website = {
-      url: '',
-      verification: 'pending'
-    }
+      url: "",
+      verification: "pending",
+    };
     this.twitter = {
-      url: '',
-      verification: 'pending'
-    }
+      url: "",
+      verification: "pending",
+    };
   }
 
   parseTimeStamp() {
@@ -104,7 +108,7 @@ export class Event {
     var first = response.data.results[0];
     var latlong = {
       lat: first.geometry.lat,
-      lng: first.geometry.lng
+      lng: first.geometry.lng,
     };
     this.latlong = latlong;
   }
@@ -119,13 +123,13 @@ export class Event {
   hasSellOrders(ticketType, ticket = false) {
     let t;
     if (!ticket) {
-      t = this.fungibleTickets.find(t => t.typeId === ticketType);
+      t = this.fungibleTickets.find((t) => t.typeId === ticketType);
       return t.sellOrders.length !== 0;
     } else {
       const tt = this.nonFungibleTickets.find(
-        type => type.typeId === ticketType
+        (type) => type.typeId === ticketType
       );
-      t = tt.tickets.find(temp => temp.ticketId === ticket);
+      t = tt.tickets.find((temp) => temp.ticketId === ticket);
       return t.sellOrder.address != undefined;
     }
   }
@@ -137,29 +141,33 @@ export class Event {
       return getLowestSellOrder(ticket);
     } else {
       const tt = this.nonFungibleTickets.find(
-        type => type.typeId === ticketType
+        (type) => type.typeId === ticketType
       );
-      ticket = tt.tickets.find(t => t.ticketId === ticketId);
+      ticket = tt.tickets.find((t) => t.ticketId === ticketId);
       return getLowestSellOrder(ticket);
     }
   }
 
   getSellOrdersByAddress(address, ticketType, nfId) {
+    console.log("loading sell orders");
     if (nfId) {
       const tt = this.getTicketType(ticketType, true);
-      const t = tt.tickets.find(ticket => ticket.ticketId === nfId);
+      const t = tt.tickets.find((ticket) => ticket.ticketId === nfId);
       return t.sellOrder.address === address ? t.sellOrder : {};
     } else {
-      const tt = this.getTicketType(ticketType, false);
-      return tt.sellOrders.filter(o => o.address === address);
+      console.log("not nf");
+      const orders = this.getTicketType(ticketType, false).sellOrders.filter(
+        (o) => o.address === address
+      );
+      return orders;
     }
   }
   getBuyOrdersByAddress(address, isNf) {
     let buyOrders = [];
     const tickets = !isNf ? this.fungibleTickets : this.nonFungibleTickets;
     for (const tt of tickets) {
-      let orders = tt.buyOrders.filter(o => o.address === address);
-      orders.forEach(o => {
+      let orders = tt.buyOrders.filter((o) => o.address === address);
+      orders.forEach((o) => {
         o.ticketTypeId = tt.typeId;
         o.eventAddress = tt.eventContractAddress;
       });
@@ -186,10 +194,10 @@ export class Event {
 
   getLowestPrice() {
     let lowestFungible = Math.min(
-      this.fungibleTickets.map(ticket => Number(ticket.price))
+      this.fungibleTickets.map((ticket) => Number(ticket.price))
     );
     let lowestNonFungible = Math.min(
-      this.nonFungibleTickets.map(ticket => Number(ticket.price))
+      this.nonFungibleTickets.map((ticket) => Number(ticket.price))
     );
     return Math.min(lowestFungible, lowestNonFungible);
   }
@@ -197,12 +205,12 @@ export class Event {
   getTicketType(ticketTypeId, isNf = false) {
     if (isNf) {
       const foundNonFungible = this.nonFungibleTickets.find(
-        t => t.typeId === ticketTypeId
+        (t) => t.typeId === ticketTypeId
       );
       return foundNonFungible;
     } else {
       const foundFungible = this.fungibleTickets.find(
-        t => t.typeId === ticketTypeId
+        (t) => t.typeId === ticketTypeId
       );
       return foundFungible;
     }
@@ -210,10 +218,10 @@ export class Event {
 
   getNfTicket(ticketTypeId, ticketId) {
     const foundNonFungible = this.nonFungibleTickets.find(
-      t => t.typeId === ticketTypeId
+      (t) => t.typeId === ticketTypeId
     );
     if (foundNonFungible) {
-      return foundNonFungible.tickets.find(t => t.ticketId === ticketId);
+      return foundNonFungible.tickets.find((t) => t.ticketId === ticketId);
     }
   }
 
@@ -229,7 +237,9 @@ export class Event {
   async loadIdentityData(ABI, web3Instance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const currency = await eventSC.methods.erc20Contract().call();
-    const identityContractAddress = await eventSC.methods.identityApprover().call();
+    const identityContractAddress = await eventSC.methods
+      .identityApprover()
+      .call();
     const identityLevel = await eventSC.methods.identityLevel().call();
     this.currency = currency;
     this.identityContractAddress = identityContractAddress;
@@ -259,17 +269,21 @@ export class Event {
   }
 
   async requestTwitterVerification() {
-    this.twitter.verification = await requestTwitterVerification(getHandle(this.twitter.url));
+    this.twitter.verification = await requestTwitterVerification(
+      getHandle(this.twitter.url)
+    );
   }
 
   async requestUrlVerification() {
-    this.website.verification = await requestWebsiteVerification(this.website.url);
+    this.website.verification = await requestWebsiteVerification(
+      this.website.url
+    );
   }
 
   async fetchIPFSHash(ABI, web3Instance) {
     const eventSC = new web3Instance.eth.Contract(ABI, this.contractAddress);
     const eventMetadata = await eventSC.getPastEvents("EventMetadata", {
-      fromBlock: this.lastFetchedBlock + 1
+      fromBlock: this.lastFetchedBlock + 1,
     });
 
     var metadataObject = eventMetadata[0].returnValues;
@@ -284,7 +298,7 @@ export class Event {
   async loadIPFSMetadata(ipfsInstance) {
     var ipfsData = null;
     for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
-      timeout: 2000
+      timeout: 2000,
     })) {
       ipfsData = Buffer(chunk, "utf8").toString();
     }
@@ -304,14 +318,14 @@ export class Event {
   }
 
   hasFungibleTicketType(id) {
-    return this.fungibleTickets.filter(t => t.typeId == id).length > 0
-      ? this.fungibleTickets.filter(t => t.typeId == id)[0]
+    return this.fungibleTickets.filter((t) => t.typeId == id).length > 0
+      ? this.fungibleTickets.filter((t) => t.typeId == id)[0]
       : false;
   }
 
   hasNonFungibleTicketType(id) {
-    return this.nonFungibleTickets.filter(t => t.typeId == id).length > 0
-      ? this.nonFungibleTickets.filter(t => t.typeId == id)[0]
+    return this.nonFungibleTickets.filter((t) => t.typeId == id).length > 0
+      ? this.nonFungibleTickets.filter((t) => t.typeId == id)[0]
       : false;
   }
 
@@ -404,15 +418,15 @@ export class Event {
 
   updateNfOwner(ticketType, ticketId, owner) {
     let ticket = this.nonFungibleTickets
-      .find(tt => tt.typeId === ticketType)
-      .tickets.find(t => t.ticketId === ticketId);
+      .find((tt) => tt.typeId === ticketType)
+      .tickets.find((t) => t.ticketId === ticketId);
     ticket.owner = owner;
   }
 
   hasNonFungibleTicket(ticketType, ticketId) {
     const tt = this.getTicketType(ticketType, true);
     if (tt) {
-      return tt.tickets.find(t => t.ticketId === ticketId);
+      return tt.tickets.find((t) => t.ticketId === ticketId);
     }
     return false;
   }
@@ -420,9 +434,11 @@ export class Event {
   updateTicketsSold(ticketTypeId, isNf, amount) {
     let ticketType;
     if (isNf) {
-      ticketType = this.nonFungibleTickets.find(t => t.typeId === ticketTypeId);
+      ticketType = this.nonFungibleTickets.find(
+        (t) => t.typeId === ticketTypeId
+      );
     } else {
-      ticketType = this.fungibleTickets.find(t => t.typeId === ticketTypeId);
+      ticketType = this.fungibleTickets.find((t) => t.typeId === ticketTypeId);
     }
     ticketType.ticketsSold += amount;
   }
@@ -472,6 +488,7 @@ export class Event {
       let ticketType = this.getTicketType(ticketTypeId, false);
       if (buyOrSell === "buy") {
         if (placedOrFilled === "placed") {
+          console.log("buy order placed");
           addBuyOrders(ticketType, percentage, quantity, address);
         } else {
           removeBuyOrders(ticketType, percentage, quantity, address);
@@ -479,7 +496,7 @@ export class Event {
         /* SELL */
       } else {
         if (placedOrFilled === "placed") {
-          console.log('placed');
+          console.log("placed");
           addSellOrders(ticketType, percentage, quantity, address);
         } else {
           removeSellOrders(ticketType, percentage, quantity, address);
@@ -512,6 +529,7 @@ export class Event {
       this.lastFetchedBlock + 1
     );
     for (const event of buyOrdersPlaced) {
+      console.log("buy order placed");
       const ticketTypeId = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)
@@ -574,7 +592,7 @@ export class Event {
       this.lastFetchedBlock + 1
     );
     for (const event of sellOrderFungiblePlaced) {
-      console.log('sell order fungible placed');
+      console.log("sell order fungible placed");
       const ticketTypeId = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)
@@ -583,6 +601,7 @@ export class Event {
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
+      console.log(percentage, address, quantity);
       this.adjustOrders(
         ticketTypeId,
         false,
@@ -623,6 +642,7 @@ export class Event {
       this.lastFetchedBlock + 1
     );
     for (const event of buyOrderFungibleFilled) {
+      console.log("buy order fungible filled");
       const ticketTypeId = Number(
         getTicketTypeIndex(
           new BigNumber(event.returnValues.ticketType)
@@ -655,6 +675,8 @@ export class Event {
       const quantity = event.returnValues.quantity;
       const address = event.returnValues.addr;
       const percentage = event.returnValues.percentage;
+      console.log("fungible sell order withdrawn");
+      console.log(quantity, percentage);
       this.adjustOrders(
         ticketTypeId,
         false,
@@ -745,22 +767,22 @@ export class Event {
     );
     for (const event of sellOrderNonFungibleWithdrawn) {
       const address = event.returnValues.addr;
-        const ticketTypeId = Number(
-          getTicketTypeIndex(
-            new BigNumber(event.returnValues._id)
-          ).toFixed()
-        );
-        const ticketId = Number(getTicketId(new BigNumber(event.returnValues._id)).toFixed());
-        this.adjustOrders(
-          ticketTypeId,
-          true,
-          0,
-          1,
-          "sell",
-          "filled",
-          address,
-          ticketId
-        );
+      const ticketTypeId = Number(
+        getTicketTypeIndex(new BigNumber(event.returnValues._id)).toFixed()
+      );
+      const ticketId = Number(
+        getTicketId(new BigNumber(event.returnValues._id)).toFixed()
+      );
+      this.adjustOrders(
+        ticketTypeId,
+        true,
+        0,
+        1,
+        "sell",
+        "filled",
+        address,
+        ticketId
+      );
     }
   }
 }

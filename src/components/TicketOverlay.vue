@@ -40,7 +40,8 @@
           <div v-if="!isNf && amountOwned > 1" class="label">
             Your Tickets
           </div>
-          <div class="value">{{ amountOwned }} tickets</div>
+          <div v-if="!isNf" class="value">{{ amountOwned }} tickets</div>
+          <div v-else class="value">Seat Number {{ ticketId }}</div>
         </div>
       </div>
       <div class="ticket-section">
@@ -51,9 +52,9 @@
             it right now for
             {{ highestBuyOrder.percentage }}% of it's original price.
           </div>
-          <md-button class="md-raised" @click="fillBuyOrder">Sell</md-button>
+          <md-button class="md-raised" @click="fillBuyOrder()">Sell</md-button>
         </div>
-        <div class="group">
+        <div class="group" v-if="amountOwned > amountOnAftermarket">
           <div class="label">
             You can always put your ticket on the market to see if anyone wants
             to buy it. <br />
@@ -90,6 +91,26 @@
             >Create Sell Order</md-button
           >
         </div>
+        <div class="group">
+          <div class="active-sell-order" v-if="getUserSellOrders.length > 0">
+            <div
+              class="sell-order"
+              v-for="(order, index) in getUserSellOrders"
+              v-bind:key="'sellorder_' + order.percentage + '_' + index"
+            >
+              <div class="label">
+                You have listed {{ order.quantity }} of this ticket for
+                {{ order.percentage }}% of its price
+              </div>
+
+              <md-button
+                class="md-raised"
+                @click="withdrawSellOrder(order.percentage, order.quantity)"
+                >withdraw</md-button
+              >
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -104,6 +125,8 @@ import {
   fillBuyOrderNonFungible,
   fillBuyOrderFungible,
   hasBuyOrder,
+  withdrawSellOrderNonFungible,
+  withdrawSellOrderFungible,
 } from "./../util/tickets";
 
 import { getNumberFungibleOwned } from "./../util/User";
@@ -169,10 +192,36 @@ export default {
     granularity() {
       return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
     },
-    hasSellOrders() {
-      return this.ticketType
-        ? Object.getOwnPropertyNames(this.ticketType.sellOrders).length > 1
-        : false;
+    getUserSellOrders() {
+      if (!this.$store.state.activeUser) return [];
+      let userTicket;
+      if (this.isNf) {
+        userTicket = this.$store.state.activeUser.nonFungibleTickets.find(
+          (t) =>
+            t.eventContractAddress === this.eventContractAddress &&
+            t.ticketType === this.ticketTypeId
+        );
+      } else {
+        userTicket = this.$store.state.activeUser.fungibleTickets.find(
+          (t) =>
+            t.eventContractAddress === this.eventContractAddress &&
+            t.ticketType === this.ticketTypeId
+        );
+      }
+      console.log(userTicket);
+      if (userTicket) {
+        return userTicket.sellOrders ? userTicket.sellOrders : [];
+      }
+      return [];
+    },
+    amountOnAftermarket() {
+      const orders = this.getUserSellOrders;
+      if (!orders) return 0;
+      let total = 0;
+      orders.forEach((o) => {
+        total += o.quantity;
+      });
+      return total;
     },
     ticketsLeftToSell() {
       let total = 0;
@@ -248,11 +297,12 @@ export default {
         const result = await makeSellOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,
-          this.percentage,
+          this.percentageToSell,
           this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        console.log(result);
         if (result.status == 1) {
           await this.$store.dispatch("updateEvent", result.event);
           await this.$store.dispatch("registerActiveUser");
@@ -264,7 +314,7 @@ export default {
         const result = await makeSellOrderFungible(
           this.ticketTypeId,
           this.amount,
-          this.percentage,
+          this.percentageToSell,
           this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
@@ -279,18 +329,46 @@ export default {
       }
       //this.$store.state.user.makeSellOrderFungible(this.$store.state.web3.web3Instance, this.activeTicket.ticketType, 100, 1);
     },
-    fillBuyOrder: function() {
-      if (this.isNf) {
-        fillBuyOrderNonFungible(
+    async withdrawSellOrder(percentage, quantity) {
+      let result;
+      if (this.activeIsNf) {
+        result = await withdrawSellOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,
-          this.highestBuyOrder.queue,
           this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
       } else {
-        fillBuyOrderFungible(
+        result = await withdrawSellOrderFungible(
+          this.ticketTypeId,
+          quantity,
+          percentage,
+          this.$store.state.activeUser.account,
+          this.$store.state.web3.web3Instance,
+          this.eventContractAddress
+        );
+      }
+      if (result.status == 1) {
+        await this.$store.dispatch("updateEvent", result.event);
+        await this.$store.dispatch("registerActiveUser");
+        this.$root.$emit("userUpdated");
+      }
+      this.$root.$emit("openMessageBus", result);
+    },
+    fillBuyOrder: async function() {
+      if (this.isNf) {
+        const result = await fillBuyOrderNonFungible(
+          this.ticketTypeId,
+          this.ticketId,
+          this.highestBuyOrder.percentage,
+          this.$store.state.activeUser.account,
+          this.$store.state.web3.web3Instance,
+          this.eventContractAddress
+        );
+        this.$root.$emit("openMessageBus", result);
+      } else {
+        const result = await fillBuyOrderFungible(
           this.ticketTypeId,
           1,
           this.highestBuyOrder.percentage,
@@ -298,7 +376,12 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("openMessageBus", result);
       }
+      await this.$store.dispatch("updateEvent", this.eventContractAddress);
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("userUpdated");
+      this.$root.$emit("updateCharts");
     },
   },
 };
@@ -313,7 +396,13 @@ export default {
   width: 100vw;
   transform: translateY(100%);
   transition: 0.4s transform ease-in-out;
-  background: #4c566a;
+  background: rgb(245, 222, 242);
+  background: linear-gradient(
+    0deg,
+    rgba(208, 135, 122, 1) 0%,
+    rgba(208, 135, 122, 1) 34%,
+    rgba(208, 135, 122, 0) 100%
+  );
   overflow-y: scroll;
 }
 .overlay.open {
@@ -322,12 +411,19 @@ export default {
 
 .close-bar {
   width: 100%;
-  background: #a3be8c;
+  background: white;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+    0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
   padding: 1rem;
   display: flex;
   justify-content: end;
   position: sticky;
   top: 0;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+.overlay.open .close-bar {
+  opacity: 1;
 }
 .close-bar .md-icon {
   margin: 0;
@@ -343,6 +439,8 @@ export default {
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.171);
   border-bottom: 1px dashed rgba(0, 0, 0, 0.171);
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+    0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
   padding: 2rem;
   background: #eceff4;
 }

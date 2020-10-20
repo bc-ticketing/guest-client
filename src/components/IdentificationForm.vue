@@ -9,12 +9,11 @@
         class="form-version mail"
         v-bind:class="{ active: this.method === 'email' }"
       >
-        <md-steppers md-linear
-        :md-active-step.sync = mailForm.progress.active>
-          <md-step 
-          id="mail_submit"
-          :md-done.sync="mailForm.progress.mail_submit"
-          :md-editable="false"
+        <md-steppers md-linear :md-active-step.sync="mailForm.progress.active">
+          <md-step
+            id="mail_submit"
+            :md-done.sync="mailForm.progress.mail_submit"
+            :md-editable="false"
           >
             <div class="form-group">
               <p>
@@ -28,12 +27,32 @@
                 placeholder="mail"
                 v-model="mailForm.mail"
               />
-              <md-button class="md-raised" @click="submitMail">Submit</md-button>
+              <md-button class="md-raised" @click="submitMail"
+                >Submit</md-button
+              >
             </div>
           </md-step>
-          <md-step id='mail_verify'
-          :md-editable="false"
-          :md-done="mailForm.progress.mail_verify"></md-step>
+          <md-step
+            id="mail_verify"
+            :md-editable="false"
+            :md-done="mailForm.progress.mail_verify"
+          >
+            <div class="form-group">
+              <p>
+                Copy the code we sent you via mail and paste it into the
+                'secret' field
+              </p>
+              <input
+                type="text"
+                name="mail"
+                placeholder="secret"
+                v-model="mailForm.secret"
+              />
+              <md-button class="md-raised" @click="verifyMail"
+                >Submit</md-button
+              >
+            </div>
+          </md-step>
         </md-steppers>
       </div>
 
@@ -60,7 +79,10 @@
 </template>
 
 <script>
-import { requestMailValidationCode } from './../util/identity';
+import {
+  requestMailValidationCode,
+  requestMailVerification,
+} from "./../util/identity";
 
 export default {
   name: "IdentificationForm",
@@ -68,16 +90,18 @@ export default {
   data() {
     return {
       mailForm: {
-        mail: '',
+        mail: "",
+        secret: "",
+        signedSecret: "",
         progress: {
-          active: 'mail_submit',
+          active: "mail_submit",
           mail_submit: false,
           mail_verify: false,
           // secondStepError: null
-    }
+        },
       },
       phoneForm: {
-        phone: '',
+        phone: "",
         step: 0,
       },
     };
@@ -86,7 +110,7 @@ export default {
     open: Boolean,
     approver: Object,
     method: String,
-    level: Number
+    level: Number,
   },
   mounted: function() {},
   computed: {},
@@ -100,18 +124,39 @@ export default {
     },
     submitMail: async function() {
       if (this.isValidMail()) {
-          const result = await requestMailValidationCode(this.mailForm.mail);
-          console.log(result);
+        const result = await requestMailValidationCode(this.mailForm.mail);
+        if (result) {
+          this.mailForm.progress.active = "mail_verify";
+        }
       }
     },
+    /*
+      @RequestParam String eMail
+      @RequestParam String secret,
+      @RequestParam String signedSecret
+      @RequestParam String ethAddress
+      */
+    verifyMail: async function() {
+      const signedSecret = await this.$store.state.web3.web3Instance.eth.personal.sign(
+        this.mailForm.secret,
+        this.$store.state.activeUser.account
+      );
+      console.log(signedSecret);
+      const results = await requestMailVerification(
+        this.mailForm.mail,
+        this.mailForm.secret,
+        signedSecret,
+        this.$store.state.activeUser.account
+      );
+      console.log(results);
+    },
     submitPhone: async function() {
-
-        await this.$store.dispatch("verifyUser", {
-          phone: this.phone,
-          method: 'phone'
-        });
-  }
-  }
+      await this.$store.dispatch("verifyUser", {
+        phone: this.phone,
+        method: "phone",
+      });
+    },
+  },
 };
 </script>
 

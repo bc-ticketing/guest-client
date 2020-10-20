@@ -1,38 +1,34 @@
 <template>
-  <md-bottom-bar class="bottom-bar" md-type="shift" :class="theme">
-  <div ref='wrapper'>
-    <md-bottom-bar-item
-      md-label="Home"
-      md-icon="home"
-      @click="
-        theme = '#00bec0';
-        navigateTo('home');
-      "
-    ></md-bottom-bar-item>
-    <md-bottom-bar-item
-      md-label="Search"
-      md-icon="search"
-      @click="
-        theme = 'orange';
-        navigateTo('event-list');
-      "
-    ></md-bottom-bar-item>
-    <md-bottom-bar-item
-      md-label="Inventory"
-      md-icon="theaters"
-      @click="
-        theme = 'red';
-        navigateTo('inventory');
-      "
-    ></md-bottom-bar-item>
-    <md-bottom-bar-item
-      md-label="Identity"
-      md-icon="face"
-      @click="
-        theme = 'red';
-        navigateTo('identification');
-      "
-    ></md-bottom-bar-item>
+  <md-bottom-bar class="md-accent bottom-bar" :class="theme">
+    <div ref="wrapper">
+      <md-bottom-bar-item
+        md-icon="home"
+        @click="
+          theme = '#00bec0';
+          navigateTo('home');
+        "
+      ></md-bottom-bar-item>
+      <md-bottom-bar-item
+        md-icon="search"
+        @click="
+          theme = 'orange';
+          navigateTo('event-list');
+        "
+      ></md-bottom-bar-item>
+      <md-bottom-bar-item
+        md-icon="theaters"
+        @click="
+          theme = 'red';
+          navigateTo('inventory');
+        "
+      ></md-bottom-bar-item>
+      <md-bottom-bar-item
+        md-icon="face"
+        @click="
+          theme = 'red';
+          navigateTo('identification');
+        "
+      ></md-bottom-bar-item>
     </div>
   </md-bottom-bar>
 </template>
@@ -56,7 +52,7 @@ export default {
     },
   },
   mounted: function() {
-    this.$emit('height', this.$refs['wrapper'].getBoundingClientRect().top);
+    this.$emit("height", this.$refs["wrapper"].getBoundingClientRect().top);
   },
 };
 </script>

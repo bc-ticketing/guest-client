@@ -48,40 +48,11 @@
             </div>
           </div>
 
-          <md-button v-if="available" class="md-raised" @click="addToCart"
+          <md-button v-if="available" class="md-raised" @click="buy"
             >Buy</md-button
           >
         </div>
       </section>
-
-      <!-- 
-      <div class="group" v-if="userNotOwner">
-        <div class="percentage-selection">
-          <input
-            type="range"
-            :min="getStepSize(granularity)"
-            max="100"
-            :step="getStepSize(granularity)"
-            v-model.number="percentage"
-          />
-          {{ percentage }}
-          %
-        </div>
-        <md-button class="md-raised" @click="createBuyOrder"
-          >Create Aftermarket Listing</md-button
-        >
-      </div>
-      <hr />
-      <div class="group" v-if="ticketHasSellOrders && userNotOwner">
-        <p>
-          {{ lowestSellOrderAmount }} Available on the aftermarket for
-          {{ lowestSellOrder }}%
-        </p>
-        <md-button class="md-raised" @click="fillSellOrder"
-          >Buy from Aftermarket</md-button
-        >
-      </div>
-       -->
     </v-touch>
   </div>
 </template>
@@ -92,7 +63,10 @@ import {
   fillSellOrderNonFungible,
   makeBuyOrderNonFungible,
   makeBuyOrderFungible,
+  buyFungible,
+  buyNonFungible,
 } from "./../util/tickets";
+import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 
 export default {
   name: "SelectionView",
@@ -223,6 +197,34 @@ export default {
       });
       this.close();
     },
+    buy: async function() {
+      if (!this.isNf) {
+        const result = await buyFungible(
+          this.ticketTypeId,
+          this.amount,
+          this.price,
+          this.$store.state.web3.web3Instance,
+          EVENT_MINTABLE_AFTERMARKET_ABI,
+          this.$store.state.activeUser.account,
+          this.eventContractAddress
+        );
+        this.$root.$emit("openMessageBus", result);
+      } else {
+        const result = await buyNonFungible(
+          this.ticketTypeId,
+          this.ticketId,
+          this.price,
+          this.$store.state.web3.web3Instance,
+          EVENT_MINTABLE_AFTERMARKET_ABI,
+          this.$store.state.activeUser.account,
+          this.eventContractAddress
+        );
+        this.$root.$emit("openMessageBus", result);
+      }
+      await this.$store.dispatch("updateEvent", this.eventContractAddress);
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("userUpdated");
+    },
     createBuyOrder: async function() {
       if (this.isNf) {
         const result = await makeBuyOrderNonFungible(
@@ -300,6 +302,8 @@ export default {
   border-radius: 15px;
   position: relative;
   padding: 2rem;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+    0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
 }
 
 .amount-selection {

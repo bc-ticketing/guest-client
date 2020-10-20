@@ -2,6 +2,7 @@
   <div class="event">
     <!-- navigation bar -->
     <div class="top-bar">
+      <h1>{{ event.title }}</h1>
       <router-link to="/event-list"
         ><md-icon>arrow_back_ios</md-icon></router-link
       >
@@ -15,7 +16,6 @@
     <!-- general event information -->
     <section class="event-information">
       <div class="container">
-        <h1>{{ event.title }}</h1>
         <p class="event-description">
           {{ event.description }}
         </p>
@@ -207,82 +207,138 @@
           v-bind:key="'fungible_' + ticket.typeId"
         >
           <h3>{{ ticket.title }}</h3>
-          <div class="queue-wrapper buying">
-            <div class="queue-label">
-              buying queue
-            </div>
-            <div class="chart-wrapper">
-              <chart-test
-                v-bind:chartId="`${ticket.typeId}_buy`"
-                v-bind:chartdata="{
-                  labels: getPercentagesFromTicket(ticket),
-                  datasets: [
-                    {
-                      label: 'orders',
-                      borderWidth: 2,
-                      borderColor: '#a3be8c',
-                      data: getOrdersFromTicket(ticket, 'buy'),
-                    },
-                  ],
-                }"
-              />
-            </div>
-          </div>
-
-          <div class="queue-wrapper selling">
-            <div class="queue-label">
-              selling queue
-            </div>
-            <div class="chart-wrapper">
-              <chart-test
-                v-bind:chartId="`${ticket.typeId}_sell`"
-                v-bind:chartdata="{
-                  labels: getPercentagesFromTicket(ticket),
-                  datasets: [
-                    {
-                      label: 'orders',
-                      borderWidth: 2,
-                      backgroundColor: '#eceff4',
-                      borderColor: '#a3be8c',
-                      data: getOrdersFromTicket(ticket, 'sell'),
-                    },
-                  ],
-                }"
-              />
-            </div>
-            <!-- <div class="queue">
-              <div
-                class="step-wrapper tooltip"
-                :data-tooltip="
-                  numBuyOrdersByPercent(
-                    ticket,
-                    (100 / ticket.aftermarketGranularity) * i
-                  ) +
-                    ' offers for' +
-                    (100 / ticket.aftermarketGranularity) * i
-                "
-                @click="
-                  showJoinButton(
-                    ticket,
-                    (100 / ticket.aftermarketGranularity) * i
-                  )
-                "
-                @mouseenter="setActiveQueueTip(ticket)"
-                v-for="i in Number(ticket.aftermarketGranularity)"
-                :key="'fungible_buy_' + i"
-              >
-                <div
-                  class="step"
-                  :data-orders="
-                    numSellOrdersByPercent(
-                      ticket,
-                      (100 / ticket.aftermarketGranularity) * i
-                    )
-                  "
-                ></div>
+          <md-card class="queue-wrapper buying">
+            <div class="top">
+              <div class="chart-wrapper">
+                <chart-test
+                  v-bind:chartId="`${ticket.typeId}_buy`"
+                  v-bind:chartdata="{
+                    labels: getPercentagesFromTicket(ticket),
+                    datasets: [
+                      {
+                        label: 'orders',
+                        borderWidth: 2,
+                        backgroundColor: '#1dba9d',
+                        borderColor: 'white',
+                        data: getOrdersFromTicket(ticket, 'buy').map(
+                          (o) => o.amount
+                        ),
+                      },
+                    ],
+                  }"
+                />
               </div>
-            </div> -->
-          </div>
+            </div>
+            <div class="bottom">
+              <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+                  <p>
+                    buying queue
+                  </p>
+                  <md-card-expand-trigger>
+                    <md-button class="md-icon-button">
+                      <md-icon>keyboard_arrow_down</md-icon>
+                    </md-button>
+                  </md-card-expand-trigger>
+                </md-card-actions>
+                <md-card-expand-content>
+                  Join queue at
+                  <div class="selection">
+                    <md-field>
+                      <md-select
+                        md-dense
+                        v-model="queueToJoin"
+                        name="queue"
+                        id="queue"
+                      >
+                        <md-option
+                          v-for="perc in getPercentagesFromTicket(ticket)"
+                          v-bind:key="'ticket.typeId_buying_' + perc"
+                          :value="perc"
+                        >
+                          {{ perc }}%
+                        </md-option>
+                      </md-select>
+                    </md-field>
+                  </div>
+                  <md-button @click="createBuyOrder(ticket)">Join</md-button>
+                </md-card-expand-content>
+                <div></div>
+              </md-card-expand>
+            </div>
+          </md-card>
+
+          <md-card class="queue-wrapper selling">
+            <div class="top">
+              <div class="chart-wrapper">
+                <chart-test
+                  v-bind:chartId="`${ticket.typeId}_sell`"
+                  v-bind:chartdata="{
+                    labels: getPercentagesFromTicket(ticket),
+                    datasets: [
+                      {
+                        label: 'orders',
+                        borderWidth: 2,
+                        backgroundColor: '#1dba9d',
+                        borderColor: 'white',
+                        data: getOrdersFromTicket(ticket, 'sell').map(
+                          (o) => o.amount
+                        ),
+                      },
+                    ],
+                  }"
+                />
+              </div>
+            </div>
+            <div class="bottom">
+              <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+                  <p>
+                    selling queue
+                  </p>
+                  <md-card-expand-trigger>
+                    <md-button class="md-icon-button">
+                      <md-icon>keyboard_arrow_down</md-icon>
+                    </md-button>
+                  </md-card-expand-trigger>
+                </md-card-actions>
+                <md-card-expand-content>
+                  <div v-if="getOrdersFromTicket(ticket, 'sell').length > 0">
+                    Buy for
+                    <div class="selection">
+                      <md-field>
+                        <md-select
+                          md-dense
+                          v-model="queueToJoin"
+                          name="queue"
+                          id="queue"
+                        >
+                          <md-option
+                            v-for="order in getOrdersFromTicket(
+                              ticket,
+                              'sell'
+                            ).filter((o) => o.amount > 0)"
+                            v-bind:key="
+                              'ticket.typeId_buying_' + order.percentage
+                            "
+                            :value="order.percentage"
+                          >
+                            {{ order.percentage }}%
+                          </md-option>
+                        </md-select>
+                      </md-field>
+                    </div>
+                    <md-button @click="fillSellOrderFungible(ticket)"
+                      >Buy</md-button
+                    >
+                  </div>
+                  <div v-else>
+                    <p>No tickets currently for sale in this category</p>
+                  </div>
+                </md-card-expand-content>
+              </md-card-expand>
+            </div>
+          </md-card>
         </div>
         <div
           class="ticket-type-am"
@@ -290,77 +346,109 @@
           v-bind:key="'nonfungible_' + ticket.typeId"
         >
           <h3>{{ ticket.title }}</h3>
-          <div class="queue-wrapper buying">
-            <div class="queue-label">
-              buying queue
-            </div>
-            <div class="queue">
-              <div
-                class="step-wrapper tooltip"
-                :data-tooltip="
-                  numBuyOrdersByPercent(
-                    ticket,
-                    (100 / ticket.aftermarketGranularity) * i
-                  ) +
-                    ' offers for' +
-                    (100 / ticket.aftermarketGranularity) * i
-                "
-                @click="
-                  showJoinButton(
-                    ticket,
-                    (100 / ticket.aftermarketGranularity) * i
-                  )
-                "
-                :ref="'fungible_buy_' + ticket.typeId + '_' + i"
-                @mouseenter="setActiveQueueTip(ticket)"
-                v-for="i in Number(ticket.aftermarketGranularity)"
-                :key="'fungible_buy_' + i"
-              >
-                <div
-                  class="step"
-                  :data-orders="
-                    numBuyOrdersByPercent(
-                      ticket,
-                      (100 / ticket.aftermarketGranularity) * i
-                    )
-                  "
-                ></div>
+          <md-card class="queue-wrapper buying">
+            <div class="top">
+              <div class="chart-wrapper">
+                <chart-test
+                  v-bind:chartId="`${ticket.typeId}_nf_buy`"
+                  v-bind:chartdata="{
+                    labels: getPercentagesFromTicket(ticket),
+                    datasets: [
+                      {
+                        label: 'orders',
+                        borderWidth: 2,
+                        backgroundColor: '#1dba9d',
+                        borderColor: 'white',
+                        data: getOrdersFromTicket(ticket, 'buy').map(
+                          (o) => o.amount
+                        ),
+                      },
+                    ],
+                  }"
+                />
               </div>
             </div>
-          </div>
-          <div class="selling">
-            <h3>sell</h3>
-            <div class="sell-offers-nf">
-              <div
-                class="sell-offering"
-                v-for="(offering, index) in allSellOferingsNfTicketType(ticket)"
-                v-bind:key="'sellOffering_' + index"
-              >
-                <span class="ticket-number"
-                  >Seat Number {{ offering.ticketId }}</span
-                >
-                <span class="percentage">{{ offering.percentage }}%</span>
-                <span
-                  class="fill-sell"
-                  @click="
-                    fillSellOrderNonFungible(
-                      ticket.typeId,
-                      offering.ticketId,
-                      offering.percentage,
-                      ticket.price
-                    )
-                  "
-                >
-                  <md-icon>shop</md-icon>
-                </span>
-              </div>
+            <div class="bottom">
+              <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+                  <p>
+                    buying queue
+                  </p>
+                  <md-card-expand-trigger>
+                    <md-button class="md-icon-button">
+                      <md-icon>keyboard_arrow_down</md-icon>
+                    </md-button>
+                  </md-card-expand-trigger>
+                </md-card-actions>
+                <md-card-expand-content>
+                  Join queue at
+                  <div class="selection">
+                    <md-field>
+                      <md-select md-dense v-model="queueToJoin" name="queue">
+                        <md-option
+                          v-for="perc in getPercentagesFromTicket(ticket)"
+                          v-bind:key="'ticket.typeId_buying_' + perc"
+                          :value="perc"
+                        >
+                          {{ perc }}%
+                        </md-option>
+                      </md-select>
+                    </md-field>
+                  </div>
+                  <md-button @click="createBuyOrder(ticket)">Join</md-button>
+                </md-card-expand-content>
+                <div></div>
+              </md-card-expand>
             </div>
-          </div>
-        </div>
-        <div>
-          <md-button class="md-raised" @click="createBuyOrder(false)">
-            Join
-          </md-button>
+          </md-card>
+          <md-card class="queue-wrapper nf">
+            <div class="top">
+              <h3>Tickets for sale</h3>
+            </div>
+            <div class="bottom">
+              <md-card-expand>
+                <md-card-actions md-alignment="space-between">
+                  <p>
+                    {{ allSellOferingsNfTicketType(ticket).length }} tickets
+                  </p>
+                  <md-card-expand-trigger>
+                    <md-button class="md-icon-button">
+                      <md-icon>keyboard_arrow_down</md-icon>
+                    </md-button>
+                  </md-card-expand-trigger>
+                </md-card-actions>
+                <md-card-expand-content>
+                  <div class="sell-offers-nf">
+                    <div
+                      class="sell-offering"
+                      v-for="(offering, index) in allSellOferingsNfTicketType(
+                        ticket
+                      )"
+                      v-bind:key="'sellOffering_' + index"
+                    >
+                      <span class="ticket-number"
+                        >Seat Number {{ offering.ticketId }}</span
+                      >
+                      <span class="percentage">{{ offering.percentage }}%</span>
+                      <span
+                        class="fill-sell"
+                        @click="
+                          fillSellOrderNonFungible(
+                            ticket.typeId,
+                            offering.ticketId,
+                            offering.percentage,
+                            ticket.price
+                          )
+                        "
+                      >
+                        <md-icon>shop</md-icon>
+                      </span>
+                    </div>
+                  </div>
+                </md-card-expand-content>
+              </md-card-expand>
+            </div>
+          </md-card>
         </div>
       </div>
     </section>
@@ -395,6 +483,8 @@ import {
   fillSellOrderNonFungible,
   makeBuyOrderNonFungible,
   makeBuyOrderFungible,
+  getNumSellOrders,
+  fillSellOrderFungible,
 } from "./../util/tickets";
 export default {
   name: "Event",
@@ -407,6 +497,7 @@ export default {
         type: "",
         isNf: false,
       },
+      queueToJoin: "0",
       aftermarket_price: 0,
       showDialog: false,
       contractAddress: Number,
@@ -540,21 +631,25 @@ export default {
       let orders = [];
       if (buyOrSell === "buy") {
         for (let i = 1; i <= ticket.aftermarketGranularity; i++) {
-          orders.push(
-            this.numBuyOrdersByPercent(
-              ticket,
-              (100 / ticket.aftermarketGranularity) * i
-            )
+          const num = this.numBuyOrdersByPercent(
+            ticket,
+            (100 / ticket.aftermarketGranularity) * i
           );
+          orders.push({
+            percentage: (100 / ticket.aftermarketGranularity) * i,
+            amount: num,
+          });
         }
       } else {
         for (let i = 1; i <= ticket.aftermarketGranularity; i++) {
-          orders.push(
-            this.numSellOrdersByPercent(
-              ticket,
-              (100 / ticket.aftermarketGranularity) * i
-            )
+          const num = this.numSellOrdersByPercent(
+            ticket,
+            (100 / ticket.aftermarketGranularity) * i
           );
+          orders.push({
+            percentage: (100 / ticket.aftermarketGranularity) * i,
+            amount: num,
+          });
         }
       }
       return orders;
@@ -563,30 +658,38 @@ export default {
       this.selectedQueue.ticketType = ticketType;
       this.selectedQueue.percentage = percentage;
     },
-    async createBuyOrder(isNf) {
-      if (isNf) {
+    async createBuyOrder(ticketType) {
+      if (ticketType.isNf) {
         const result = await makeBuyOrderNonFungible(
-          this.selectedQueue.ticketType.typeId,
+          ticketType.typeId,
           1,
-          this.selectedQueue.percentage,
-          this.selectedQueue.ticketType.price,
+          this.queueToJoin,
+          ticketType.price,
           this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
-          this.selectedQueue.ticketType.eventContractAddress
+          ticketType.eventContractAddress
         );
         this.$root.$emit("openMessageBus", result);
       } else {
         const result = await makeBuyOrderFungible(
-          this.selectedQueue.ticketType.typeId,
+          ticketType.typeId,
           1,
-          this.selectedQueue.percentage,
-          this.selectedQueue.ticketType.price,
+          this.queueToJoin,
+          ticketType.price,
           this.$store.state.activeUser.account,
           this.$store.state.web3.web3Instance,
-          this.selectedQueue.ticketType.eventContractAddress
+          ticketType.eventContractAddress
         );
         this.$root.$emit("openMessageBus", result);
       }
+
+      await this.$store.dispatch(
+        "updateEvent",
+        ticketType.eventContractAddress
+      );
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("userUpdated");
+      this.$root.$emit("updateCharts");
     },
 
     async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
@@ -601,8 +704,23 @@ export default {
       );
       this.$root.$emit("openMessageBus", result);
     },
+    async fillSellOrderFungible(ticketType) {
+      const result = await fillSellOrderFungible(
+        ticketType.typeId,
+        1,
+        ticketType.price,
+        this.queueToJoin,
+        this.$store.state.activeUser.account,
+        this.$store.state.web3.web3Instance,
+        this.event.contractAddress
+      );
+      this.$root.$emit("openMessageBus", result);
+    },
     setActiveQueueTip(ticket) {
       this.activeQueueTip.ticketType = ticket;
+    },
+    numSellOrdersFungible(ticket) {
+      return getNumSellOrders(ticket);
     },
     numSellOrdersByPercent(ticket, percentage) {
       return getNumSellOrdersByPercent(ticket, percentage);
@@ -808,6 +926,9 @@ export default {
 </script>
 
 <style scoped>
+.aftermarket {
+  padding-bottom: 4rem;
+}
 .event-info-wrapper {
   padding-bottom: 100px;
 }
@@ -816,12 +937,19 @@ export default {
 }
 .event .top-bar {
   width: 100%;
-  background: #a3be8c;
+  background-color: white;
   padding: 1rem;
   display: flex;
-  justify-content: end;
+  justify-content: space-between;
   position: sticky;
   top: 0;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+    0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+.top-bar h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 400;
 }
 .ticket-category {
   display: flex;
@@ -1064,21 +1192,34 @@ i.shopping-cart {
 .queue-wrapper {
   display: flex;
   flex-wrap: wrap;
-  padding: 1rem;
-  border-radius: 12px;
-  background: #eceff4;
-  border: 1px solid rgba(0, 0, 0, 0.171);
+  padding: 0.2rem;
+  /* border-radius: 12px; */
+  /* border: 1px solid rgba(0, 0, 0, 0.171); */
   margin-bottom: 1rem;
+}
+.queue-wrapper .top {
+  flex: 0 0 100%;
+  background: #1dba9d;
+  color: white;
+}
+.queue-wrapper.nf .top {
+  padding: 2rem;
+}
+.queue-wrapper .bottom {
+  flex: 0 0 100%;
+  padding: 0.5rem;
+}
+.bottom .selection {
+  max-width: 80px;
+  display: inline-block;
+}
+.bottom p {
+  margin: 0;
 }
 .queue-wrapper.selected {
   border: 1px solid var(--red);
 }
-.queue-label {
-  flex-basis: 100%;
-  flex-grow: 0;
-  margin-right: 2rem;
-  text-align: center;
-}
+
 .queue-wrapper .chart-wrapper {
   flex-basis: 100%;
   flex-shrink: 0;
@@ -1086,6 +1227,7 @@ i.shopping-cart {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
 }
 .queue-wrapper .queue {
 }

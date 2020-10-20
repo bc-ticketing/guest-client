@@ -26,7 +26,7 @@
           v-bind:ticketId="ticket.ticketId"
           v-bind:eventContractAddress="ticket.eventContractAddress"
           v-bind:isNf="false"
-          v-on:openOverlay="openTicketOverlay(ticket)"
+          v-on:openOverlay="openTicketOverlay(ticket, false)"
         />
       </div>
       <div
@@ -39,7 +39,7 @@
           v-bind:ticketId="ticket.ticketId"
           v-bind:eventContractAddress="ticket.eventContractAddress"
           v-bind:isNf="true"
-          v-on:openOverlay="openTicketOverlay(ticket)"
+          v-on:openOverlay="openTicketOverlay(ticket, true)"
         />
       </div>
     </div>
@@ -163,13 +163,6 @@ import TicketOverlay from "./../components/TicketOverlay";
 import Ticket from "./../components/Ticket";
 // import SellView from "./SellView";
 import { getNumberFungibleOwned } from "./../util/User";
-import Swiper, { Pagination } from "swiper";
-Swiper.use([Pagination]);
-import "swiper/swiper-bundle.css";
-import {
-  withdrawSellOrderFungible,
-  withdrawSellOrderNonFungible,
-} from "../util/tickets";
 
 export default {
   name: "Inventory",
@@ -243,37 +236,10 @@ export default {
     },
   },
   methods: {
-    openTicketOverlay(ticket) {
-      this.setActiveTicket(ticket);
+    openTicketOverlay(ticket, isNf) {
+      this.setActiveTicket(ticket, isNf);
       this.ticketOverlay.open = true;
       this.ticketOverlay.ticket = ticket;
-    },
-    async withdrawSellOrder(index) {
-      let result;
-      if (this.activeIsNf) {
-        result = await withdrawSellOrderNonFungible(
-          this.activeTicketType,
-          this.activeTicket,
-          this.$store.state.activeUser.account,
-          this.$store.state.web3.web3Instance,
-          this.activeTicketEvent
-        );
-      } else {
-        result = await withdrawSellOrderFungible(
-          this.activeTicketType,
-          this.activeSellOrders[index].quantity,
-          this.activeSellOrders[index].percentage,
-          this.$store.state.activeUser.account,
-          this.$store.state.web3.web3Instance,
-          this.activeTicketEvent
-        );
-      }
-      if (result.status == 1) {
-        await this.$store.dispatch("updateEvent", result.event);
-        await this.$store.dispatch("registerActiveUser");
-        this.$root.$emit("userUpdated");
-      }
-      this.$root.$emit("openMessageBus", result);
     },
     getTicketType(ticket) {
       for (const ticketType of this.event.nonFungibleTickets) {
@@ -287,8 +253,8 @@ export default {
         (event) => event.contractAddress === ticket.eventContractAddress
       )[0];
     },
-    setActiveTicket: function(ticket) {
-      if (ticket.isNF) {
+    setActiveTicket: function(ticket, isNf) {
+      if (isNf) {
         this.activeTicket = ticket.ticketId;
         this.activeIsNf = true;
       } else {
@@ -307,6 +273,9 @@ export default {
 </script>
 
 <style>
+.ticket {
+  margin-bottom: 1rem;
+}
 h1 {
   margin-left: 1rem;
   margin-top: 2rem;
@@ -354,10 +323,7 @@ h1 {
 .empty-message p {
   text-align: center;
 }
-.sell-order {
-  display: flex;
-  justify-content: space-between;
-}
+
 .img {
   display: flex;
   justify-content: center;
@@ -371,61 +337,6 @@ h1 {
   height: 100vh;
   position: relative;
   overflow-y: hidden;
-}
-.position-relative {
-  height: 90%;
-  position: relative;
-}
-.ticket-swiper {
-  width: 100%;
-  margin: auto;
-  height: 200px;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-}
-.swiper-container {
-  width: 100%;
-  height: 200px;
-}
-.swiper-wrapper {
-  height: 100%;
-}
-
-.ticket-swiper .swiper-slide {
-  height: 100%;
-  width: 100%;
-  background-color: whitesmoke;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-}
-.ticket-swiper .swiper-slide .img {
-  background-position: center;
-  background-size: cover;
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
-  height: 100%;
-}
-.ticket-swiper .swiper-slide .info {
-  padding: 10px;
-}
-.swiper-slide .info span {
-  display: block;
-}
-.ticket-swiper .pagination {
-  position: relative;
-  bottom: unset;
-  left: unset;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-.pagination .swiper-pagination-bullet {
-  margin-left: 0.3rem;
-  margin-right: 0.3rem;
-}
-.ticket-swiper .swiper-pagination-bullet-active {
-  background: var(--accent);
 }
 
 .amount-selection {

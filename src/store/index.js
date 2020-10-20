@@ -57,14 +57,14 @@ export default new Vuex.Store({
     },
     setEventFactoryContractAddress(state, address) {
       state.EVENT_FACTORY_ADDRESS = address;
-    }
+    },
   },
   actions: {
-    async setIdentityContractAddress({ commit }, address){
-      commit('setIdentityContractAddress', address);
+    async setIdentityContractAddress({ commit }, address) {
+      commit("setIdentityContractAddress", address);
     },
-    async setEventFactoryContractAddress({commit}, address) {
-      commit('setEventFactoryContractAddress', address);
+    async setEventFactoryContractAddress({ commit }, address) {
+      commit("setEventFactoryContractAddress", address);
     },
     /* 
       Responsible for getting the current user object.
@@ -78,23 +78,38 @@ export default new Vuex.Store({
       //check if the user is in the db already
       const inDB = await idb.getUser(state.web3.account);
       if (inDB) {
+        console.log("user in db");
         let user = new User(inDB);
+        console.log(user);
         //if yes, update the data of the user to the current block
         for (const event of state.events) {
+          console.log("loading tickets for" + event.contractAddress);
           await loadTicketsForEvent(
             user,
             state.web3.web3Instance,
             EVENT_MINTABLE_AFTERMARKET_ABI,
             event
           );
+          console.log(user);
+          console.log("loading am");
           loadAftermarketForEvent(user, event);
-          let approver = state.approvers.find(a => String(a.approverAddress) === String(event.identityContractAddress));
-          const method = await approver.getApprovalLevel(state.identity, user.account);
+          console.log("loaded am");
+          let approver = state.approvers.find(
+            (a) =>
+              String(a.approverAddress) ===
+              String(event.identityContractAddress)
+          );
+          const method = await approver.getApprovalLevel(
+            state.identity,
+            user.account
+          );
           setApprovalLevel(user, approver.approverAddress, method);
         }
         //and update the record in the db
-        user.lastFetchedBlock = state.web3.currentBlock;
+        const block = await state.web3.web3Instance.eth.getBlock("latest");
+        user.lastFetchedBlock = block.number;
         await idb.saveUser(user);
+        console.log(user);
         commit("setActiveUser", user);
       } else {
         //if not, create a new user from the web3 data and load his tickets
@@ -106,13 +121,22 @@ export default new Vuex.Store({
             EVENT_MINTABLE_AFTERMARKET_ABI,
             event
           );
+          console.log(JSON.parse(JSON.stringify(user.fungibleTickets)));
           loadAftermarketForEvent(user, event);
-          let approver = state.approvers.find(a => String(a.approverAddress) === String(event.identityContractAddress));
-          const method = await approver.getApprovalLevel(state.identity, user.account);
+          let approver = state.approvers.find(
+            (a) =>
+              String(a.approverAddress) ===
+              String(event.identityContractAddress)
+          );
+          const method = await approver.getApprovalLevel(
+            state.identity,
+            user.account
+          );
           setApprovalLevel(user, approver.approverAddress, method);
         }
         //and save it to the db
-        user.lastFetchedBlock = state.web3.currentBlock;
+        const block = await state.web3.web3Instance.eth.getBlock("latest");
+        user.lastFetchedBlock = block.number;
         await idb.saveUser(user);
         commit("setActiveUser", user);
       }
@@ -165,35 +189,35 @@ export default new Vuex.Store({
         .call();
       var events = [];
       for (let i = 0; i < eventAddresses.length; i++) {
-        
         const address = eventAddresses[i];
-        console.log('loading event; '+ address);
+        console.log("loading event; " + address);
         const inStore = await idb.getEvent(address);
         let event;
         if (!inStore) {
-          console.log('not in store');
+          console.log("not in store");
           event = new Event(address);
           await event.loadIdentityData(
             EVENT_MINTABLE_AFTERMARKET_ABI,
             state.web3.web3Instance
           );
         } else {
-          console.log('in store');
+          console.log("in store");
           event = new Event(inStore);
         }
-        console.log('loading event data');
+        console.log("loading event data");
         let fetch = await event.loadData(
           EVENT_MINTABLE_AFTERMARKET_ABI,
           state.ipfsInstance,
           state.web3.web3Instance
         );
-        console.log('loaded event data');
+        console.log("loaded event data");
         if (fetch) {
-          event.lastFetchedBlock = state.web3.currentBlock;
+          const block = await state.web3.web3Instance.eth.getBlock("latest");
+          event.lastFetchedBlock = block.number;
         }
-        console.log('saving event data');
+        console.log("saving event data");
         await idb.saveEvent(event);
-        console.log('saved event data');
+        console.log("saved event data");
         events.push(event);
       }
       commit("updateEventStore", events);
@@ -224,14 +248,15 @@ export default new Vuex.Store({
       the changes in ownership live, without reloading the page.
     */
     async updateEvent({ commit }, address) {
-      let event = state.events.find(e => e.contractAddress === address);
+      let event = state.events.find((e) => e.contractAddress === address);
       let fetch = await event.loadData(
         EVENT_MINTABLE_AFTERMARKET_ABI,
         state.ipfsInstance,
         state.web3.web3Instance
       );
       if (fetch) {
-        event.lastFetchedBlock = state.web3.currentBlock;
+        const block = await state.web3.web3Instance.eth.getBlock("latest");
+        event.lastFetchedBlock = block.number;
       }
       await idb.saveEvent(event);
       commit("updateEventStore", state.events);
@@ -249,5 +274,5 @@ export default new Vuex.Store({
       commit("updateShoppingCartStore", state.shoppingCart);
     },
   },
-  modules: {}
+  modules: {},
 });

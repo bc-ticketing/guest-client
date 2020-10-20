@@ -4,7 +4,7 @@
 import {
   MintFungibles,
   MintNonFungibles,
-  ticketTransferred
+  ticketTransferred,
 } from "./blockchainEventHandler";
 import { isNf, getTicketId, getTicketTypeIndex } from "idetix-utils";
 
@@ -29,24 +29,25 @@ export class User {
     this.idetixIdentity = {
       phone: false,
       mail: false,
-      kyc: false
+      kyc: false,
     };
-    this.approvalLevels = {}; 
+    this.approvalLevels = {};
   }
 }
 
 export function setApprovalLevel(user, approver, method) {
-  
   user.approvalLevels[approver] = method ? method : 0;
-} 
+}
 
 export function getApprovalLevelForApprover(user, approver) {
   return user.approvalLevels[approver];
 }
 
 export function isApproved(user, approver, level) {
-  return user.approvalLevels[approver] &&
-        user.approvalLevels[approver].level >= level;
+  return (
+    user.approvalLevels[approver] &&
+    user.approvalLevels[approver].level >= level
+  );
 }
 
 export function getNumberFungibleOwned(user, event, type) {
@@ -62,7 +63,7 @@ export function getNumberFungibleOwned(user, event, type) {
 export async function checkFungibleTicketPurchases(user, contract) {
   const fungibles = await MintFungibles(
     contract,
-    user.lastFetchedBlock +1,
+    user.lastFetchedBlock + 1,
     user.account
   );
   return fungibles;
@@ -70,7 +71,7 @@ export async function checkFungibleTicketPurchases(user, contract) {
 export async function checkNonFungibleTicketPurchases(user, contract) {
   const nonFungibles = await MintNonFungibles(
     contract,
-    user.lastFetchedBlock +1,
+    user.lastFetchedBlock + 1,
     user.account
   );
   return nonFungibles;
@@ -79,34 +80,35 @@ export async function checkNonFungibleTicketPurchases(user, contract) {
 export async function checkTicketChanges(user, contract) {
   const seller = await ticketTransferred(
     contract,
-    user.lastFetchedBlock +1,
+    user.lastFetchedBlock + 1,
     "seller",
     user.account
   );
-  seller.map(t => {
+  seller.map((t) => {
     t.changeType = "sold";
   });
   const buyer = await ticketTransferred(
     contract,
-    user.lastFetchedBlock +1,
+    user.lastFetchedBlock + 1,
     "buyer",
     user.account
   );
-  buyer.map(t => {
+  buyer.map((t) => {
     t.changeType = "bought";
   });
   return seller.concat(buyer);
 }
 
-
 export function loadAftermarketForEvent(user, event) {
   for (const ticket of user.fungibleTickets) {
+    console.log("loading am for ticket: ", ticket);
     if (ticket.eventContractAddress === event.contractAddress) {
       const sellOrders = event.getSellOrdersByAddress(
         user.account,
         ticket.ticketType,
         false
       );
+      console.log("got sell orders", sellOrders);
       ticket.sellOrders = sellOrders;
     }
   }
@@ -130,13 +132,10 @@ export function loadAftermarketForEvent(user, event) {
 
 export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
   const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
-  const fungiblePurchases = await checkFungibleTicketPurchases(
-    user,
-    eventSC,
-  );
+  const fungiblePurchases = await checkFungibleTicketPurchases(user, eventSC);
   const nonFungiblePurchases = await checkNonFungibleTicketPurchases(
     user,
-    eventSC,
+    eventSC
   );
   /* Purchases from Host directly */
   for (const purchase of fungiblePurchases) {
@@ -147,19 +146,21 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
     );
     const quantity = purchase.returnValues.quantity;
     let t = user.fungibleTickets.find(
-      t =>
+      (t) =>
         t.ticketType === ticketType &&
         t.eventContractAddress === event.contractAddress
     );
     if (t) {
       t.amount += Number(quantity);
+      console.log(user.fungibleTickets);
     } else {
       user.fungibleTickets.push({
         ticketType: ticketType,
         amount: Number(quantity),
-        eventContractAddress: event.contractAddress
+        eventContractAddress: event.contractAddress,
       });
     }
+    console.log(user.fungibleTickets);
   }
   for (const purchase of nonFungiblePurchases) {
     const ids = purchase.returnValues.ids;
@@ -171,7 +172,7 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
       user.nonFungibleTickets.push({
         ticketId: ticketId,
         ticketType: ticketType,
-        eventContractAddress: event.contractAddress
+        eventContractAddress: event.contractAddress,
       });
     }
   }
@@ -181,12 +182,14 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
   for (const change of changes) {
     const ticketType = new BigNumber(change.returnValues.ticketType);
     const ticketTypeId = Number(
-      getTicketTypeIndex(
-        new BigNumber(change.returnValues.ticketType)
-      ).toFixed()
+      getTicketTypeIndex(new BigNumber(change.returnValues.id)).toFixed()
     );
     if (!isNf(ticketType)) {
-      let t = user.fungibleTickets.find(t => t.ticketType === ticketTypeId);
+      let t = user.fungibleTickets.find(
+        (t) =>
+          t.ticketType === ticketTypeId &&
+          t.eventContractAddress === event.contractAddress
+      );
       if (change.changeType === "sold") {
         if (t) {
           t.amount -= 1;
@@ -198,7 +201,7 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
           user.fungibleTickets.push({
             ticketType: ticketTypeId,
             amount: 1,
-            eventContractAddress: event.contractAddress
+            eventContractAddress: event.contractAddress,
           });
         }
       }
@@ -213,13 +216,13 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
       const ticketId = Number(
         getTicketId(new BigNumber(change.returnValues.ticketType)).toFixed()
       );
-      let t = user.nonFungibleTickets.find(t => {
+      let t = user.nonFungibleTickets.find((t) => {
         t === ticketType.toFixed();
       });
       if (change.changeType === "sold") {
         console.log("sold nf ticket: " + ticketTypeId + " - " + ticketId);
         if (t) {
-          user.nonFungibleTickets.filter(t => {
+          user.nonFungibleTickets.filter((t) => {
             t.ticketType === ticketTypeId && t.ticketId === ticketId;
           });
         }
@@ -229,7 +232,7 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
         user.nonFungibleTickets.push({
           ticketType: ticketTypeId,
           ticketId: ticketId,
-          eventContractAddress: event.contractAddress
+          eventContractAddress: event.contractAddress,
         });
         console.log("nf tickets: ", user.nonFungibleTickets);
       }
@@ -237,10 +240,26 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
   }
 }
 
+/* function findTicketInInventory(user, typeId, isNf = false) {
+  if (isNf) {
+    for (const ticket of user.nonFungibleTickets) {
+      if (ticket.ticketType === typeId) {
+        return ticket;
+      }
+    }
+  } else {
+    for (const ticket of user.fungibleTickets) {
+      if (ticket.ticketType === typeId) {
+        return ticket;
+      }
+    }
+  }
+} */
+
 export function ownsFungibles(user, eventContract, ticketType, amount) {
   return (
     user.fungibleTickets.filter(
-      t =>
+      (t) =>
         t.ticketType === ticketType &&
         t.amount >= amount &&
         t.eventContractAddress == eventContract
@@ -250,12 +269,11 @@ export function ownsFungibles(user, eventContract, ticketType, amount) {
 
 export function ownsNonFungible(user, eventContract, ticketType, ticketNr) {
   return user.nonFungibleTickets.find(
-        t =>
-        t.ticketType === ticketType &&
-        t.ticketId === ticketNr &&
-        t.eventContractAddress === eventContract
-    );
-  
+    (t) =>
+      t.ticketType === ticketType &&
+      t.ticketId === ticketNr &&
+      t.eventContractAddress === eventContract
+  );
 }
 
 export async function requestIdentification(user) {
