@@ -13,6 +13,7 @@ import {
   MESSAGE_BUYORDER_PLACED,
   MESSAGE_BUYORDER_FILLED,
 } from "./constants/constants";
+import { AFFILIATE_ADDRESS } from './constants/addresses';
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 
 const BigNumber = require("bignumber.js");
@@ -619,7 +620,7 @@ export async function buyFungible(
   const eventSC = new web3Instance.eth.Contract(ABI, eventContractAddress);
   let result;
   await eventSC.methods
-    .mintFungible(getFullTicketTypeId(false, new BigNumber(ticketType)), amount)
+    .mintFungible(getFullTicketTypeId(false, new BigNumber(ticketType)), amount, [AFFILIATE_ADDRESS])
     .send({
       from: account,
       value: amount * price,
@@ -657,7 +658,7 @@ export async function buyNonFungible(
   const eventSC = new web3Instance.eth.Contract(ABI, eventContractAddress);
   let result;
   await eventSC.methods
-    .mintNonFungibles([getFullTicketId(ticket, ticketType)])
+    .mintNonFungibles([getFullTicketId(ticket, ticketType)], [AFFILIATE_ADDRESS])
     .send({
       from: account,
       value: price,

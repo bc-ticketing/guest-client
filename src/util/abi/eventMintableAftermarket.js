@@ -54,6 +54,19 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "AffiliatesReward",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "addr",
@@ -662,47 +675,47 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
   {
     "inputs": [
       {
-        "internalType": "bytes1",
-        "name": "_hashFunction",
-        "type": "bytes1"
+        "internalType": "bytes1[]",
+        "name": "_hashFunctions",
+        "type": "bytes1[]"
       },
       {
-        "internalType": "bytes1",
-        "name": "_size",
-        "type": "bytes1"
+        "internalType": "bytes1[]",
+        "name": "_sizes",
+        "type": "bytes1[]"
       },
       {
-        "internalType": "bytes32",
-        "name": "_digest",
-        "type": "bytes32"
+        "internalType": "bytes32[]",
+        "name": "_digests",
+        "type": "bytes32[]"
       },
       {
-        "internalType": "bool",
-        "name": "_isNF",
-        "type": "bool"
+        "internalType": "bool[]",
+        "name": "_isNFs",
+        "type": "bool[]"
       },
       {
-        "internalType": "uint256",
-        "name": "_price",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "_prices",
+        "type": "uint256[]"
       },
       {
-        "internalType": "uint256",
-        "name": "_finalizationTime",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "_finalizationTimes",
+        "type": "uint256[]"
       },
       {
-        "internalType": "uint256",
-        "name": "_supply",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "_supplies",
+        "type": "uint256[]"
       },
       {
-        "internalType": "uint256",
-        "name": "_block",
-        "type": "uint256"
+        "internalType": "uint256[]",
+        "name": "_blocks",
+        "type": "uint256[]"
       }
     ],
-    "name": "createPresaleType",
+    "name": "createPresaleTypes",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -741,7 +754,7 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
       },
       {
         "internalType": "uint256[]",
-        "name": "_initialSupplys",
+        "name": "_initialSupplies",
         "type": "uint256[]"
       }
     ],
@@ -1264,6 +1277,11 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
         "internalType": "uint256",
         "name": "_quantity",
         "type": "uint256"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_affiliates",
+        "type": "address[]"
       }
     ],
     "name": "mintFungible",
@@ -1277,6 +1295,11 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
         "internalType": "uint256[]",
         "name": "_ids",
         "type": "uint256[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_affiliates",
+        "type": "address[]"
       }
     ],
     "name": "mintNonFungibles",
@@ -1392,19 +1415,6 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address payable",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1614,6 +1624,52 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
       }
     ],
     "name": "updateEventMetadata",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_ticketType",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_finalizationTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateFinalizationTime",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_type",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes1",
+        "name": "_hashFunction",
+        "type": "bytes1"
+      },
+      {
+        "internalType": "bytes1",
+        "name": "_size",
+        "type": "bytes1"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_digest",
+        "type": "bytes32"
+      }
+    ],
+    "name": "updateType",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
