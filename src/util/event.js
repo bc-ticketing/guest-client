@@ -350,6 +350,7 @@ export class Event {
             .ticketTypeMeta(typeIdentifier)
             .call();
           ticketType.price = ticketMapping.price;
+          console.log(ticketType.price);
           ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
           ticketType.supply = Number(ticketMapping.supply);
           const granularity = await eventSC.methods.granularity().call();
@@ -386,11 +387,13 @@ export class Event {
           const ticketMapping = await eventSC.methods
             .ticketTypeMeta(getIdAsBigNumber(true, i).toFixed())
             .call();
+            console.log(ticketMapping);
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = ticketMapping.ticketsSold;
           ticketType.supply = ticketMapping.supply;
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
+          console.log(ticketType);
           for (let j = 1; j <= ticketType.supply; j++) {
             const ticketId = getIdAsBigNumber(true, i, j).toFixed();
             let ticket = this.hasNonFungibleTicket(i, j);
