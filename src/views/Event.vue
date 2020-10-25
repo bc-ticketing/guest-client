@@ -16,6 +16,8 @@
     <!-- general event information -->
     <section class="event-information">
       <div class="container">
+        <md-card>
+          <md-card-content>
         <p class="event-description">
           {{ event.description }}
         </p>
@@ -35,11 +37,14 @@
           <md-icon class="info-title">local_offer</md-icon>
           <span class="info-value">From {{ lowest_price }} ETH</span>
         </div>
+        </md-card-content>
+        </md-card>
       </div>
     </section>
     <!-- information about the host -->
     <section class="host-information">
       <div class="container">
+        <md-card><md-card-content>
         <h2>Organizer name</h2>
         <div class="info-group split">
           <div>
@@ -99,11 +104,13 @@
             </span>
           </div>
         </div>
+        </md-card-content></md-card>
       </div>
     </section>
     <!-- information about the identity service -->
     <section class="identity-information">
       <div class="container">
+        <md-card><md-card-content>
         <h2>{{ approverTitle }}</h2>
         <div class="info-group split">
           <div>
@@ -175,6 +182,7 @@
           You are approved with {{ approverTitle }} at the required level to buy
           tickets.
         </div>
+        </md-card-content></md-card>
       </div>
     </section>
     <!-- tickets -->
@@ -882,6 +890,7 @@ export default {
           // check if this fungible category still has seats available
           const seat = this.$refs[`seat_${x}_${y}`];
           seat[0].classList.add("fungible");
+          seat[0].style.backgroundColor = ticket.color;
           if (numberFreeSeats(ticket) > ticket.supply / 2) {
             seat[0].dataset.status = "good";
           } else if (numberFreeSeats(ticket) > ticket.supply / 4) {
@@ -897,6 +906,8 @@ export default {
           let y = Number(ticket.seatMapping.split("/")[1]);
 
           const seat = this.$refs[`seat_${x}_${y}`];
+          console.log(seat);
+          seat[0].style.backgroundColor = ticketType.color;
           if (isFree(ticket)) {
             seat[0].dataset.status = "free";
           } else {
@@ -926,6 +937,10 @@ export default {
 </script>
 
 <style scoped>
+.container .md-card {
+  margin-top:1rem;
+  margin-bottom: 1rem;
+}
 .aftermarket {
   padding-bottom: 4rem;
 }
@@ -943,6 +958,7 @@ export default {
   justify-content: space-between;
   position: sticky;
   top: 0;
+  z-index:9;
   box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
 }

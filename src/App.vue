@@ -19,7 +19,9 @@
     <div class="content" ref="content">
       <overlayMessage></overlayMessage>
 
-      <router-view />
+      <transition :name="'slide'" mode="out-in">
+        <router-view></router-view>
+      </transition>
     </div>
     <messageBus v-bind:yPos="messagePos"></messageBus>
     <searchBar v-bind:yPos="navHeight"></searchBar>
@@ -58,10 +60,24 @@ export default {
     return {
       navHeight: 100,
       messagePos: 0,
+      transitionName: "",
       //infoOpen: false
     };
   },
+  watch: {
+    $route(to, from) {
+      const toDepth = to.path.split("/").length;
+      const fromDepth = from.path.split("/").length;
+      this.transitionName = toDepth < fromDepth ? "slide-right" : "slide-left";
+    },
+  },
   methods: {
+    afterEnter: () => {
+      window.scrollTo(0, 0);
+    },
+    afterLeave: () => {
+      this.$store.commit("setPageTransition", "default");
+    },
     setNavHeight: function(value) {
       this.navHeight = value;
     },
@@ -146,11 +162,13 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 /* ----------- Fonts ----------- */
 @import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap");
 @import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 /* ----------- Color Definitions ----------- */
+@import url("https://fonts.googleapis.com/css2?family=Dosis:wght@400;700&display=swap");
+
 :root {
   --fg: #584d53;
   --fg-light: hsl(9, 36%, 85%);
@@ -169,7 +187,7 @@ export default {
 body,
 html {
   font-size: 16px;
-  font-family: "Ubuntu", sans-serif;
+  font-family: "Dosis", sans-serif;
   font-weight: 400;
   /* Placeholder font */
   color: var(--fg);
@@ -258,5 +276,27 @@ a:hover {
   .container {
     width: 80%;
   }
+}
+
+/* ----------------- Page Transitions ----------------- */
+.slide-enter-active,
+.slide-leave-active {
+  transition: 300ms;
+}
+.slide-enter {
+  left: -100vw;
+  position: absolute;
+}
+.slide-enter-to {
+  position: relative;
+  left: 0;
+}
+
+.slide-leave {
+  position: absolute;
+  left:0;
+}
+.slide-leave-to {
+  left: 100vw;
 }
 </style>

@@ -701,6 +701,9 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
   ticket.description = metadata.ticket.description;
   ticket.seatMapping = metadata.ticket.mapping;
   ticket.title = metadata.ticket.title;
+  ticket.color = metadata.ticket.color;
+  console.log(ticket.seatMapping);
+  console.log(ticket.tickets);
   if (ticket.isNf) {
     metadata.ticket.mapping.forEach((mapping, index) => {
       if (index >= ticket.tickets.length) {

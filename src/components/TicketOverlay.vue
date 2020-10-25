@@ -210,8 +210,14 @@ export default {
       }
       console.log(userTicket);
       if (userTicket) {
-        return userTicket.sellOrders ? userTicket.sellOrders : [];
+        if (userTicket.sellOrders) {
+          console.log(userTicket.sellOrders);
+          return userTicket.sellOrders;
+        } else if (userTicket.sellOrder.percentage) {
+          return [userTicket.sellOrder];
+        }
       }
+
       return [];
     },
     amountOnAftermarket() {
@@ -225,30 +231,10 @@ export default {
     },
     ticketsLeftToSell() {
       let total = 0;
-      this.activeSellOrders.forEach((o) => {
+      this.getUserSellOrders.forEach((o) => {
         total += o.quantity;
       });
       return this.amountOwned - total;
-    },
-    activeSellOrders() {
-      if (!this.$store.state.activeUser) {
-        return [];
-      }
-      try {
-        if (this.activeIsNf) {
-          let order = this.$store.state.activeUser.nonFungibleTickets[
-            this.activeSlide -
-              this.$store.state.activeUser.fungibleTickets.length
-          ].sellOrder;
-          order.quantity = 1;
-          return order.percentage ? [order] : [];
-        } else {
-          return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
-            .sellOrders;
-        }
-      } catch (e) {
-        return [];
-      }
     },
     lowestSellOrder() {
       return this.ticketType ? getLowestSellOrder(this.ticketType).queue : 0;
@@ -331,7 +317,7 @@ export default {
     },
     async withdrawSellOrder(percentage, quantity) {
       let result;
-      if (this.activeIsNf) {
+      if (this.isNf) {
         result = await withdrawSellOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,

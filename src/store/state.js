@@ -11,6 +11,9 @@ let state = {
     error: null,
     currentBlock: null,
   },
+  pageTransition: {
+    
+  },
   eventAddresses: [],
   events: [],
   eventFactory: null,

@@ -3,7 +3,7 @@
     <v-touch
       @swipeleft="close"
       @swiperight="openSearchBar"
-      class="search-bar-wrapper"
+      class="search-bar-wrapper md-elevation-9"
     >
       <div class="search-field">
         <input
@@ -64,9 +64,6 @@ export default {
     },
   },
   mounted: function() {
-    //this.openSearchBar();
-  },
-  created: function() {
     this.$root.$on("openSearchBar", async () => {
       this.openSearchBar();
     });
@@ -76,6 +73,9 @@ export default {
     this.$root.$on("closeSearchBar", async () => {
       this.close();
     });
+  },
+  created: function() {
+    
   },
 };
 </script>

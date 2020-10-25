@@ -114,7 +114,7 @@ export class Event {
   }
 
   getNfOwner(ticketType, ticketId) {
-    if (this.getTicketType(ticketType).isNf) {
+    if (this.getTicketType(ticketType, true).isNf) {
       return this.getNfTicket(ticketType, ticketId).owner;
     }
     return false;
@@ -203,10 +203,13 @@ export class Event {
   }
 
   getTicketType(ticketTypeId, isNf = false) {
+    console.log(ticketTypeId);
+    console.log(this.nonFungibleTickets);
     if (isNf) {
       const foundNonFungible = this.nonFungibleTickets.find(
         (t) => t.typeId === ticketTypeId
       );
+      console.log(foundNonFungible);
       return foundNonFungible;
     } else {
       const foundFungible = this.fungibleTickets.find(
@@ -258,6 +261,8 @@ export class Event {
       this.requestUrlVerification();
       await this.loadFungibleTickets(web3Instance, ABI, ipfsInstance);
       await this.loadNonFungibleTickets(web3Instance, ABI, ipfsInstance);
+      console.log('loaded tickets');
+      console.log(this);
       await this.loadOwnerShipChanges(web3Instance, ABI);
       await this.loadTicketsSoldChanges(web3Instance, ABI);
       await this.loadAftermarketChanges(web3Instance, ABI);
@@ -372,15 +377,19 @@ export class Event {
     const nonce = await eventSC.methods.nfNonce().call();
     // nonce shows how many ticket types exist for this event
     if (nonce > 0) {
+      
       for (let i = 1; i <= nonce; i++) {
-        const typeIdentifier = getIdAsBigNumber(false, i);
+        console.log('loading nf ticket type', i);
+        const typeIdentifier = getIdAsBigNumber(true, i);
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlock + 1,
           typeIdentifier
         );
         if (changed) {
+          console.log('changed');
           const exists = this.hasNonFungibleTicketType(i);
+          console.log('exists: ', exists);
           let ticketType = exists
             ? exists
             : new NonFungibleTicketType(this.contractAddress, i);
@@ -388,15 +397,18 @@ export class Event {
             .ticketTypeMeta(getIdAsBigNumber(true, i).toFixed())
             .call();
             console.log(ticketMapping);
+          ticketType.color = ticketMapping.color;
           ticketType.price = ticketMapping.price;
           ticketType.ticketsSold = ticketMapping.ticketsSold;
           ticketType.supply = ticketMapping.supply;
+          console.log('supply', ticketType.supply);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
           console.log(ticketType);
-          for (let j = 1; j <= ticketType.supply; j++) {
+          for (let j = 1; j <= Number(ticketType.supply); j++) {
             const ticketId = getIdAsBigNumber(true, i, j).toFixed();
             let ticket = this.hasNonFungibleTicket(i, j);
+            console.log(ticket);
             if (!ticket) {
               ticket = new NonFungibleTicket(this.contractAddress, i, j);
             }
@@ -408,12 +420,16 @@ export class Event {
           }
           await fetchIpfsHash(ticketType, web3Instance, ABI);
           await loadIPFSMetadata(ticketType, ipfsInstance);
-
+          console.log(ticketType)
           //await loadSellOrders(ticketType, web3Instance, ABI);
           //await loadBuyOrders(ticketType, web3Instance, ABI);
           if (!exists) {
+            console.log('pushing');
+            console.log(JSON.stringify(this.nonFungibleTickets));
             this.nonFungibleTickets.push(ticketType);
           }
+        } else {
+          console.log('no change');
         }
       }
     }

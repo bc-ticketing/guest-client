@@ -106,7 +106,6 @@ export default {
 
 <style scoped>
 .events {
-  background-color: #eceff4;
   min-height: 100vh;
   padding-top: 2rem;
 }

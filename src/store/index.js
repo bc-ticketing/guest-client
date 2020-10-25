@@ -19,6 +19,20 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state,
   mutations: {
+    setPageTransition(state, value) {
+      if ("default" === value) {
+        state.pageTransition = {
+          name: "router-view",
+          mode: "in-out"
+        };
+      }
+      if ("back" === value) {
+        state.pageTransition = {
+          name: "router-view-back",
+          mode: "",
+        };
+      }
+    },
     updateWeb3(state, web3) {
       state.web3.web3Instance = web3.web3Instance;
       state.web3.account = web3.account;
@@ -210,16 +224,18 @@ export default new Vuex.Store({
           state.ipfsInstance,
           state.web3.web3Instance
         );
-        console.log("loaded event data");
+        console.log("loaded event data", fetch);
         if (fetch) {
           const block = await state.web3.web3Instance.eth.getBlock("latest");
           event.lastFetchedBlock = block.number;
         }
         console.log("saving event data");
-        await idb.saveEvent(event);
-        console.log("saved event data");
+        const saved = await idb.saveEvent(event);
+        console.log("saved event data", saved);
+        console.log(JSON.stringify(event));
         events.push(event);
       }
+      console.log(JSON.stringify(events));
       commit("updateEventStore", events);
     },
     async loadApprovers({ commit }) {

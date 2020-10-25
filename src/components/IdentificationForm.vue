@@ -1,5 +1,5 @@
 <template>
-  <div class="selection" v-bind:class="{ open: open }">
+  <div class="selection md-elevation-9" v-bind:class="{ open: open }">
     <div class="wrapper">
       <span class="close-icon" @click="close">
         <md-icon>close</md-icon>
@@ -21,12 +21,17 @@
                 mail with a code! Please provide your email address so that we
                 can contact you.
               </p>
-              <input
+              <md-field>
+                <label for="mail"></label>
+                <md-input
                 type="text"
                 name="mail"
+                id="mail"
                 placeholder="mail"
                 v-model="mailForm.mail"
               />
+              </md-field>
+              
               <md-button class="md-raised" @click="submitMail"
                 >Submit</md-button
               >
@@ -35,22 +40,39 @@
           <md-step
             id="mail_verify"
             :md-editable="false"
-            :md-done="mailForm.progress.mail_verify"
+            :md-done.sync="mailForm.progress.mail_verify"
           >
             <div class="form-group">
               <p>
                 Copy the code we sent you via mail and paste it into the
                 'secret' field
               </p>
-              <input
+              <md-field>
+                <label for="secret mail">secret</label>
+                <md-input
                 type="text"
-                name="mail"
+                name="secret mail"
+                id="secret_mail"
                 placeholder="secret"
                 v-model="mailForm.secret"
               />
+              </md-field>
+              
               <md-button class="md-raised" @click="verifyMail"
                 >Submit</md-button
               >
+            </div>
+          </md-step>
+          <md-step
+            id="mail_done"
+            :md-editable="false"
+            :md-done.sync="mailForm.progress.mail_done"
+          >
+            <div class="form-group">
+              <p>
+                You are all done!
+              </p>
+              
             </div>
           </md-step>
         </md-steppers>
@@ -58,12 +80,74 @@
 
       <div
         class="form-version phone"
-        v-bind:class="{ active: this.method === 'phone' }"
+        v-bind:class="{ active: this.method === 'mobile phone' }"
       >
-        <div class="form-group">
-          <label for="phone">Phone</label>
-          <input type="text" name="phone" v-model="phoneForm.phone" />
-        </div>
+        <md-steppers md-linear :md-active-step.sync="phoneForm.progress.active">
+          <md-step
+            id="phone_submit"
+            :md-done.sync="phoneForm.progress.phone_submit"
+            :md-editable="false"
+          >
+            <div class="form-group">
+              <p>
+                In this first step of the approval process we will send you a
+                mail with a code! Please provide your phone number so that we
+                can contact you.
+              </p>
+              <md-field>
+                <label for="phoneNr">phone number</label>
+                <md-input
+                name="phoneNr" id="phoneNr"
+                type="text"
+                placeholder="phone"
+                v-model="phoneForm.phone"
+              />
+              </md-field>
+              
+              <md-button class="md-raised" @click="submitPhone"
+                >Submit</md-button
+              >
+            </div>
+          </md-step>
+          <md-step
+            id="phone_verify"
+            :md-editable="false"
+            :md-done.sync="phoneForm.progress.phone_verify"
+          >
+            <div class="form-group">
+              <p>
+                Copy the code we sent you via phone and paste it into the
+                'secret' field
+              </p>
+              <md-field>
+                <label for="secret_phone">Secret</label>
+                <md-input
+                type="text"
+                name="secret phone"
+                id="secret_phone"
+                placeholder="secret"
+                v-model="phoneForm.secret"
+              />
+              </md-field>
+              
+              <md-button class="md-raised" @click="verifyPhone"
+                >Submit</md-button
+              >
+            </div>
+          </md-step>
+          <md-step
+            id="phone_done"
+            :md-editable="false"
+            :md-done.sync="phoneForm.progress.phone_done"
+          >
+            <div class="form-group">
+              <p>
+                You are all done!
+              </p>
+              
+            </div>
+          </md-step>
+        </md-steppers>
       </div>
 
       <div
@@ -81,7 +165,9 @@
 <script>
 import {
   requestMailValidationCode,
+  requestPhoneValidationCode,
   requestMailVerification,
+  requestPhoneVerification
 } from "./../util/identity";
 
 export default {
@@ -97,12 +183,20 @@ export default {
           active: "mail_submit",
           mail_submit: false,
           mail_verify: false,
+          mail_done: false,
           // secondStepError: null
         },
       },
       phoneForm: {
         phone: "",
-        step: 0,
+        secret: "",
+        signedSecret: "",
+        progress: {
+          active: "phone_submit",
+          phone_submit: false,
+          phone_verify: false,
+          phone_done: false,
+        }
       },
     };
   },
@@ -122,11 +216,23 @@ export default {
       //todo: make real check
       return this.mailForm.mail.indexOf("@") != -1;
     },
+    isValidPhone: function() {
+      return true;
+      //todo: make real check
+    },
     submitMail: async function() {
       if (this.isValidMail()) {
         const result = await requestMailValidationCode(this.mailForm.mail);
         if (result) {
           this.mailForm.progress.active = "mail_verify";
+        }
+      }
+    },
+    submitPhone: async function() {
+      if (this.isValidPhone()) {
+        const result = await requestPhoneValidationCode(this.phoneForm.phone);
+        if (result) {
+          this.phoneForm.progress.active = "phone_verify";
         }
       }
     },
@@ -142,20 +248,37 @@ export default {
         this.$store.state.activeUser.account
       );
       console.log(signedSecret);
-      const results = await requestMailVerification(
+      const result = await requestMailVerification(
         this.mailForm.mail,
         this.mailForm.secret,
         signedSecret,
         this.$store.state.activeUser.account
       );
-      console.log(results);
+      console.log(result);
+      if (result) {
+        this.mailForm.progress.active = "mail_done";
+        this.$root.dispatch('registerActiveUser');
+      }
     },
-    submitPhone: async function() {
-      await this.$store.dispatch("verifyUser", {
-        phone: this.phone,
-        method: "phone",
-      });
+    verifyPhone: async function() {
+      const signedSecret = await this.$store.state.web3.web3Instance.eth.personal.sign(
+        this.phoneForm.secret,
+        this.$store.state.activeUser.account
+      );
+      console.log(signedSecret);
+      const result = await requestPhoneVerification(
+        this.phoneForm.phone,
+        this.phoneForm.secret,
+        signedSecret,
+        this.$store.state.activeUser.account
+      );
+      console.log(result);
+      if (result) {
+        this.phoneForm.progress.active = "phone_done";
+        this.$root.dispatch('registerActiveUser');
+      }
     },
+
   },
 };
 </script>
@@ -167,7 +290,7 @@ export default {
   left: 0;
   transition: transform 0.5s ease-in-out;
   width: 100vw;
-  background-color: aliceblue;
+  background-color: white;
   z-index: 9999;
 }
 

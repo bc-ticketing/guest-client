@@ -146,6 +146,20 @@ export async function requestMailValidationCode(mail) {
   return response;
 }
 
+export async function requestPhoneValidationCode(number) {
+  console.log(number);
+  let response;
+  try {
+    response = await axios.post(
+      `${IDETIX_APPROVAL_SERVER}/addPhoneIdentity/?phoneNr=${number}`
+    );
+    console.log(response);
+  } catch {
+    console.log("api call error");
+  }
+  return response;
+}
+
 export async function requestMailVerification(
   mail,
   secret,
@@ -158,7 +172,32 @@ export async function requestMailVerification(
     response = await axios.post(
       `${IDETIX_APPROVAL_SERVER}/EmailIdentity/${paramString}`
     );
-    console.log(response);
+    console.log(response.status);
+    if (response.status === 200) {
+      return true;
+    }
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
+}
+
+export async function requestPhoneVerification(
+  number,
+  secret,
+  signedSecret,
+  address
+) {
+  let response;
+  const paramString = `?phoneNr=${number}&secret=${secret}&signedSecret=${signedSecret}&ethAddress=${address}`;
+  try {
+    response = await axios.post(
+      `${IDETIX_APPROVAL_SERVER}/PhoneIdentity/${paramString}`
+    );
+    console.log(response.status);
+    if (response.status === 200) {
+      return true;
+    }
   } catch (e) {
     console.log(e);
     return false;

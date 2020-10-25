@@ -1,30 +1,38 @@
 <template>
   <div id="identity">
     <div class="container">
-      <div
-        class="approver"
-        v-for="approver in $store.state.approvers"
-        v-bind:key="approver.approverAddress"
-      >
-        <h3>{{ approver.title }}</h3>
-        <div
-          class="method"
-          v-for="method in approver.methods"
-          v-bind:key="method.value"
-        >
-          <h4>{{ method.value }}</h4>
-
-          <md-button
-            v-if="!userVerified(approver, method.level)"
-            class="md-raised"
-            @click="openForm(approver, method.level, method.value)"
-            >Verify</md-button
+      <md-card>
+        <md-card-content>
+          <div
+            class="approver"
+            v-for="approver in $store.state.approvers"
+            v-bind:key="approver.approverAddress"
           >
-          <span class="status good" v-else>
-            <md-icon>done</md-icon>
-          </span>
-        </div>
-      </div>
+            <div class="md-title">{{ approver.title }}</div>
+            <div class="md-subhead">
+              You can verify yourself with idetix right in the application. Make sure to check
+              which approvers are listed on the events you are interested in!
+            </div>
+            <div
+              class="method"
+              v-for="method in approver.methods"
+              v-bind:key="method.value"
+            >
+              <h4>{{ method.value }}</h4>
+
+              <md-button
+                v-if="!userVerified(approver, method.level)"
+                class="md-raised"
+                @click="openForm(approver, method.level, method.value)"
+                >Verify</md-button
+              >
+              <span class="status good" v-else>
+                <md-icon>done</md-icon>
+              </span>
+            </div>
+          </div>
+        </md-card-content>
+      </md-card>
     </div>
     <IdentificationForm
       v-bind:method="desiredMethod"
@@ -42,25 +50,27 @@ import IdentificationForm from "./../components/IdentificationForm";
 export default {
   name: "Identification",
   components: {
-    IdentificationForm
+    IdentificationForm,
   },
   data() {
     return {
       desiredMethod: "",
       desiredLevel: 0,
       approver: undefined,
-      formOpen: false
+      formOpen: false,
     };
   },
   watch: {},
   methods: {
     userVerified(approver, level) {
-      return (
-        this.$store.state.activeUser && 
-        this.$store.state.activeUser.approvalLevels[approver.approvalLevels] && 
-        this.$store.state.activeUser.approvalLevels[approver.approverAddress]
-          .level >= level
-      );
+      try {
+        const approvedLevel = this.$store.state.activeUser.approvalLevels[
+          approver.approverAddress
+        ].level;
+        return approvedLevel >= level;
+      } catch {
+        return false;
+      }
     },
     openForm(approver, level, name) {
       this.desiredMethod = name;
@@ -70,16 +80,22 @@ export default {
     },
     closeForm() {
       this.formOpen = false;
-    }
+    },
   },
   computed: {},
   mounted: function() {
     this.$root.$emit("hideSearchBar");
-  }
+  },
 };
 </script>
 
 <style>
+#identity {
+  padding-top: 2rem;
+  height: 100vh;
+  overflow-y: hidden;
+  position: relative;
+}
 .method {
   display: flex;
   justify-content: space-between;
