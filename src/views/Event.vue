@@ -18,171 +18,182 @@
       <div class="container">
         <md-card>
           <md-card-content>
-        <p class="event-description">
-          {{ event.description }}
-        </p>
-        <div class="info-group">
-          <md-icon class="info-title">location_on</md-icon>
-          <span class="info-value">{{ event.location }}</span>
-        </div>
-        <div class="info-group">
-          <md-icon class="info-title">event</md-icon>
-          <span class="info-value">{{ event_date }}</span>
-        </div>
-        <div class="info-group">
-          <md-icon class="info-title">label</md-icon>
-          <span class="info-value tag">{{ event.category }}</span>
-        </div>
-        <div class="info-group">
-          <md-icon class="info-title">local_offer</md-icon>
-          <span class="info-value">From {{ lowest_price }} ETH</span>
-        </div>
-        </md-card-content>
+            <p class="event-description">
+              {{ event.description }}
+            </p>
+            <div class="info-group">
+              <md-icon class="info-title">location_on</md-icon>
+              <span class="info-value">{{ event.location }}</span>
+            </div>
+            <div class="info-group">
+              <md-icon class="info-title">event</md-icon>
+              <span class="info-value">{{ event_date }}</span>
+            </div>
+            <div class="info-group">
+              <md-icon class="info-title">label</md-icon>
+              <span class="info-value tag">{{ event.category }}</span>
+            </div>
+            <div class="info-group">
+              <md-icon class="info-title">local_offer</md-icon>
+              <span class="info-value">From {{ lowest_price }} ETH</span>
+            </div>
+          </md-card-content>
         </md-card>
       </div>
     </section>
     <!-- information about the host -->
     <section class="host-information">
       <div class="container">
-        <md-card><md-card-content>
-        <h2>Organizer name</h2>
-        <div class="info-group split">
-          <div>
-            <md-icon class="info-title">link</md-icon>
-            <a class="info-value" :href="eventWebsite.url" target="_blank"
-              >Website</a
-            >
-          </div>
-          <div>
-            <span class="info-value-status">
-              <md-progress-spinner
-                v-if="eventWebsite.verification === 'pending'"
-                :md-diameter="20"
-                :md-stroke="4"
-                md-mode="indeterminate"
-              ></md-progress-spinner>
-              <span class="danger"
-                ><md-icon
-                  class="danger"
-                  v-if="eventWebsite.verification == false"
-                  >warning</md-icon
-                ></span
-              >
-              <span class="good"
-                ><md-icon v-if="eventWebsite.verification == true"
-                  >done</md-icon
-                ></span
-              >
-            </span>
-          </div>
-        </div>
-        <div class="info-group split">
-          <div>
-            <md-icon class="info-title">delete</md-icon>
-            <a class="info-value" :href="eventTwitter.url" target="_blank"
-              >Twitter</a
-            >
-          </div>
-          <div>
-            <span class="info-value-status">
-              <md-progress-spinner
-                v-if="eventTwitter.verification === 'pending'"
-                :md-diameter="20"
-                :md-stroke="4"
-                md-mode="indeterminate"
-              ></md-progress-spinner>
-              <span class="danger"
-                ><md-icon v-if="eventTwitter.verification == false"
-                  >warning</md-icon
-                ></span
-              >
-              <span class="good"
-                ><md-icon v-if="eventTwitter.verification == true"
-                  >done</md-icon
-                ></span
-              >
-            </span>
-          </div>
-        </div>
-        </md-card-content></md-card>
+        <md-card
+          ><md-card-content>
+            <h2>Organizer name</h2>
+            <div class="info-group split">
+              <div>
+                <md-icon class="info-title">link</md-icon>
+                <a class="info-value" :href="eventWebsite.url" target="_blank"
+                  >Website</a
+                >
+              </div>
+              <div>
+                <span class="info-value-status">
+                  <md-progress-spinner
+                    v-if="eventWebsite.verification === 'pending'"
+                    :md-diameter="20"
+                    :md-stroke="4"
+                    md-mode="indeterminate"
+                  ></md-progress-spinner>
+                  <span class="danger"
+                    ><md-icon
+                      class="danger"
+                      v-if="eventWebsite.verification == false"
+                      >warning</md-icon
+                    ></span
+                  >
+                  <span class="good"
+                    ><md-icon v-if="eventWebsite.verification == true"
+                      >done</md-icon
+                    ></span
+                  >
+                </span>
+              </div>
+            </div>
+            <div class="info-group split">
+              <div>
+                <md-icon class="info-title">delete</md-icon>
+                <a class="info-value" :href="eventTwitter.url" target="_blank"
+                  >Twitter</a
+                >
+              </div>
+              <div>
+                <span class="info-value-status">
+                  <md-progress-spinner
+                    v-if="eventTwitter.verification === 'pending'"
+                    :md-diameter="20"
+                    :md-stroke="4"
+                    md-mode="indeterminate"
+                  ></md-progress-spinner>
+                  <span class="danger"
+                    ><md-icon v-if="eventTwitter.verification == false"
+                      >warning</md-icon
+                    ></span
+                  >
+                  <span class="good"
+                    ><md-icon v-if="eventTwitter.verification == true"
+                      >done</md-icon
+                    ></span
+                  >
+                </span>
+              </div>
+            </div>
+          </md-card-content></md-card
+        >
       </div>
     </section>
     <!-- information about the identity service -->
     <section class="identity-information">
       <div class="container">
-        <md-card><md-card-content>
-        <h2>{{ approverTitle }}</h2>
-        <div class="info-group split">
-          <div>
-            <md-icon class="info-title">link</md-icon>
-            <a class="info-value" :href="approverWebsite.url" target="_blank"
-              >Website</a
-            >
-          </div>
-          <div>
-            <span class="info-value-status">
-              <md-progress-spinner
-                v-if="approverWebsite.verification === 'pending'"
-                :md-diameter="20"
-                :md-stroke="4"
-                md-mode="indeterminate"
-              ></md-progress-spinner>
-              <span class="danger"
-                ><md-icon
-                  class="danger"
-                  v-if="approverWebsite.verification == false"
-                  >warning</md-icon
-                ></span
+        <md-card
+          ><md-card-content>
+            <h2>{{ approverTitle }}</h2>
+            <div class="info-group split">
+              <div>
+                <md-icon class="info-title">link</md-icon>
+                <a
+                  class="info-value"
+                  :href="approverWebsite.url"
+                  target="_blank"
+                  >Website</a
+                >
+              </div>
+              <div>
+                <span class="info-value-status">
+                  <md-progress-spinner
+                    v-if="approverWebsite.verification === 'pending'"
+                    :md-diameter="20"
+                    :md-stroke="4"
+                    md-mode="indeterminate"
+                  ></md-progress-spinner>
+                  <span class="danger"
+                    ><md-icon
+                      class="danger"
+                      v-if="approverWebsite.verification == false"
+                      >warning</md-icon
+                    ></span
+                  >
+                  <span class="good"
+                    ><md-icon v-if="approverWebsite.verification == true"
+                      >done</md-icon
+                    ></span
+                  >
+                </span>
+              </div>
+            </div>
+            <div class="info-group split">
+              <div>
+                <md-icon class="info-title">delete</md-icon>
+                <a
+                  class="info-value"
+                  :href="approverTwitter.url"
+                  target="_blank"
+                  >Twitter</a
+                >
+              </div>
+              <div>
+                <span class="info-value-status">
+                  <md-progress-spinner
+                    v-if="approverTwitter.verification === 'pending'"
+                    :md-diameter="20"
+                    :md-stroke="4"
+                    md-mode="indeterminate"
+                  ></md-progress-spinner>
+                  <span class="danger"
+                    ><md-icon
+                      class="danger"
+                      v-if="approverTwitter.verification == false"
+                      >warning</md-icon
+                    ></span
+                  >
+                  <span class="good"
+                    ><md-icon v-if="approverTwitter.verification == true"
+                      >done</md-icon
+                    ></span
+                  >
+                </span>
+              </div>
+            </div>
+            <div class="info-group">
+              <md-icon class="info-title">mail_outline</md-icon>
+              <span class="info-value"
+                >{{ requiredIdentityLevel }} -
+                {{ requiredIdentityMethod }}</span
               >
-              <span class="good"
-                ><md-icon v-if="approverWebsite.verification == true"
-                  >done</md-icon
-                ></span
-              >
-            </span>
-          </div>
-        </div>
-        <div class="info-group split">
-          <div>
-            <md-icon class="info-title">delete</md-icon>
-            <a class="info-value" :href="approverTwitter.url" target="_blank"
-              >Twitter</a
-            >
-          </div>
-          <div>
-            <span class="info-value-status">
-              <md-progress-spinner
-                v-if="approverTwitter.verification === 'pending'"
-                :md-diameter="20"
-                :md-stroke="4"
-                md-mode="indeterminate"
-              ></md-progress-spinner>
-              <span class="danger"
-                ><md-icon
-                  class="danger"
-                  v-if="approverTwitter.verification == false"
-                  >warning</md-icon
-                ></span
-              >
-              <span class="good"
-                ><md-icon v-if="approverTwitter.verification == true"
-                  >done</md-icon
-                ></span
-              >
-            </span>
-          </div>
-        </div>
-        <div class="info-group">
-          <md-icon class="info-title">mail_outline</md-icon>
-          <span class="info-value"
-            >{{ requiredIdentityLevel }} - {{ requiredIdentityMethod }}</span
-          >
-        </div>
-        <div class="info-group" v-if="userIsApproved">
-          You are approved with {{ approverTitle }} at the required level to buy
-          tickets.
-        </div>
-        </md-card-content></md-card>
+            </div>
+            <div class="info-group" v-if="userIsApproved">
+              You are approved with {{ approverTitle }} at the required level to
+              buy tickets.
+            </div>
+          </md-card-content></md-card
+        >
       </div>
     </section>
     <!-- tickets -->
@@ -203,6 +214,31 @@
             ></div>
           </div>
         </div>
+      </div>
+    </section>
+    <!-- Presale -->
+    <section>
+      <div class="container">
+        <h2>Presale</h2>
+        <div
+          class="presale-type"
+          v-for="ticket in fungibleTicketsWithPresale"
+          v-bind:key="'presale_fungible_' + ticket.typeId"
+        >
+          <div class="presale">
+            <md-card>
+              <md-card-content>
+                <div class="md-card-title">{{ ticket.title }}</div>
+                <md-button @click="joinPresale(ticket)">Join</md-button>
+              </md-card-content>
+            </md-card>
+          </div>
+        </div>
+        <div
+          class="presale-type"
+          v-for="ticket in nonFungibleTicketsWithPresale"
+          v-bind:key="'presale_nonfungible_' + ticket.typeId"
+        ></div>
       </div>
     </section>
     <!-- aftermarket -->
@@ -493,6 +529,7 @@ import {
   makeBuyOrderFungible,
   getNumSellOrders,
   fillSellOrderFungible,
+  joinPresale,
 } from "./../util/tickets";
 export default {
   name: "Event",
@@ -600,6 +637,16 @@ export default {
     nonFungibleTickets() {
       return this.event.nonFungibleTickets ? this.event.nonFungibleTickets : [];
     },
+    fungibleTicketsWithPresale() {
+      return this.event.fungibleTickets
+        ? this.event.fungibleTickets.filter((t) => t.presaleSupply > 0)
+        : [];
+    },
+    nonFungibleTicketsWithPresale() {
+      return this.event.nonFungibleTickets
+        ? this.event.nonFungibleTickets.filter((t) => t.presaleSupply > 0)
+        : [];
+    },
     lowest_price() {
       try {
         return this.event.getLowestPrice();
@@ -699,7 +746,15 @@ export default {
       this.$root.$emit("userUpdated");
       this.$root.$emit("updateCharts");
     },
-
+    async joinPresale(ticket) {
+      const result = await joinPresale(
+        ticket,
+        this.$store.state.activeUser.account,
+        this.$store.state.web3.web3Instance,
+        this.event.contractAddress
+      );
+      this.$root.$emit("openMessageBus", result);
+    },
     async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
       const result = await fillSellOrderNonFungible(
         ticketTypeId,
@@ -938,7 +993,7 @@ export default {
 
 <style scoped>
 .container .md-card {
-  margin-top:1rem;
+  margin-top: 1rem;
   margin-bottom: 1rem;
 }
 .aftermarket {
@@ -958,7 +1013,7 @@ export default {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index:9;
+  z-index: 9;
   box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
 }

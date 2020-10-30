@@ -1390,25 +1390,6 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
         "type": "uint256"
       }
     ],
-    "name": "nfsForSale",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
     "name": "nonces",
     "outputs": [
       {
@@ -1586,6 +1567,25 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
     "inputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "totalTickets",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_sender",
         "type": "address"
       },
@@ -1743,4 +1743,4 @@ export const EVENT_MINTABLE_AFTERMARKET_ABI = [
     "stateMutability": "nonpayable",
     "type": "function"
   }
-];
+]

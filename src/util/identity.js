@@ -160,6 +160,25 @@ export async function requestPhoneValidationCode(number) {
   return response;
 }
 
+export async function requestKYCVerification(mrz, front, selfie) {
+  let response;
+  var formData = new FormData();
+  formData.append("mrz", mrz);
+  formData.append("front", front);
+  formData.append("selfie", selfie);
+
+  try {
+    response = await axios.post(
+      `${IDETIX_APPROVAL_SERVER}/AddKYCIdentity`,
+      formData
+    );
+    console.log(response);
+  } catch (e) {
+    console.log(e);
+    console.log("api call error");
+  }
+}
+
 export async function requestMailVerification(
   mail,
   secret,

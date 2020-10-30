@@ -111,4 +111,4 @@ export const EVENT_FACTORY_ABI = [
     "stateMutability": "view",
     "type": "function"
   }
-];
+]

@@ -18,6 +18,32 @@ import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAfter
 
 const BigNumber = require("bignumber.js");
 
+
+export async function joinPresale(ticket, account, web3Instance, eventContractAddress) {
+  const contract = new web3Instance.eth.Contract(
+    EVENT_MINTABLE_AFTERMARKET_ABI,
+    eventContractAddress
+  );
+  const typeId = ticket.isNf ? getFullTicketTypeId(true, ticket.typeId) : getFullTicketTypeId(false, ticket.typeId)
+  const result = contract.methods.joinPresale(typeId).send({
+    value: String(ticket.price),
+    from: account
+  });
+  console.log(result);
+}
+
+export async function claimPresale(ticket, account, web3Instance, eventContractAddress) {
+  const contract = new web3Instance.eth.Contract(
+    EVENT_MINTABLE_AFTERMARKET_ABI,
+    eventContractAddress
+  );
+  const result = contract.methods.claim(ticket.typeId).send({
+    from: account
+  });
+  console.log(result);
+}
+
+
 /**
  * Returns the number of available seats for a ticket Type
  * @param {TicketType} ticket
@@ -880,6 +906,8 @@ export class FungibleTicketType {
     this.supply = 0;
     this.ticketsSold = 0;
     this.aftermarketGranularity = 0;
+    this.presaleSupply = 0;
+    this.presaleClosingBlock = 0;
     this.title = "";
     this.description = "";
     this.color = "";
@@ -901,6 +929,8 @@ export class NonFungibleTicketType {
     this.supply = 0;
     this.ticketsSold = 0;
     this.aftermarketGranularity = 0;
+    this.presaleSupply = 0;
+    this.presaleClosingBlock = 0;
     this.title = "";
     this.description = "";
     this.color = "";

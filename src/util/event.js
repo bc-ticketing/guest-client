@@ -341,6 +341,7 @@ export class Event {
     if (nonce > 0) {
       for (let i = 1; i <= nonce; i++) {
         const typeIdentifier = getIdAsBigNumber(false, i);
+        console.log('loading fungible ticket type', i);
         const changed = await ticketMetadataChanged(
           eventSC,
           this.lastFetchedBlock + 1,
@@ -360,6 +361,13 @@ export class Event {
           ticketType.supply = Number(ticketMapping.supply);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
+          // check presale
+          const lottery = await eventSC.methods.lotteries(typeIdentifier).call();
+          console.log(lottery);
+          if ( lottery.supply > 0) {
+            ticketType.presaleSupply = Number(lottery.supply);
+            ticketType.presaleClosingBlock = lottery.block;
+          }
           await fetchIpfsHash(ticketType, web3Instance, ABI);
           await loadIPFSMetadata(ticketType, ipfsInstance);
           //await loadSellOrders(ticketType, web3Instance, ABI);
@@ -404,6 +412,13 @@ export class Event {
           console.log('supply', ticketType.supply);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;
+           // check presale
+           const lottery = await eventSC.methods.lotteries(typeIdentifier).call();
+           console.log(lottery);
+           if ( lottery.supply > 0) {
+             ticketType.presaleSupply = Number(lottery.supply);
+             ticketType.presaleClosingBlock = lottery.block;
+           }
           console.log(ticketType);
           for (let j = 1; j <= Number(ticketType.supply); j++) {
             const ticketId = getIdAsBigNumber(true, i, j).toFixed();

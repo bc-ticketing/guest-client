@@ -99,6 +99,10 @@ export async function checkTicketChanges(user, contract) {
   return seller.concat(buyer);
 }
 
+export function loadJoinedPresales(user, event) {
+  // TODO: fetch joined presales
+}
+
 export function loadAftermarketForEvent(user, event) {
   for (const ticket of user.fungibleTickets) {
     console.log("loading am for ticket: ", ticket);

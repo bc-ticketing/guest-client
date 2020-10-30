@@ -24,14 +24,14 @@
               <md-field>
                 <label for="mail"></label>
                 <md-input
-                type="text"
-                name="mail"
-                id="mail"
-                placeholder="mail"
-                v-model="mailForm.mail"
-              />
+                  type="text"
+                  name="mail"
+                  id="mail"
+                  placeholder="mail"
+                  v-model="mailForm.mail"
+                />
               </md-field>
-              
+
               <md-button class="md-raised" @click="submitMail"
                 >Submit</md-button
               >
@@ -50,14 +50,14 @@
               <md-field>
                 <label for="secret mail">secret</label>
                 <md-input
-                type="text"
-                name="secret mail"
-                id="secret_mail"
-                placeholder="secret"
-                v-model="mailForm.secret"
-              />
+                  type="text"
+                  name="secret mail"
+                  id="secret_mail"
+                  placeholder="secret"
+                  v-model="mailForm.secret"
+                />
               </md-field>
-              
+
               <md-button class="md-raised" @click="verifyMail"
                 >Submit</md-button
               >
@@ -72,7 +72,6 @@
               <p>
                 You are all done!
               </p>
-              
             </div>
           </md-step>
         </md-steppers>
@@ -97,13 +96,14 @@
               <md-field>
                 <label for="phoneNr">phone number</label>
                 <md-input
-                name="phoneNr" id="phoneNr"
-                type="text"
-                placeholder="phone"
-                v-model="phoneForm.phone"
-              />
+                  name="phoneNr"
+                  id="phoneNr"
+                  type="text"
+                  placeholder="phone"
+                  v-model="phoneForm.phone"
+                />
               </md-field>
-              
+
               <md-button class="md-raised" @click="submitPhone"
                 >Submit</md-button
               >
@@ -122,14 +122,14 @@
               <md-field>
                 <label for="secret_phone">Secret</label>
                 <md-input
-                type="text"
-                name="secret phone"
-                id="secret_phone"
-                placeholder="secret"
-                v-model="phoneForm.secret"
-              />
+                  type="text"
+                  name="secret phone"
+                  id="secret_phone"
+                  placeholder="secret"
+                  v-model="phoneForm.secret"
+                />
               </md-field>
-              
+
               <md-button class="md-raised" @click="verifyPhone"
                 >Submit</md-button
               >
@@ -144,7 +144,6 @@
               <p>
                 You are all done!
               </p>
-              
             </div>
           </md-step>
         </md-steppers>
@@ -154,9 +153,51 @@
         class="form-version kyc"
         v-bind:class="{ active: this.method === 'kyc' }"
       >
-        <div class="form-group mail">
-          <label for="mail">KYC</label>
-        </div>
+        <md-steppers md-linear :md-active-step.sync="kycForm.progress.active">
+          <md-step
+            id="kyc_submit"
+            :md-done.sync="kycForm.progress.kyc_submit"
+            :md-editable="false"
+          >
+            <div class="form-group">
+              <p>
+                In this first step of the approval process we will send you a
+                mail with a code! Please provide your phone number so that we
+                can contact you.
+              </p>
+              <md-field>
+                <label>mrz</label>
+                <md-file 
+                @change="assignMrzFile($event)" accept="image/*" />
+              </md-field>
+              <md-field>
+                <label>front</label>
+                <md-file 
+                 @change="assignFrontFile($event)" accept="image/*" />
+              </md-field>
+              <md-field>
+                <label>selfie</label>
+                <md-file 
+                @change="assignSelfieFile($event)" accept="image/*" />
+              </md-field>
+
+              <md-button class="md-raised" @click="submitKYC"
+                >Submit</md-button
+              >
+            </div>
+          </md-step>
+          <md-step
+            id="kyc_done"
+            :md-editable="false"
+            :md-done.sync="kycForm.progress.kyc_done"
+          >
+            <div class="form-group">
+              <p>
+                You are all done!
+              </p>
+            </div>
+          </md-step>
+        </md-steppers>
       </div>
     </div>
   </div>
@@ -167,7 +208,8 @@ import {
   requestMailValidationCode,
   requestPhoneValidationCode,
   requestMailVerification,
-  requestPhoneVerification
+  requestPhoneVerification,
+  requestKYCVerification
 } from "./../util/identity";
 
 export default {
@@ -196,7 +238,17 @@ export default {
           phone_submit: false,
           phone_verify: false,
           phone_done: false,
-        }
+        },
+      },
+      kycForm: {
+        mrz: undefined,
+        front: undefined,
+        selfie: undefined,
+        progress: {
+          active: "kyc_submit",
+          kyc_submit: false,
+          kyc_done: false,
+        },
       },
     };
   },
@@ -209,6 +261,21 @@ export default {
   mounted: function() {},
   computed: {},
   methods: {
+    assignMrzFile(event) {
+      const file = event.target.files[0];
+      console.log(file);
+      this.kycForm.mrz = file;
+    },
+    assignFrontFile(event) {
+      const file = event.target.files[0];
+      console.log(file);
+      this.kycForm.front = file;
+    },
+    assignSelfieFile(event) {
+      const file = event.target.files[0];
+      console.log(file);
+      this.kycForm.selfie = file;
+    },
     close: function() {
       this.$emit("close");
     },
@@ -236,6 +303,17 @@ export default {
         }
       }
     },
+    // addKYCIdentity(MultipartFile mrz, MultipartFile front, MultipartFile selfie)
+    submitKYC: async function() {
+      console.log(this.kycForm.mrz);
+    
+      const result = await requestKYCVerification(
+        this.kycForm.mrz,
+        this.kycForm.front,
+        this.kycForm.selfie
+      );
+      console.log(result);
+    },
     /*
       @RequestParam String eMail
       @RequestParam String secret,
@@ -257,7 +335,7 @@ export default {
       console.log(result);
       if (result) {
         this.mailForm.progress.active = "mail_done";
-        this.$root.dispatch('registerActiveUser');
+        this.$root.dispatch("registerActiveUser");
       }
     },
     verifyPhone: async function() {
@@ -275,10 +353,9 @@ export default {
       console.log(result);
       if (result) {
         this.phoneForm.progress.active = "phone_done";
-        this.$root.dispatch('registerActiveUser');
+        this.$root.dispatch("registerActiveUser");
       }
     },
-
   },
 };
 </script>
