@@ -45,3 +45,4 @@ export const MESSAGE_BUYORDER_PLACED = 'You enqueued for this ticket!';
 export const MESSAGE_BUYORDER_FILLED = 'You sold your ticket!';
 export const MESSAGE_SELLORDER_WITHDRAWN = 'The sale listing has been withdrawn!';
 export const MESSAGE_PRESALE_CLAIMED = 'The Presale has been claimed';
+export const MESSAGE_PRESALE_JOINED = 'You joined the presale';

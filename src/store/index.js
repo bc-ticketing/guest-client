@@ -5,7 +5,6 @@ import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import { IDENTITY_ABI } from "./../util/abi/identity";
-import getIpfs from "./../util/ipfs/getIpfs";
 import { Event } from "./../util/event";
 import { User, setApprovalLevel } from "./../util/User";
 import { ShoppingCart } from "./../util/shoppingCart";
@@ -57,9 +56,6 @@ export default new Vuex.Store({
     },
     updateShoppingCartStore(state, cart) {
       state.shoppingCart = cart;
-    },
-    registerIpfsInstance(state, payload) {
-      state.ipfsInstance = payload;
     },
     setUsers(state, users) {
       state.users = users;
@@ -174,10 +170,6 @@ export default new Vuex.Store({
     async createShoppingCart({ commit }) {
       commit("updateShoppingCartStore", new ShoppingCart());
     },
-    async registerIpfs({ commit }) {
-      const ipfs = await getIpfs();
-      commit("registerIpfsInstance", ipfs);
-    },
     registerWeb3: async function({ commit }) {
       const web3 = await getWeb3();
       commit("updateWeb3", web3);
@@ -214,44 +206,35 @@ export default new Vuex.Store({
       the state.
     */
     async loadEvents({ commit }) {
-      const eventAddresses = await state.eventFactory.methods
-        .getEvents()
-        .call();
+      const createdEvents = await state.eventFactory.getPastEvents("EventCreated", {
+        fromBlock: 0,
+      });
       var events = [];
-      for (let i = 0; i < eventAddresses.length; i++) {
-        const address = eventAddresses[i];
+      for (let i = 0; i < createdEvents.length; i++) {
+        const address = createdEvents[i].returnValues._contractAddress;
         console.log("loading event; " + address);
         const inStore = await idb.getEvent(address);
         let event;
+        let success;
         if (!inStore) {
           console.log("not in store");
-          event = new Event(address);
-          await event.loadIdentityData(
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            state.web3.web3Instance
-          );
+          event = new Event(address, state.web3.web3Instance);
+          console.log(event);
         } else {
           console.log("in store");
-          event = new Event(inStore);
+          event = new Event(inStore, state.web3.web3Instance);
         }
-        console.log("loading event data");
-        let fetch = await event.loadData(
-          EVENT_MINTABLE_AFTERMARKET_ABI,
-          state.ipfsInstance,
-          state.web3.web3Instance
-        );
-        console.log("loaded event data", fetch);
-        if (fetch) {
+        success = await event.handleMissedEvents();
+        if (success) {
           const block = await state.web3.web3Instance.eth.getBlock("latest");
           event.lastFetchedBlock = block.number;
         }
-        console.log("saving event data");
-        const saved = await idb.saveEvent(event);
-        console.log("saved event data", saved);
-        console.log(JSON.stringify(event));
+        await event.verifySocials();
+        //event.initSubscriptions(state.web3.web3Instance);
+        await idb.saveEvent(event);
+        console.log('saved event');
         events.push(event);
       }
-      console.log(JSON.stringify(events));
       commit("updateEventStore", events);
     },
     async loadApprovers({ commit }) {
@@ -262,12 +245,14 @@ export default new Vuex.Store({
         const inStore = await idb.getApprover(approverAddress);
         let approver;
         if (inStore) {
+          console.log('in store')
           approver = new IdentityApprover(inStore);
           approver.requestUrlVerification();
           approver.requestTwitterVerification();
         } else {
+          console.log('not in store')
           approver = new IdentityApprover(approverAddress);
-          await approver.loadData(state.identity, state.ipfsInstance);
+          await approver.loadData(state.identity);
         }
         await idb.saveApprover(approver);
         if (! approvers.find(a => a.approverAddress === approver.approverAddress)) {

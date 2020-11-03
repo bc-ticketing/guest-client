@@ -1,5 +1,6 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
+import { ipfsClient } from "./ipfs/getIpfs";
 
 const IDETIX_APPROVAL_SERVER = "http://localhost:9191";
 
@@ -30,7 +31,6 @@ export class IdentityApprover {
     const approverMetadata = await identitySC.methods
       .getApproverInfo(this.approverAddress)
       .call();
-    console.log(approverMetadata);
     this.ipfsHash = argsToCid(
       approverMetadata.hashFunction,
       approverMetadata.size,
@@ -39,10 +39,10 @@ export class IdentityApprover {
     return true;
   }
 
-  async loadIPFSMetadata(ipfsInstance) {
+  async loadIPFSMetadata() {
     var ipfsData = null;
     try {
-      for await (const chunk of ipfsInstance.cat(this.ipfsHash, {
+      for await (const chunk of ipfsClient.cat(this.ipfsHash, {
         timeout: 2000,
       })) {
         ipfsData = Buffer(chunk, "utf8").toString();
@@ -95,7 +95,6 @@ export function getHandle(url) {
 }
 
 export async function requestTwitterVerification(handle) {
-  console.log(handle);
   const VERIFIER_URL = process.env.VUE_APP_TRUST_CERTIFICATES_API_URL;
   const VERIFIER_PORT = process.env.VUE_APP_TRUST_CERTIFICATES_API_PORT;
   try {
@@ -114,7 +113,6 @@ export async function requestTwitterVerification(handle) {
 }
 
 export async function requestWebsiteVerification(url) {
-  console.log(url);
   const VERIFIER_URL = process.env.VUE_APP_TRUST_CERTIFICATES_API_URL;
   const VERIFIER_PORT = process.env.VUE_APP_TRUST_CERTIFICATES_API_PORT;
   try {
@@ -133,7 +131,6 @@ export async function requestWebsiteVerification(url) {
 }
 
 export async function requestMailValidationCode(mail) {
-  console.log(mail);
   let response;
   try {
     response = await axios.post(
@@ -147,7 +144,6 @@ export async function requestMailValidationCode(mail) {
 }
 
 export async function requestPhoneValidationCode(number) {
-  console.log(number);
   let response;
   try {
     response = await axios.post(
@@ -191,7 +187,6 @@ export async function requestMailVerification(
     response = await axios.post(
       `${IDETIX_APPROVAL_SERVER}/EmailIdentity/${paramString}`
     );
-    console.log(response.status);
     if (response.status === 200) {
       return true;
     }
@@ -213,7 +208,6 @@ export async function requestPhoneVerification(
     response = await axios.post(
       `${IDETIX_APPROVAL_SERVER}/PhoneIdentity/${paramString}`
     );
-    console.log(response.status);
     if (response.status === 200) {
       return true;
     }

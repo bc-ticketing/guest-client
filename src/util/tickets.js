@@ -1,7 +1,7 @@
 /* 
   This file contains data classes for all ticket types and utility functions for state alterations. All functions that interact with the blockchain for buying/selling tickets are contained here as well as helper functions to get infos from ticket objects
 */
-import { argsToCid, getIdAsBigNumber } from "idetix-utils";
+import { getIdAsBigNumber } from "idetix-utils";
 import {
   NULL_ADDRESS,
   MESSAGE_TRANSACTION_DENIED,
@@ -13,9 +13,12 @@ import {
   MESSAGE_BUYORDER_PLACED,
   MESSAGE_BUYORDER_FILLED,
   MESSAGE_PRESALE_CLAIMED,
+  MESSAGE_PRESALE_JOINED,
 } from "./constants/constants";
 import { AFFILIATE_ADDRESS } from './constants/addresses';
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
+
+import { ipfsClient } from "./ipfs/getIpfs";
 
 const BigNumber = require("bignumber.js");
 
@@ -29,11 +32,22 @@ export async function joinPresale(ticket, account, web3Instance, eventContractAd
     eventContractAddress
   );
   const typeId = ticket.isNf ? getFullTicketTypeId(true, ticket.typeId) : getFullTicketTypeId(false, ticket.typeId)
-  const result = contract.methods.joinPresale(typeId).send({
-    value: String(ticket.price),
-    from: account
-  });
-  console.log(result);
+  let result;
+  try {
+    result = contract.methods.joinPresale(typeId).send({
+      value: String(ticket.price),
+      from: account
+    });
+    if (result.status) {
+      return {
+        message: MESSAGE_PRESALE_JOINED,
+        status: 1,
+        event: eventContractAddress,
+      };
+    }
+  } catch(e) {
+    return decodeError(e);
+  }
 }
 
 export async function claimPresale(ticket, account, web3Instance, eventContractAddress) {
@@ -41,11 +55,11 @@ export async function claimPresale(ticket, account, web3Instance, eventContractA
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
   );
+  let result;
   try {
-    const result =  await contract.methods.claim(ticket.typeId).send({
+    result =  await contract.methods.claim(ticket.typeId).send({
       from: account
     });
-    console.log(result);
     if (result.status) {
       return {
         message: MESSAGE_PRESALE_CLAIMED,
@@ -54,7 +68,6 @@ export async function claimPresale(ticket, account, web3Instance, eventContractA
       };
     }
   } catch (e) {
-    console.log(e);
     return decodeError(e);
   }
 }
@@ -286,7 +299,6 @@ export async function fillBuyOrderFungible(
     eventContractAddress
   );
   let result;
-  console.log(ticketType, amount, percentage);
   await contract.methods
     .fillBuyOrderFungibles(
       getFullTicketTypeId(false, ticketType),
@@ -323,7 +335,6 @@ export async function fillBuyOrderNonFungible(
   web3Instance,
   eventContractAddress
 ) {
-  console.log(ticketType, ticketId, percentage);
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
@@ -422,17 +433,13 @@ export async function withdrawSellOrderFungible(
         i
       )
       .call();
-    console.log(queuedUser);
     if (
       queuedUser.userAddress === account &&
       Number(queuedUser.quantity) >= amount
     ) {
-      console.log("found user index");
       foundIndex = i;
     }
-    console.log(`found index at ${foundIndex}`);
   }
-  console.log(queue);
   let result;
   await contract.methods
     .withdrawSellOrderFungible(
@@ -509,9 +516,6 @@ export async function makeSellOrderNonFungible(
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
   );
-
-  console.log(ticketType, ticket, percentage, account);
-  console.log(getFullTicketId(ticket, ticketType));
   let result;
   await contract.methods
     .makeSellOrderNonFungibles(
@@ -661,11 +665,12 @@ export async function buyFungible(
 ) {
   const eventSC = new web3Instance.eth.Contract(ABI, eventContractAddress);
   let result;
+  console.log(price);
   await eventSC.methods
     .mintFungible(getFullTicketTypeId(false, new BigNumber(ticketType)), amount, [AFFILIATE_ADDRESS])
     .send({
       from: account,
-      value: amount * price,
+      value: String(amount * web3Instance.utils.toWei(price)),
     })
     .on("receipt", function(receipt) {
       console.log(receipt);
@@ -703,7 +708,7 @@ export async function buyNonFungible(
     .mintNonFungibles([getFullTicketId(ticket, ticketType)], [AFFILIATE_ADDRESS])
     .send({
       from: account,
-      value: price,
+      value: String(web3Instance.utils.toWei(price)),
     })
     .on("receipt", function(receipt) {
       if (receipt.status === "true") {
@@ -729,12 +734,12 @@ export async function buyNonFungible(
  * @param {TicketType} ticket
  * @param {ipfsInstance} ipfsInstance
  */
-export async function loadIPFSMetadata(ticket, ipfsInstance) {
+export async function loadIPFSMetadata(ticket) {
   if (ticket.ipfsHash === "") {
     return;
   }
   var ipfsData = null;
-  for await (const chunk of ipfsInstance.cat(ticket.ipfsHash, {
+  for await (const chunk of ipfsClient.cat(ticket.ipfsHash, {
     timeout: 2000,
   })) {
     ipfsData = Buffer(chunk, "utf8").toString();
@@ -744,8 +749,6 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
   ticket.seatMapping = metadata.ticket.mapping;
   ticket.title = metadata.ticket.title;
   ticket.color = metadata.ticket.color;
-  console.log(ticket.seatMapping);
-  console.log(ticket.tickets);
   if (ticket.isNf) {
     metadata.ticket.mapping.forEach((mapping, index) => {
       if (index >= ticket.tickets.length) {
@@ -757,33 +760,6 @@ export async function loadIPFSMetadata(ticket, ipfsInstance) {
   return ticket;
 }
 
-/**
- * Fetches the IPFS hash on the blockchain for a ticket Type
- * @param {TicketType} ticket
- */
-export async function fetchIpfsHash(ticket, web3Instance, ABI) {
-  const eventSC = new web3Instance.eth.Contract(
-    ABI,
-    ticket.eventContractAddress
-  );
-  const ticketMetadata = await eventSC.getPastEvents("TicketMetadata", {
-    filter: {
-      ticketTypeId: getFullTicketTypeId(ticket.isNf, ticket.typeId),
-    },
-    fromBlock: 1,
-  });
-  if (ticketMetadata.length < 1) {
-    return;
-  }
-  var metadataObject = ticketMetadata[0].returnValues;
-  const ipfsHash = argsToCid(
-    metadataObject.hashFunction,
-    metadataObject.size,
-    metadataObject.digest
-  );
-  ticket.ipfsHash = ipfsHash;
-  return ticket;
-}
 
 /**
  * Calculates the full Ticket Type Identifier
@@ -845,7 +821,6 @@ export function addSellOrders(
   ticketId = 0
 ) {
   if (ticketId == 0) {
-    console.log("adding sell order");
     ticketType.sellOrders.push({
       address: address,
       percentage: percentage,
@@ -897,7 +872,6 @@ export function removeSellOrders(
       return;
     }
     if (Number(quantity) >= Number(order.quantity)) {
-      console.log("withdrawing all orders of this type");
       ticketType.sellOrders = ticketType.sellOrders.filter(
         (o) =>
           o.address !== address || Number(o.percentage) !== Number(percentage)
@@ -917,7 +891,7 @@ export function removeSellOrders(
 export class FungibleTicketType {
   constructor(eventContractAddress, typeId) {
     this.eventContractAddress = eventContractAddress;
-    this.typeId = typeId;
+    this.typeId = Number(typeId);
     this.price = 0;
     this.supply = 0;
     this.ticketsSold = 0;
@@ -940,7 +914,7 @@ export class FungibleTicketType {
 export class NonFungibleTicketType {
   constructor(eventContractAddress, typeId) {
     this.eventContractAddress = eventContractAddress;
-    this.typeId = typeId;
+    this.typeId = Number(typeId);
     this.price = 0;
     this.supply = 0;
     this.ticketsSold = 0;

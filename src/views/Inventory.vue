@@ -55,15 +55,16 @@
                 <div class="md-subhead">
                   {{ getTicketTitle(presale.event, presale.ticketType) }}
                 </div>
-                <div
-                v-if="getPresaleOver(presale.event, presale.ticketType)"
-                >
+                <div v-if="getPresaleOver(presale.event, presale.ticketType)">
                   <md-button
-                  @click="makePresaleClaim(presale.event, presale.ticketType)">
-                    Claim</md-button>
+                    @click="makePresaleClaim(presale.event, presale.ticketType)"
+                  >
+                    Claim</md-button
+                  >
                 </div>
                 <div v-else>
-                  This Presale is still running, wait until it is over to see if you won the lottery
+                  This Presale is still running, wait until it is over to see if
+                  you won the lottery
                 </div>
               </md-card-content>
             </md-card>
@@ -84,13 +85,12 @@
 
 <script>
 import TicketOverlay from "./../components/TicketOverlay";
-import { Ticket } from "./../components/Ticket";
-import { presaleOver, claimPresale } from './../util/tickets';
-// import SellView from "./SellView";
+import Ticket from "./../components/Ticket";
+import { presaleOver, claimPresale } from "./../util/tickets";
 import { getNumberFungibleOwned } from "./../util/User";
 import { isNf, getTicketTypeIndex } from "idetix-utils";
- 
- const BigNumber = require("bignumber.js");
+
+const BigNumber = require("bignumber.js");
 
 export default {
   name: "Inventory",
@@ -109,7 +109,6 @@ export default {
   },
   components: {
     Ticket,
-    // SellView,
     TicketOverlay,
   },
   computed: {
@@ -190,12 +189,9 @@ export default {
     },
     getTicket(event, ticketId) {
       const ticketNr = Number(
-        getTicketTypeIndex(
-          new BigNumber(ticketId)
-        ).toFixed()
+        getTicketTypeIndex(new BigNumber(ticketId)).toFixed()
       );
-      const nf = isNf(new BigNumber(ticketId
-        ).toFixed());
+      const nf = isNf(new BigNumber(ticketId).toFixed());
       const ticket = event.getTicketType(ticketNr, nf);
       return ticket;
     },
@@ -203,10 +199,11 @@ export default {
       const event = this.getEvent(eventAddress);
       const ticket = this.getTicket(event, ticketId);
       const result = await claimPresale(
-        ticket, 
-        this.$store.state.activeUser.account, 
+        ticket,
+        this.$store.state.activeUser.account,
         this.$store.state.web3.web3Instance,
-        eventAddress);
+        eventAddress
+      );
       this.$root.$emit("openMessageBus", result);
     },
     getTicketTitle(eventAddress, ticketId) {

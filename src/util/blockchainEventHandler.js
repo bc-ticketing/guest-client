@@ -33,7 +33,6 @@ export async function getJoinedPresales(contract, fromBlock, account) {
     fromBlock: fromBlock,
     filter: { user: account },
   });
-  console.log("events", events);
   return events.length > 0 ? events : [];
 }
 
@@ -42,7 +41,6 @@ export async function getTicketClaimed(contract, fromBlock, account) {
     fromBlock: fromBlock,
     filter: { user: account },
   });
-  console.log("events", events);
   return events.length > 0 ? events : [];
 }
 
@@ -51,32 +49,28 @@ export async function getTicketPriceRefunded(contract, fromBlock, account) {
     fromBlock: fromBlock,
     filter: { user: account },
   });
-  console.log("events", events);
   return events.length > 0 ? events : [];
 }
 
 async function getEvents(contract, name, fromBlock) {
   return await contract.getPastEvents(name, { fromBlock: fromBlock });
 }
-async function getLatestEvent(contract, name, fromBlock) {
-  const events = await contract.getPastEvents(name, { fromBlock: fromBlock });
-  return events.length > 0;
-}
+
 
 /* event */
-export async function eventMetadataChanged(contract, fromBlock) {
-  return await getLatestEvent(contract, "EventMetadata", fromBlock);
+export async function eventMetadata(contract, fromBlock) {
+  const events = await contract.getPastEvents("EventMetadata", {
+    fromBlock: fromBlock,
+  });
+  return events.length > 0 ? events : [];
 }
 
-export async function newTickets(contract, fromBlock) {
-  return await getLatestEvent(contract, "TicketMetadata", fromBlock);
-}
-export async function ticketMetadataChanged(contract, fromBlock, ticketId) {
+
+export async function ticketMetadata(contract, fromBlock) {
   const events = await contract.getPastEvents("TicketMetadata", {
     fromBlock: fromBlock,
-    filter: { ticketTypeId: ticketId },
   });
-  return events.length > 0;
+  return events.length > 0 ? events : [];
 }
 
 /* aftermarket */

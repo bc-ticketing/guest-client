@@ -97,7 +97,6 @@ export default {
     // since the ticket loading logic depends on the event metadata
     // being present.
     this.$root.$on("loadedEvents", async () => {
-      //await this.$store.dispatch("loadUsers");
       await this.$store.dispatch("loadApprovers");
       await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("userUpdated");
@@ -119,9 +118,8 @@ export default {
 
     // Actual execution starts here
     // First we register ipfs and web3 handlers and emit the respective event
-    await this.$store.dispatch("registerIpfs");
     await this.$store.dispatch("registerWeb3");
-    this.$root.$emit("web3Injected");
+    this.$root.$emit("web3Injected"); 
     // we subscribe to the accountsChanged event from web3 to detect thos
     this.$store.state.web3.ethereum.on("accountsChanged", () => {
       this.$root.$emit("accountChanged");

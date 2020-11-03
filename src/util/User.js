@@ -13,6 +13,11 @@ import { isNf, getTicketId, getTicketTypeIndex } from "idetix-utils";
 
 const BigNumber = require("bignumber.js");
 
+
+
+
+
+
 export class User {
   constructor(account, balance) {
     // hack to turn users from idb into proper user objects
@@ -63,12 +68,9 @@ export async function loadPresales(user, event, web3Instance, ABI) {
 }
 
 export async function loadJoinedPresales(user, event, web3Instance, ABI) {
-  console.log('loading presales for event: ',event.title)
   const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
   const presales = await getJoinedPresales(eventSC, 0, user.account);
-  console.log(presales);
   presales.forEach(presale => {
-    console.log(presale);
     user.presales.joined[event.contractAddress] = user.presales.joined[event.contractAddress] ? user.presales.joined[event.contractAddress] : {};
     user.presales.joined[event.contractAddress][presale.returnValues.ticketType] = true;
   });

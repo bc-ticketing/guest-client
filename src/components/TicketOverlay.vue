@@ -208,10 +208,8 @@ export default {
             t.ticketType === this.ticketTypeId
         );
       }
-      console.log(userTicket);
       if (userTicket) {
         if (userTicket.sellOrders) {
-          console.log(userTicket.sellOrders);
           return userTicket.sellOrders;
         } else if (userTicket.sellOrder.percentage) {
           return [userTicket.sellOrder];
@@ -288,7 +286,6 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
-        console.log(result);
         if (result.status == 1) {
           await this.$store.dispatch("updateEvent", result.event);
           await this.$store.dispatch("registerActiveUser");
