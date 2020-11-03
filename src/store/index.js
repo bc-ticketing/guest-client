@@ -9,7 +9,11 @@ import getIpfs from "./../util/ipfs/getIpfs";
 import { Event } from "./../util/event";
 import { User, setApprovalLevel } from "./../util/User";
 import { ShoppingCart } from "./../util/shoppingCart";
-import { loadTicketsForEvent, loadAftermarketForEvent } from "./../util/User";
+import {
+  loadTicketsForEvent,
+  loadAftermarketForEvent,
+  loadPresales,
+} from "./../util/User";
 import idb from "./../util/db/idb";
 import { IdentityApprover } from "../util/identity";
 //import { FungibleTicketType, NonFungibleTicketType, NonFungibleTicket } from "../util/tickets";
@@ -23,7 +27,7 @@ export default new Vuex.Store({
       if ("default" === value) {
         state.pageTransition = {
           name: "router-view",
-          mode: "in-out"
+          mode: "in-out",
         };
       }
       if ("back" === value) {
@@ -108,6 +112,12 @@ export default new Vuex.Store({
           console.log("loading am");
           loadAftermarketForEvent(user, event);
           console.log("loaded am");
+          await loadPresales(
+            user,
+            event,
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI
+          );
           let approver = state.approvers.find(
             (a) =>
               String(a.approverAddress) ===
@@ -137,6 +147,12 @@ export default new Vuex.Store({
           );
           console.log(JSON.parse(JSON.stringify(user.fungibleTickets)));
           loadAftermarketForEvent(user, event);
+          await loadPresales(
+            user,
+            event,
+            state.web3.web3Instance,
+            EVENT_MINTABLE_AFTERMARKET_ABI
+          );
           let approver = state.approvers.find(
             (a) =>
               String(a.approverAddress) ===
@@ -254,7 +270,9 @@ export default new Vuex.Store({
           await approver.loadData(state.identity, state.ipfsInstance);
         }
         await idb.saveApprover(approver);
-        approvers.push(approver);
+        if (! approvers.find(a => a.approverAddress === approver.approverAddress)) {
+          approvers.push(approver);
+        }
       }
       commit("updateApproverStore", approvers);
     },

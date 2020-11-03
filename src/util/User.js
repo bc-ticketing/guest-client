@@ -5,6 +5,9 @@ import {
   MintFungibles,
   MintNonFungibles,
   ticketTransferred,
+  getJoinedPresales,
+  getTicketClaimed,
+  getTicketPriceRefunded
 } from "./blockchainEventHandler";
 import { isNf, getTicketId, getTicketTypeIndex } from "idetix-utils";
 
@@ -26,6 +29,10 @@ export class User {
     this.nfBuyOrders = [];
     this.account = account;
     this.balance = balance;
+    this.presales = {
+      joined: {},
+      ended: {},
+    };
     this.idetixIdentity = {
       phone: false,
       mail: false,
@@ -48,6 +55,41 @@ export function isApproved(user, approver, level) {
     user.approvalLevels[approver] &&
     user.approvalLevels[approver].level >= level
   );
+}
+
+export async function loadPresales(user, event, web3Instance, ABI) {
+  await loadJoinedPresales(user, event, web3Instance, ABI);
+  await loadClaimedPresales(user, event, web3Instance, ABI);
+}
+
+export async function loadJoinedPresales(user, event, web3Instance, ABI) {
+  console.log('loading presales for event: ',event.title)
+  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
+  const presales = await getJoinedPresales(eventSC, 0, user.account);
+  console.log(presales);
+  presales.forEach(presale => {
+    console.log(presale);
+    user.presales.joined[event.contractAddress] = user.presales.joined[event.contractAddress] ? user.presales.joined[event.contractAddress] : {};
+    user.presales.joined[event.contractAddress][presale.returnValues.ticketType] = true;
+  });
+
+}
+
+export async function loadClaimedPresales(user, event, web3Instance, ABI) {
+  console.log('loading claimed presales')
+  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
+  const claims = await getTicketClaimed(eventSC, 0, user.account);
+  const refunds = await getTicketPriceRefunded(eventSC, 0, user.account);
+  for( const claim of claims) {
+    console.log(claim)
+    user.presales.joined[event.contractAddress][claim.returnValues.ticketType] = false;
+
+  }
+  for( const refund of refunds) {
+    console.log(refund)
+    user.presales.joined[event.contractAddress][refund.returnValues.ticketType] = false;
+
+  }
 }
 
 export function getNumberFungibleOwned(user, event, type) {
@@ -99,9 +141,7 @@ export async function checkTicketChanges(user, contract) {
   return seller.concat(buyer);
 }
 
-export function loadJoinedPresales(user, event) {
-  // TODO: fetch joined presales
-}
+
 
 export function loadAftermarketForEvent(user, event) {
   for (const ticket of user.fungibleTickets) {

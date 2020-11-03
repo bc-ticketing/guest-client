@@ -823,6 +823,8 @@ export default {
           }
         });
       });
+      console.log(found_ticket);
+      if (found_ticket) {return found_ticket;}
       this.event.nonFungibleTickets.forEach(function(ticketType) {
         ticketType.tickets.forEach(function(ticket) {
           if (

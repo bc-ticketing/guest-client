@@ -150,7 +150,9 @@ export class Event {
 
   getSellOrdersByAddress(address, ticketType, nfId) {
     console.log("loading sell orders");
+    console.log(ticketType)
     if (nfId) {
+      console.log(ticketType)
       const tt = this.getTicketType(ticketType, true);
       const t = tt.tickets.find((ticket) => ticket.ticketId === nfId);
       return t.sellOrder.address === address ? t.sellOrder : {};
@@ -212,6 +214,7 @@ export class Event {
       console.log(foundNonFungible);
       return foundNonFungible;
     } else {
+      console.log(ticketTypeId);
       const foundFungible = this.fungibleTickets.find(
         (t) => t.typeId === ticketTypeId
       );
@@ -407,8 +410,8 @@ export class Event {
             console.log(ticketMapping);
           ticketType.color = ticketMapping.color;
           ticketType.price = ticketMapping.price;
-          ticketType.ticketsSold = ticketMapping.ticketsSold;
-          ticketType.supply = ticketMapping.supply;
+          ticketType.ticketsSold = Number(ticketMapping.ticketsSold);
+          ticketType.supply = Number(ticketMapping.supply);
           console.log('supply', ticketType.supply);
           const granularity = await eventSC.methods.granularity().call();
           ticketType.aftermarketGranularity = granularity;

@@ -11,7 +11,7 @@
         <div class="group">
           <div class="label">Price</div>
           <div class="value">
-            <div>{{ price }} wei</div>
+            <div>{{ price }} ETH</div>
             <div v-if="!isNf">{{ ticketsAvailable }} available</div>
             <div v-else>
               {{ available ? "available" : "sold" }}
@@ -93,11 +93,7 @@ export default {
         (e) => e.contractAddress === this.eventContractAddress
       );
     },
-    ticket() {
-      return this.event
-        ? this.event.getNfTicket(this.ticketTypeId, this.ticketId)
-        : undefined;
-    },
+    
     ticketType() {
       return this.event
         ? this.event.getTicketType(this.ticketTypeId, this.isNf)
@@ -112,13 +108,13 @@ export default {
         : 0;
     },
     seatNumber() {
-      return this.ticket ? this.ticketId : 0;
+      return this.isNf ? this.ticketId : 0;
     },
     ticketDescription() {
       return this.ticketType ? this.ticketType.description : "";
     },
     price() {
-      return this.ticketType ? this.ticketType.price : 0;
+      return this.ticketType ? this.$store.state.web3.web3Instance.utils.fromWei(this.ticketType.price) : 0;
     },
     granularity() {
       return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
@@ -160,10 +156,10 @@ export default {
         : false;
     },
     userNotOwner() {
-      return this.event
+      return this.event && this.isNf
         ? this.event.getNfOwner(this.ticketTypeId, this.ticketId) !==
             this.$store.state.activeUser.account
-        : false;
+        : true;
     },
     nfForSale() {
       return this.event

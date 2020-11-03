@@ -1,152 +1,76 @@
 <template>
   <div class="container-fluid inventory">
     <h1>Tickets</h1>
-    <div class="tabs">
-      <div class="tab active">Live</div>
-      <div class="tab">Past</div>
-      <div class="underline"></div>
-    </div>
-    <div class="empty-message" v-if="noTicketsOwned">
-      <div class="empty-icon">
-        <md-icon>confirmation_number</md-icon>
-      </div>
-      <p>
-        Looks like its empty here! Checkout some of our events to get your first
-        ticket!
-      </p>
-    </div>
-    <div class="container ticket-list" v-if="$store.state.activeUser">
-      <div
-        class="ticket"
-        v-for="(ticket, index) in $store.state.activeUser.fungibleTickets"
-        v-bind:key="'fungible_' + index"
-      >
-        <Ticket
-          v-bind:ticketTypeId="ticket.ticketType"
-          v-bind:ticketId="ticket.ticketId"
-          v-bind:eventContractAddress="ticket.eventContractAddress"
-          v-bind:isNf="false"
-          v-on:openOverlay="openTicketOverlay(ticket, false)"
-        />
-      </div>
-      <div
-        class="ticket"
-        v-for="(ticket, index) in $store.state.activeUser.nonFungibleTickets"
-        v-bind:key="'nonfungible_' + index"
-      >
-        <Ticket
-          v-bind:ticketTypeId="ticket.ticketType"
-          v-bind:ticketId="ticket.ticketId"
-          v-bind:eventContractAddress="ticket.eventContractAddress"
-          v-bind:isNf="true"
-          v-on:openOverlay="openTicketOverlay(ticket, true)"
-        />
-      </div>
-    </div>
-    <!--
-    <div class="position-relative">
-      <div class="ticket-preview"></div>
-
-      <div class="container ticket-sell">
-        <div v-if="activeSellOrders.length > 0">
-          <p>You have created the following sale listings for this ticket:</p>
-          <div class="sell-order">
-            <div
-              v-for="(order, index) in activeSellOrders"
-              v-bind:key="'sell_' + index"
-            >
-              <p>
-                {{ order.quantity }} tickets for {{ order.percentage }}% of its
-                original price
-              </p>
-              <md-button class="md-raised" @click="withdrawSellOrder(index)">
-                Withdraw sell order
-              </md-button>
-            </div>
+    <md-tabs>
+      <md-tab id="tab-owned" md-label="Owned">
+        <div class="empty-message" v-if="noTicketsOwned">
+          <div class="empty-icon">
+            <md-icon>confirmation_number</md-icon>
+          </div>
+          <p>
+            Looks like its empty here! Checkout some of our events to get your
+            first ticket!
+          </p>
+        </div>
+        <div class="container ticket-list" v-if="$store.state.activeUser">
+          <div
+            class="ticket"
+            v-for="(ticket, index) in $store.state.activeUser.fungibleTickets"
+            v-bind:key="'fungible_' + index"
+          >
+            <Ticket
+              v-bind:ticketTypeId="ticket.ticketType"
+              v-bind:ticketId="ticket.ticketId"
+              v-bind:eventContractAddress="ticket.eventContractAddress"
+              v-bind:isNf="false"
+              v-on:openOverlay="openTicketOverlay(ticket, false)"
+            />
+          </div>
+          <div
+            class="ticket"
+            v-for="(ticket, index) in $store.state.activeUser
+              .nonFungibleTickets"
+            v-bind:key="'nonfungible_' + index"
+          >
+            <Ticket
+              v-bind:ticketTypeId="ticket.ticketType"
+              v-bind:ticketId="ticket.ticketId"
+              v-bind:eventContractAddress="ticket.eventContractAddress"
+              v-bind:isNf="true"
+              v-on:openOverlay="openTicketOverlay(ticket, true)"
+            />
           </div>
         </div>
-        <md-button
-          v-if="ticketsLeftToSell > 0"
-          class="md-raised"
-          @click="sellOpen = true"
-        >
-          Create Sell Order
-        </md-button>
-      </div>
-
-      <div class="ticket-swiper">
-        <div class="pagination"></div>
-        <div v-if="$store.state.activeUser">
-          <div class="swiper-container">
-            <div class="swiper-wrapper">
-              <div
-                class="swiper-slide"
-                v-for="(ticket, index) in $store.state.activeUser
-                  .fungibleTickets"
-                v-bind:key="'fungible_' + index"
-              >
+      </md-tab>
+      <md-tab id="tab-presales" md-label="Presales">
+        <div class="container presales">
+          <div
+            class="presale"
+            v-for="(presale, index) in joinedPresales"
+            v-bind:key="'presale_' + index"
+          >
+            <md-card>
+              <md-card-content>
+                <div class="md-title">{{ getEventTitle(presale.event) }}</div>
+                <div class="md-subhead">
+                  {{ getTicketTitle(presale.event, presale.ticketType) }}
+                </div>
                 <div
-                  class="img"
-                  :style="{
-                    backgroundImage: `url(${
-                      getEventForTicket(ticket).img_url
-                    })`,
-                  }"
+                v-if="getPresaleOver(presale.event, presale.ticketType)"
                 >
-                  <span class="nrTickets"> {{ ticket.amount }}</span>
+                  <md-button
+                  @click="makePresaleClaim(presale.event, presale.ticketType)">
+                    Claim</md-button>
                 </div>
-                <div class="info">
-                  <span class="title">{{
-                    getEventForTicket(ticket).title
-                  }}</span>
-                  <span class="date">
-                    {{ getEventForTicket(ticket).getTimeAndDate() }}</span
-                  >
-                  <span class="location">{{
-                    getEventForTicket(ticket).location
-                  }}</span>
+                <div v-else>
+                  This Presale is still running, wait until it is over to see if you won the lottery
                 </div>
-              </div>
-              <div
-                class="swiper-slide"
-                v-for="(ticket, index) in $store.state.activeUser
-                  .nonFungibleTickets"
-                v-bind:key="'nonfungible_' + index"
-              >
-                <div
-                  class="img"
-                  :style="{
-                    backgroundImage: `url(${
-                      getEventForTicket(ticket).img_url
-                    })`,
-                  }"
-                ></div>
-                <div class="info">
-                  <span class="title">{{
-                    getEventForTicket(ticket).title
-                  }}</span>
-                  <span class="date">
-                    {{ getEventForTicket(ticket).getTimeAndDate() }}</span
-                  >
-                  <span class="location">{{
-                    getEventForTicket(ticket).location
-                  }}</span>
-                </div>
-              </div>
-            </div>
+              </md-card-content>
+            </md-card>
           </div>
         </div>
-      </div>
-    </div> -->
-    <!--    <SellView
-      v-bind:eventContractAddress="activeTicketEvent"
-      v-bind:ticketId="activeTicket"
-      v-bind:ticketTypeId="activeTicketType"
-      v-bind:leftToSell="ticketsLeftToSell"
-      v-bind:isNf="activeIsNf"
-      v-bind:open="sellOpen"
-      v-on:close="sellOpen = false"
-    ></SellView> -->
+      </md-tab>
+    </md-tabs>
     <TicketOverlay
       v-bind:eventContractAddress="activeTicketEvent"
       v-bind:ticketId="activeTicket"
@@ -160,9 +84,13 @@
 
 <script>
 import TicketOverlay from "./../components/TicketOverlay";
-import Ticket from "./../components/Ticket";
+import { Ticket } from "./../components/Ticket";
+import { presaleOver, claimPresale } from './../util/tickets';
 // import SellView from "./SellView";
 import { getNumberFungibleOwned } from "./../util/User";
+import { isNf, getTicketTypeIndex } from "idetix-utils";
+ 
+ const BigNumber = require("bignumber.js");
 
 export default {
   name: "Inventory",
@@ -185,6 +113,24 @@ export default {
     TicketOverlay,
   },
   computed: {
+    joinedPresales() {
+      let presales = [];
+      if (!this.$store.state.activeUser) {
+        return presales;
+      }
+      for (const [eventAddress, presale] of Object.entries(
+        this.$store.state.activeUser.presales.joined
+      )) {
+        for (const [ticketType, status] of Object.entries(presale)) {
+          presales.push({
+            event: eventAddress,
+            ticketType: ticketType,
+            joined: status,
+          });
+        }
+      }
+      return presales;
+    },
     noTicketsOwned() {
       return (
         !this.$store.state.activeUser ||
@@ -236,6 +182,47 @@ export default {
     },
   },
   methods: {
+    getEvent(eventAddress) {
+      const event = this.$store.state.events.find(
+        (e) => e.contractAddress === eventAddress
+      );
+      return event ? event : {};
+    },
+    getTicket(event, ticketId) {
+      const ticketNr = Number(
+        getTicketTypeIndex(
+          new BigNumber(ticketId)
+        ).toFixed()
+      );
+      const nf = isNf(new BigNumber(ticketId
+        ).toFixed());
+      const ticket = event.getTicketType(ticketNr, nf);
+      return ticket;
+    },
+    async makePresaleClaim(eventAddress, ticketId) {
+      const event = this.getEvent(eventAddress);
+      const ticket = this.getTicket(event, ticketId);
+      const result = await claimPresale(
+        ticket, 
+        this.$store.state.activeUser.account, 
+        this.$store.state.web3.web3Instance,
+        eventAddress);
+      this.$root.$emit("openMessageBus", result);
+    },
+    getTicketTitle(eventAddress, ticketId) {
+      const event = this.getEvent(eventAddress);
+      const ticket = this.getTicket(event, ticketId);
+      return ticket.title;
+    },
+    getEventTitle(eventAddress) {
+      const event = this.getEvent(eventAddress);
+      return event ? event.title : "";
+    },
+    getPresaleOver(eventAddress, ticketId) {
+      const event = this.getEvent(eventAddress);
+      const ticket = this.getTicket(event, ticketId);
+      return presaleOver(ticket, this.$store.state.web3.currentBlock);
+    },
     openTicketOverlay(ticket, isNf) {
       this.setActiveTicket(ticket, isNf);
       this.ticketOverlay.open = true;

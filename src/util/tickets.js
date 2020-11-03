@@ -12,12 +12,16 @@ import {
   MESSAGE_SELLORDER_WITHDRAWN,
   MESSAGE_BUYORDER_PLACED,
   MESSAGE_BUYORDER_FILLED,
+  MESSAGE_PRESALE_CLAIMED,
 } from "./constants/constants";
 import { AFFILIATE_ADDRESS } from './constants/addresses';
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 
 const BigNumber = require("bignumber.js");
 
+export function presaleOver(ticket, currentBlock) {
+  return Number(ticket.presaleClosingBlock) <= currentBlock;
+}
 
 export async function joinPresale(ticket, account, web3Instance, eventContractAddress) {
   const contract = new web3Instance.eth.Contract(
@@ -37,10 +41,22 @@ export async function claimPresale(ticket, account, web3Instance, eventContractA
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
   );
-  const result = contract.methods.claim(ticket.typeId).send({
-    from: account
-  });
-  console.log(result);
+  try {
+    const result =  await contract.methods.claim(ticket.typeId).send({
+      from: account
+    });
+    console.log(result);
+    if (result.status) {
+      return {
+        message: MESSAGE_PRESALE_CLAIMED,
+        status: 1,
+        event: eventContractAddress,
+      };
+    }
+  } catch (e) {
+    console.log(e);
+    return decodeError(e);
+  }
 }
 
 
