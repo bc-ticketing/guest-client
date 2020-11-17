@@ -1,19 +1,22 @@
 <template>
-  <div class="camera-wrapper" ontouchstart="">
+  <div class="" ontouchstart="" :class="size">
     <section
       id="camera"
       v-if="stream"
       class="absolute flex flex-col inset-0 items-center justify-end px-4 py-8 z-20"
     ></section>
 
-    <!-- <img :src="photo.toDataURL('image/jpeg')" alt="Photo" class="h-64 w-64" /> -->
+    <div class="camera-wrapper">
+          <div class="overlay top" v-if="size ==='small'"></div>
     <video
       ref="video"
-      class="absolute h-full inset-0 object-cover w-full z-10"
       autoplay
       muted
       playsinline
     ></video>
+    <div class="overlay bottom" v-if="size ==='small'"></div>
+    </div>
+
     <button class="md-button md-raised" @click="capturePhoto">Snap</button>
   </div>
 </template>
@@ -29,6 +32,9 @@ export default {
       photo: null,
     };
   },
+  props: {
+    size: String,
+  },
   mounted() {
     this.startCamera();
   },
@@ -37,7 +43,7 @@ export default {
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
-          facingMode: "environment",
+          facingMode: "user",
         },
       });
 
@@ -56,11 +62,15 @@ export default {
       let video = this.$refs.video;
 
       let videoCanvas = document.createElement("canvas");
-      videoCanvas.height = video.videoHeight;
+      videoCanvas.height = this.size === "small" ? video.videoHeight/3 : video.videoHeight;
       videoCanvas.width = video.videoWidth;
       let videoContext = videoCanvas.getContext("2d");
-
-      videoContext.drawImage(video, 0, 0);
+      console.log(video, 0, video.videoHeight, video.videoWidth)
+      if (this.size === "small") {
+          videoContext.drawImage(video, 0, video.videoHeight/3, video.videoWidth, video.videoHeight/3, 0, 0, video.videoWidth, videoCanvas.height);
+      } else {
+          videoContext.drawImage(video, 0, 0);
+      }
 
       this.photo = loadImage.scale(videoCanvas, {
         maxHeight: 1080,
@@ -71,7 +81,7 @@ export default {
       });
       //console.log(videoCanvas.toDataURL("image/jpeg"));
       //this.$emit("picture", videoCanvas.toDataURL("image/jpeg"));
-      this.photo.toBlob((blob) => {
+      videoCanvas.toBlob((blob) => {
         this.$emit("picture", blob);
         //let data = window.URL.createObjectURL(blob);
       }, "image/jpeg");
@@ -86,8 +96,29 @@ export default {
 
 <style>
 
+.overlay {
+  background: white;
+  z-index: 9;
+  height: 80px;
+  position: absolute;
+  left:0;
+  width: 100%;
+}
+.overlay.top {
+  top:0;
+}
+.overlay.bottom {
+  bottom:0;
+}
 
 .camera-wrapper {
-  min-height: 300px;
+  position: relative;
+}
+
+video {
+  height: 240px;
+}
+.camera-wrapper.small video {
+  
 }
 </style>

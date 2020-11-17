@@ -164,7 +164,7 @@
                 In this first step of the approval process we will take a
                 picture of the back of your identity card
               </p>
-              <camera @picture="assignMrzFile" />
+              <camera @picture="assignMrzFile" v-bind:size="'small'"/>
             </div>
           </md-step>
           <md-step
@@ -177,7 +177,7 @@
                 In this second step of the approval process we will take a
                 picture of the front of your identity card
               </p>
-              <camera @picture="assignFrontFile" />
+              <camera @picture="assignFrontFile" v-bind:size="'normal'"/>
             </div>
           </md-step>
           <md-step
@@ -190,7 +190,7 @@
                 In this third step of the approval process we will take a selfie
                 of you
               </p>
-              <camera @picture="assignSelfieFile" />
+              <camera @picture="assignSelfieFile" v-bind:size="'normal'"/>
             </div>
           </md-step>
           <md-step
@@ -397,8 +397,7 @@ export default {
 
 <style scoped>
 .preview-img {
-  height: 50px;
-  width: 50px;
+  max-width: 80px;
 }
 
 .selection {
