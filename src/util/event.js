@@ -125,8 +125,12 @@ export class Event {
       this.handleBuyOrderPlaced(event)
     );
     // subscribeTo("TicketTransferred", contract, (event) => console.log(event));
-    subscribeTo("TicketMetadata", contract, (event) => this.handleTicketMetadata(event));
-    subscribeTo("EventMetadata", contract, (event) => this.handleEventMetadata(event));
+    subscribeTo("TicketMetadata", contract, (event) =>
+      this.handleTicketMetadata(event)
+    );
+    subscribeTo("EventMetadata", contract, (event) =>
+      this.handleEventMetadata(event)
+    );
   }
 
   getTime() {
@@ -295,14 +299,15 @@ export class Event {
   async loadIPFSMetadata() {
     var ipfsData = null;
     for await (const chunk of ipfsClient.cat(this.ipfsHash, {
-      timeout: 2000,
+      timeout: 10000,
     })) {
       ipfsData = Buffer(chunk, "utf8").toString();
     }
+    console.log(String(ipfsData));
     const metadata = JSON.parse(ipfsData);
     this.location = metadata.event.location;
     this.title = metadata.event.title;
-    this.img_url = metadata.event.img_url;
+    this.image = metadata.event.image;
     this.description = metadata.event.description;
     this.category = metadata.event.category;
     this.duration = metadata.event.duration;
@@ -400,9 +405,7 @@ export class Event {
         }
       }
     }
-  
   }
-
 
   // --------------------------------- Event Handlers ---------------------------------
   async handleMintNonFungibles(event) {

@@ -159,6 +159,8 @@
             :md-done.sync="kycForm.progress.kyc_submit"
             :md-editable="false"
           >
+            <camera />
+
             <div class="form-group">
               <p>
                 In this first step of the approval process we will send you a
@@ -167,23 +169,18 @@
               </p>
               <md-field>
                 <label>mrz</label>
-                <md-file 
-                @change="assignMrzFile($event)" accept="image/*" />
+                <md-file @change="assignMrzFile($event)" accept="image/*" />
               </md-field>
               <md-field>
                 <label>front</label>
-                <md-file 
-                 @change="assignFrontFile($event)" accept="image/*" />
+                <md-file @change="assignFrontFile($event)" accept="image/*" />
               </md-field>
               <md-field>
                 <label>selfie</label>
-                <md-file 
-                @change="assignSelfieFile($event)" accept="image/*" />
+                <md-file @change="assignSelfieFile($event)" accept="image/*" />
               </md-field>
 
-              <md-button class="md-raised" @click="submitKYC"
-                >Submit</md-button
-              >
+              <md-button class="md-raised" @click="submitKYC">Submit</md-button>
             </div>
           </md-step>
           <md-step
@@ -209,12 +206,13 @@ import {
   requestPhoneValidationCode,
   requestMailVerification,
   requestPhoneVerification,
-  requestKYCVerification
+  requestKYCVerification,
 } from "./../util/identity";
+import Camera from "./camera.vue";
 
 export default {
   name: "IdentificationForm",
-  components: {},
+  components: { Camera },
   data() {
     return {
       mailForm: {
@@ -306,7 +304,7 @@ export default {
     // addKYCIdentity(MultipartFile mrz, MultipartFile front, MultipartFile selfie)
     submitKYC: async function() {
       console.log(this.kycForm.mrz);
-    
+
       const result = await requestKYCVerification(
         this.kycForm.mrz,
         this.kycForm.front,

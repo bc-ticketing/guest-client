@@ -8,10 +8,9 @@
       >
     </div>
     <!-- big image -->
-    <div
-      class="header-img"
-      :style="{ backgroundColor: `${event.color}` }"
-    ></div>
+    <div class="header-img" :style="{ backgroundColor: `${event.color}` }">
+      <img :src="event.image" alt="" />
+    </div>
 
     <!-- general event information -->
     <section class="event-information">
@@ -824,7 +823,9 @@ export default {
         });
       });
       console.log(found_ticket);
-      if (found_ticket) {return found_ticket;}
+      if (found_ticket) {
+        return found_ticket;
+      }
       this.event.nonFungibleTickets.forEach(function(ticketType) {
         ticketType.tickets.forEach(function(ticket) {
           if (

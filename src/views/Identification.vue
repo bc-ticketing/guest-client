@@ -10,8 +10,9 @@
           >
             <div class="md-title">{{ approver.title }}</div>
             <div class="md-subhead">
-              You can verify yourself with idetix right in the application. Make sure to check
-              which approvers are listed on the events you are interested in!
+              You can verify yourself with idetix right in the application. Make
+              sure to check which approvers are listed on the events you are
+              interested in!
             </div>
             <div
               class="method"
@@ -54,10 +55,10 @@ export default {
   },
   data() {
     return {
-      desiredMethod: "",
+      desiredMethod: "kyc",
       desiredLevel: 0,
       approver: undefined,
-      formOpen: false,
+      formOpen: true,
     };
   },
   watch: {},
