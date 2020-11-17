@@ -1,96 +1,12 @@
 <template>
-  <main ontouchstart="" class="md:text-xl lg:text-2xl">
-    <!-- Intro -->
-    <!-- ---------- -->
-    <!-- Inform the user of the camera's purpose and prepare them for camera permissions. -->
-    <section
-      id="intro"
-      v-if="!stream"
-      class="absolute flex flex-col inset-0 px-4 py-8 z-20"
-    >
-      <footer class="text-center">
-        <button
-          @click="startCamera"
-          class="bg-black font-bold px-4 py-2 rounded-md text-white"
-        >
-          Allow Access
-        </button>
-      </footer>
-    </section>
-
-    <!-- Camera -->
-    <!-- ---------- -->
-    <!-- Allow the user to capture photos and take other camera actions. -->
+  <div class="camera-wrapper" ontouchstart="">
     <section
       id="camera"
       v-if="stream"
       class="absolute flex flex-col inset-0 items-center justify-end px-4 py-8 z-20"
-    >
-      <footer>
-        <button class="capture" @click="capturePhoto">
-          <img
-            src="https://assets.codepen.io/141041/Button-Fill-White-Large.png"
-            alt="CodePen"
-            class="h-24 w-24"
-            :disabled="!ready"
-          />
-        </button>
-      </footer>
-    </section>
+    ></section>
 
-    <!-- Download -->
-    <!-- ---------- -->
-    <!-- Allow the user to preview and download the captured photo or return to camera. -->
-    <section
-      id="download"
-      v-if="photo"
-      class="absolute bg-white flex flex-col inset-0 items-center justify-between px-4 py-8 z-30"
-    >
-      <header>
-        <button @click="photo = null">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24"
-            viewBox="0 0 24 24"
-            width="24"
-            class="h-10 md:h-12 lg:h-16 w-10 lg:w-12 md:w-16"
-          >
-            <path d="M0 0h24v24H0z" fill="none" />
-            <path
-              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-            />
-          </svg>
-        </button>
-      </header>
-
-      <article>
-        <img
-          :src="photo.toDataURL('image/jpeg')"
-          alt="Photo"
-          class="h-64 w-64"
-        />
-      </article>
-
-      <footer>
-        <button @click="downloadPhoto">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24"
-            viewBox="0 0 24 24"
-            width="24"
-            class="h-10 md:h-12 lg:h-16 w-10 lg:w-12 md:w-16"
-          >
-            <path d="M0 0h24v24H0V0z" fill="none" />
-            <path
-              d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
-            />
-          </svg>
-        </button>
-      </footer>
-    </section>
-
-    <!-- Video -->
-    <!-- ---------- -->
+    <!-- <img :src="photo.toDataURL('image/jpeg')" alt="Photo" class="h-64 w-64" /> -->
     <video
       ref="video"
       class="absolute h-full inset-0 object-cover w-full z-10"
@@ -98,11 +14,12 @@
       muted
       playsinline
     ></video>
-  </main>
+    <button class="md-button md-raised" @click="capturePhoto">Snap</button>
+  </div>
 </template>
 
 <script>
-import { loadImage } from "blueimp-load-image";
+import * as loadImage from "blueimp-load-image";
 
 export default {
   data() {
@@ -111,6 +28,9 @@ export default {
       ready: false,
       photo: null,
     };
+  },
+  mounted() {
+    this.startCamera();
   },
   methods: {
     async startCamera() {
@@ -149,46 +69,25 @@ export default {
         crop: true,
         canvas: true,
       });
+      //console.log(videoCanvas.toDataURL("image/jpeg"));
+      //this.$emit("picture", videoCanvas.toDataURL("image/jpeg"));
+      this.photo.toBlob((blob) => {
+        this.$emit("picture", blob);
+        //let data = window.URL.createObjectURL(blob);
+      }, "image/jpeg");
+      
     },
     downloadPhoto() {
-      this.photo.toBlob((blob) => {
-        let data = window.URL.createObjectURL(blob);
-        let link = document.createElement("a");
-
-        link.href = data;
-        link.download = "photo.jpg";
-        link.click();
-      }, "image/jpeg");
+      
     },
   },
 };
 </script>
 
 <style>
-html,
-body,
-main,
-section {
-  height: 100%;
-  width: 100%;
-}
 
-html {
-  position: fixed;
-}
 
-body {
-  font-family: "Lato", sans-serif;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-}
-
-button.capture:disabled {
-  opacity: 0.25;
-}
-
-button.capture:active {
-  opacity: 0.9;
+.camera-wrapper {
+  min-height: 300px;
 }
 </style>

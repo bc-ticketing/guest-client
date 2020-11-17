@@ -155,32 +155,61 @@
       >
         <md-steppers md-linear :md-active-step.sync="kycForm.progress.active">
           <md-step
-            id="kyc_submit"
-            :md-done.sync="kycForm.progress.kyc_submit"
+            id="kyc_mrz"
             :md-editable="false"
+            :md-done.sync="kycForm.progress.kyc_mrz"
           >
-            <camera />
-
             <div class="form-group">
               <p>
-                In this first step of the approval process we will send you a
-                mail with a code! Please provide your phone number so that we
-                can contact you.
+                In this first step of the approval process we will take a
+                picture of the back of your identity card
               </p>
-              <md-field>
-                <label>mrz</label>
-                <md-file @change="assignMrzFile($event)" accept="image/*" />
-              </md-field>
-              <md-field>
-                <label>front</label>
-                <md-file @change="assignFrontFile($event)" accept="image/*" />
-              </md-field>
-              <md-field>
-                <label>selfie</label>
-                <md-file @change="assignSelfieFile($event)" accept="image/*" />
-              </md-field>
-
-              <md-button class="md-raised" @click="submitKYC">Submit</md-button>
+              <camera @picture="assignMrzFile" />
+            </div>
+          </md-step>
+          <md-step
+            id="kyc_front"
+            :md-editable="false"
+            :md-done.sync="kycForm.progress.kyc_front"
+          >
+            <div class="form-group">
+              <p>
+                In this second step of the approval process we will take a
+                picture of the front of your identity card
+              </p>
+              <camera @picture="assignFrontFile" />
+            </div>
+          </md-step>
+          <md-step
+            id="kyc_selfie"
+            :md-editable="false"
+            :md-done.sync="kycForm.progress.kyc_selfie"
+          >
+            <div class="form-group">
+              <p>
+                In this third step of the approval process we will take a selfie
+                of you
+              </p>
+              <camera @picture="assignSelfieFile" />
+            </div>
+          </md-step>
+          <md-step
+            id="kyc_submit"
+            :md-editable="false"
+            :md-done.sync="kycForm.progress.kyc_submit"
+          >
+            <div class="form-group">
+              <p>
+                In last step you will submit the files
+              </p>
+              <div class="img-list">
+                <img class="preview-img" :src="getImageUrl(kycForm.mrz)" v-if="kycForm.mrz" alt="" />
+                <img class="preview-img" :src="getImageUrl(kycForm.front)" v-if="kycForm.front" alt="" />
+                <img class="preview-img" :src="getImageUrl(kycForm.selfie)" v-if="kycForm.selfie" alt="" />
+              </div>
+              <button class="md-button md-raised" @click="submitKyc()">
+                submit
+              </button>
             </div>
           </md-step>
           <md-step
@@ -243,7 +272,10 @@ export default {
         front: undefined,
         selfie: undefined,
         progress: {
-          active: "kyc_submit",
+          active: "kyc_mrz",
+          kyc_mrz: false,
+          kyc_front: false,
+          kyc_selfie: false,
           kyc_submit: false,
           kyc_done: false,
         },
@@ -259,20 +291,25 @@ export default {
   mounted: function() {},
   computed: {},
   methods: {
-    assignMrzFile(event) {
-      const file = event.target.files[0];
-      console.log(file);
-      this.kycForm.mrz = file;
+    getImageUrl(blob) {
+      var urlCreator = window.URL || window.webkitURL;
+      var imageUrl = urlCreator.createObjectURL(blob);
+      return imageUrl;
     },
-    assignFrontFile(event) {
-      const file = event.target.files[0];
-      console.log(file);
-      this.kycForm.front = file;
+    async assignMrzFile(picture) {
+      console.log(picture);
+      //const file = event.target.files[0];
+      //console.log(file);
+      this.kycForm.mrz = new File([picture], "mrz.jpeg");
+      this.kycForm.progress.active = "kyc_front";
     },
-    assignSelfieFile(event) {
-      const file = event.target.files[0];
-      console.log(file);
-      this.kycForm.selfie = file;
+    async assignFrontFile(picture) {
+      this.kycForm.front = new File([picture], "front.jpeg");
+      this.kycForm.progress.active = "kyc_selfie";
+    },
+    async assignSelfieFile(picture) {
+      this.kycForm.selfie = new File([picture], "selfie.jpeg");
+      this.kycForm.progress.active = "kyc_submit";
     },
     close: function() {
       this.$emit("close");
@@ -302,7 +339,7 @@ export default {
       }
     },
     // addKYCIdentity(MultipartFile mrz, MultipartFile front, MultipartFile selfie)
-    submitKYC: async function() {
+    submitKyc: async function() {
       console.log(this.kycForm.mrz);
 
       const result = await requestKYCVerification(
@@ -359,6 +396,11 @@ export default {
 </script>
 
 <style scoped>
+.preview-img {
+  height: 50px;
+  width: 50px;
+}
+
 .selection {
   position: absolute;
   top: 100vh;

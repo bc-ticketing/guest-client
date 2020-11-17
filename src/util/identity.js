@@ -2,7 +2,7 @@ import { argsToCid } from "idetix-utils";
 import axios from "axios";
 import { ipfsClient } from "./ipfs/getIpfs";
 
-const IDETIX_APPROVAL_SERVER = "http://localhost:9191";
+const IDETIX_APPROVAL_SERVER = "http://identity.icu.uzh.ch:9191";
 
 export class IdentityApprover {
   constructor(approverAddress) {
