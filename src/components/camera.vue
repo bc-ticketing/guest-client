@@ -1,5 +1,5 @@
 <template>
-  <div class="" ontouchstart="" :class="size">
+  <div class="camera-component" ontouchstart="" :class="size">
     <section
       id="camera"
       v-if="stream"
@@ -7,14 +7,9 @@
     ></section>
 
     <div class="camera-wrapper">
-          <div class="overlay top" v-if="size ==='small'"></div>
-    <video
-      ref="video"
-      autoplay
-      muted
-      playsinline
-    ></video>
-    <div class="overlay bottom" v-if="size ==='small'"></div>
+      <div class="overlay top" v-if="size === 'small'"></div>
+      <video ref="video" autoplay muted playsinline></video>
+      <div class="overlay bottom" v-if="size === 'small'"></div>
     </div>
 
     <button class="md-button md-raised" @click="capturePhoto">Snap</button>
@@ -62,14 +57,25 @@ export default {
       let video = this.$refs.video;
 
       let videoCanvas = document.createElement("canvas");
-      videoCanvas.height = this.size === "small" ? video.videoHeight/3 : video.videoHeight;
+      videoCanvas.height =
+        this.size === "small" ? video.videoHeight / 3 : video.videoHeight;
       videoCanvas.width = video.videoWidth;
       let videoContext = videoCanvas.getContext("2d");
-      console.log(video, 0, video.videoHeight, video.videoWidth)
+      console.log(video, 0, video.videoHeight, video.videoWidth);
       if (this.size === "small") {
-          videoContext.drawImage(video, 0, video.videoHeight/3, video.videoWidth, video.videoHeight/3, 0, 0, video.videoWidth, videoCanvas.height);
+        videoContext.drawImage(
+          video,
+          0,
+          video.videoHeight / 3,
+          video.videoWidth,
+          video.videoHeight / 3,
+          0,
+          0,
+          video.videoWidth,
+          videoCanvas.height
+        );
       } else {
-          videoContext.drawImage(video, 0, 0);
+        videoContext.drawImage(video, 0, 0);
       }
 
       this.photo = loadImage.scale(videoCanvas, {
@@ -85,30 +91,28 @@ export default {
         this.$emit("picture", blob);
         //let data = window.URL.createObjectURL(blob);
       }, "image/jpeg");
-      
-    },
-    downloadPhoto() {
-      
     },
   },
 };
 </script>
 
 <style>
-
+.camera-component {
+  min-height: 500px;
+}
 .overlay {
   background: white;
   z-index: 9;
   height: 80px;
   position: absolute;
-  left:0;
+  left: 0;
   width: 100%;
 }
 .overlay.top {
-  top:0;
+  top: 0;
 }
 .overlay.bottom {
-  bottom:0;
+  bottom: 0;
 }
 
 .camera-wrapper {
@@ -117,8 +121,5 @@ export default {
 
 video {
   height: 240px;
-}
-.camera-wrapper.small video {
-  
 }
 </style>

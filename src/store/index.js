@@ -141,7 +141,6 @@ export default new Vuex.Store({
             EVENT_MINTABLE_AFTERMARKET_ABI,
             event
           );
-          console.log(JSON.parse(JSON.stringify(user.fungibleTickets)));
           loadAftermarketForEvent(user, event);
           await loadPresales(
             user,
@@ -206,9 +205,12 @@ export default new Vuex.Store({
       the state.
     */
     async loadEvents({ commit }) {
-      const createdEvents = await state.eventFactory.getPastEvents("EventCreated", {
-        fromBlock: 0,
-      });
+      const createdEvents = await state.eventFactory.getPastEvents(
+        "EventCreated",
+        {
+          fromBlock: 0,
+        }
+      );
       var events = [];
       for (let i = 0; i < createdEvents.length; i++) {
         const address = createdEvents[i].returnValues._contractAddress;
@@ -232,7 +234,7 @@ export default new Vuex.Store({
         await event.verifySocials();
         //event.initSubscriptions(state.web3.web3Instance);
         await idb.saveEvent(event);
-        console.log('saved event');
+        console.log("saved event");
         events.push(event);
       }
       commit("updateEventStore", events);
@@ -245,17 +247,19 @@ export default new Vuex.Store({
         const inStore = await idb.getApprover(approverAddress);
         let approver;
         if (inStore) {
-          console.log('in store')
+          console.log("in store");
           approver = new IdentityApprover(inStore);
           approver.requestUrlVerification();
           approver.requestTwitterVerification();
         } else {
-          console.log('not in store')
+          console.log("not in store");
           approver = new IdentityApprover(approverAddress);
           await approver.loadData(state.identity);
         }
         await idb.saveApprover(approver);
-        if (! approvers.find(a => a.approverAddress === approver.approverAddress)) {
+        if (
+          !approvers.find((a) => a.approverAddress === approver.approverAddress)
+        ) {
           approvers.push(approver);
         }
       }

@@ -9,9 +9,12 @@
         <p>{{ ticketDescription }}</p>
         <p v-if="isNf">Seat Number {{ seatNumber }}</p>
         <div class="group">
-          <div class="label">Price</div>
+          <div class="label"><md-icon>local_offer</md-icon></div>
+          <div class="value">{{ price }} ETH</div>
+        </div>
+        <div class="group">
+          <div class="label"><md-icon>score</md-icon></div>
           <div class="value">
-            <div>{{ price }} ETH</div>
             <div v-if="!isNf">{{ ticketsAvailable }} available</div>
             <div v-else>
               {{ available ? "available" : "sold" }}
@@ -39,11 +42,15 @@
         </div>
         <div class="group" v-if="available">
           <div v-if="!isNf" class="amount-selection">
-            <div class="icon-wrap" @click="changeSelectionAmount(-1)">
+            <div
+              class="icon-wrap"
+              :class="{ active: amount > 1 }"
+              @click="changeSelectionAmount(-1)"
+            >
               <md-icon>remove_circle</md-icon>
             </div>
             <input type="number" v-model="amount" />
-            <div class="icon-wrap" @click="changeSelectionAmount(1)">
+            <div class="icon-wrap active" @click="changeSelectionAmount(1)">
               <md-icon>add_circle</md-icon>
             </div>
           </div>
@@ -93,7 +100,7 @@ export default {
         (e) => e.contractAddress === this.eventContractAddress
       );
     },
-    
+
     ticketType() {
       return this.event
         ? this.event.getTicketType(this.ticketTypeId, this.isNf)
@@ -114,7 +121,11 @@ export default {
       return this.ticketType ? this.ticketType.description : "";
     },
     price() {
-      return this.ticketType ? this.$store.state.web3.web3Instance.utils.fromWei(this.ticketType.price) : 0;
+      return this.ticketType
+        ? this.$store.state.web3.web3Instance.utils.fromWei(
+            String(this.ticketType.price)
+          )
+        : 0;
     },
     granularity() {
       return this.ticketType ? this.ticketType.aftermarketGranularity : 1;
@@ -173,6 +184,7 @@ export default {
   methods: {
     changeSelectionAmount(amount) {
       this.amount += amount;
+      this.amount = Math.max(1, this.amount);
     },
     getStepSize(granularity) {
       return Math.floor(100 / granularity);
@@ -311,11 +323,27 @@ export default {
 }
 .amount-selection .icon-wrap {
   display: inline-block;
+  opacity: 0.2;
+  transition: opacity 0.3s ease-in-out;
+}
+.icon-wrap.active {
+  opacity: 1;
+  cursor: pointer;
 }
 .close-icon {
   position: absolute;
   top: 1rem;
   right: 1rem;
   cursor: pointer;
+}
+.group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.group .label,
+.group .value {
+  display: inline-block;
+  margin-right: 1rem;
 }
 </style>

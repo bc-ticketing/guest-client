@@ -7,16 +7,11 @@ import {
   ticketTransferred,
   getJoinedPresales,
   getTicketClaimed,
-  getTicketPriceRefunded
+  getTicketPriceRefunded,
 } from "./blockchainEventHandler";
 import { isNf, getTicketId, getTicketTypeIndex } from "idetix-utils";
 
 const BigNumber = require("bignumber.js");
-
-
-
-
-
 
 export class User {
   constructor(account, balance) {
@@ -70,27 +65,34 @@ export async function loadPresales(user, event, web3Instance, ABI) {
 export async function loadJoinedPresales(user, event, web3Instance, ABI) {
   const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
   const presales = await getJoinedPresales(eventSC, 0, user.account);
-  presales.forEach(presale => {
-    user.presales.joined[event.contractAddress] = user.presales.joined[event.contractAddress] ? user.presales.joined[event.contractAddress] : {};
-    user.presales.joined[event.contractAddress][presale.returnValues.ticketType] = true;
+  presales.forEach((presale) => {
+    user.presales.joined[event.contractAddress] = user.presales.joined[
+      event.contractAddress
+    ]
+      ? user.presales.joined[event.contractAddress]
+      : {};
+    user.presales.joined[event.contractAddress][
+      presale.returnValues.ticketType
+    ] = true;
   });
-
 }
 
 export async function loadClaimedPresales(user, event, web3Instance, ABI) {
-  console.log('loading claimed presales')
+  console.log("loading claimed presales");
   const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
   const claims = await getTicketClaimed(eventSC, 0, user.account);
   const refunds = await getTicketPriceRefunded(eventSC, 0, user.account);
-  for( const claim of claims) {
-    console.log(claim)
-    user.presales.joined[event.contractAddress][claim.returnValues.ticketType] = false;
-
+  for (const claim of claims) {
+    console.log(claim);
+    user.presales.joined[event.contractAddress][
+      claim.returnValues.ticketType
+    ] = false;
   }
-  for( const refund of refunds) {
-    console.log(refund)
-    user.presales.joined[event.contractAddress][refund.returnValues.ticketType] = false;
-
+  for (const refund of refunds) {
+    console.log(refund);
+    user.presales.joined[event.contractAddress][
+      refund.returnValues.ticketType
+    ] = false;
   }
 }
 
@@ -143,8 +145,6 @@ export async function checkTicketChanges(user, contract) {
   return seller.concat(buyer);
 }
 
-
-
 export function loadAftermarketForEvent(user, event) {
   for (const ticket of user.fungibleTickets) {
     console.log("loading am for ticket: ", ticket);
@@ -176,15 +176,8 @@ export function loadAftermarketForEvent(user, event) {
   );
 }
 
-export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
-  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
-  const fungiblePurchases = await checkFungibleTicketPurchases(user, eventSC);
-  const nonFungiblePurchases = await checkNonFungibleTicketPurchases(
-    user,
-    eventSC
-  );
-  /* Purchases from Host directly */
-  for (const purchase of fungiblePurchases) {
+async function handleMintFungible(user, eventContractAddress, events) {
+  for (const purchase of events) {
     const ticketType = Number(
       getTicketTypeIndex(
         new BigNumber(purchase.returnValues.ticketType)
@@ -194,7 +187,7 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
     let t = user.fungibleTickets.find(
       (t) =>
         t.ticketType === ticketType &&
-        t.eventContractAddress === event.contractAddress
+        t.eventContractAddress === eventContractAddress
     );
     if (t) {
       t.amount += Number(quantity);
@@ -203,12 +196,15 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
       user.fungibleTickets.push({
         ticketType: ticketType,
         amount: Number(quantity),
-        eventContractAddress: event.contractAddress,
+        eventContractAddress: eventContractAddress,
       });
     }
     console.log(user.fungibleTickets);
   }
-  for (const purchase of nonFungiblePurchases) {
+}
+
+async function handleMintNonFungible(user, eventContractAddress, events) {
+  for (const purchase of events) {
     const ids = purchase.returnValues.ids;
     for (const id of ids) {
       const ticketType = Number(
@@ -218,56 +214,50 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
       user.nonFungibleTickets.push({
         ticketId: ticketId,
         ticketType: ticketType,
-        eventContractAddress: event.contractAddress,
+        eventContractAddress: eventContractAddress,
       });
     }
   }
-  /* Changes in ownership involving the current user */
-  /* TODO: check with simon to get the actual ticket ID in the NF case */
-  const changes = await checkTicketChanges(user, eventSC);
-  for (const change of changes) {
-    const ticketType = new BigNumber(change.returnValues.ticketType);
+}
+
+async function handleTicketTransferred(user, eventContractAddress, transfers) {
+  for (const change of transfers) {
+    const isNfTicketType = isNf(new BigNumber(change.returnValues.id));
     const ticketTypeId = Number(
       getTicketTypeIndex(new BigNumber(change.returnValues.id)).toFixed()
     );
-    if (!isNf(ticketType)) {
-      let t = user.fungibleTickets.find(
+    if (!isNfTicketType) {
+      // search for the ticket type in the inventory of the user
+      let ticketInInventory = user.fungibleTickets.find(
         (t) =>
           t.ticketType === ticketTypeId &&
-          t.eventContractAddress === event.contractAddress
+          t.eventContractAddress === eventContractAddress
       );
       if (change.changeType === "sold") {
-        if (t) {
-          t.amount -= 1;
+        if (ticketInInventory) {
+          ticketInInventory.amount -= 1;
         }
       } else {
-        if (t) {
-          t.amount += 1;
+        if (ticketInInventory) {
+          ticketInInventory.amount += 1;
         } else {
           user.fungibleTickets.push({
             ticketType: ticketTypeId,
             amount: 1,
-            eventContractAddress: event.contractAddress,
+            eventContractAddress: eventContractAddress,
           });
         }
       }
     } else {
-      console.log("change for ticket: " + change.returnValues.ticketType);
-      console.log(new BigNumber(change.returnValues.ticketType).toFixed());
-      console.log(
-        Number(
-          getTicketId(new BigNumber(change.returnValues.ticketType)).toFixed()
-        )
-      );
       const ticketId = Number(
-        getTicketId(new BigNumber(change.returnValues.ticketType)).toFixed()
+        getTicketId(new BigNumber(change.returnValues.id)).toFixed()
       );
-      let t = user.nonFungibleTickets.find((t) => {
-        t === ticketType.toFixed();
+      let ticketInInventory = user.nonFungibleTickets.find((t) => {
+        t.ticketType === ticketTypeId;
       });
       if (change.changeType === "sold") {
         console.log("sold nf ticket: " + ticketTypeId + " - " + ticketId);
-        if (t) {
+        if (ticketInInventory) {
           user.nonFungibleTickets.filter((t) => {
             t.ticketType === ticketTypeId && t.ticketId === ticketId;
           });
@@ -278,7 +268,7 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
         user.nonFungibleTickets.push({
           ticketType: ticketTypeId,
           ticketId: ticketId,
-          eventContractAddress: event.contractAddress,
+          eventContractAddress: eventContractAddress,
         });
         console.log("nf tickets: ", user.nonFungibleTickets);
       }
@@ -286,21 +276,20 @@ export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
   }
 }
 
-/* function findTicketInInventory(user, typeId, isNf = false) {
-  if (isNf) {
-    for (const ticket of user.nonFungibleTickets) {
-      if (ticket.ticketType === typeId) {
-        return ticket;
-      }
-    }
-  } else {
-    for (const ticket of user.fungibleTickets) {
-      if (ticket.ticketType === typeId) {
-        return ticket;
-      }
-    }
-  }
-} */
+export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
+  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
+  const fungiblePurchases = await checkFungibleTicketPurchases(user, eventSC);
+  const nonFungiblePurchases = await checkNonFungibleTicketPurchases(
+    user,
+    eventSC
+  );
+  /* Purchases from Host directly */
+  handleMintFungible(user, event.contractAddress, fungiblePurchases);
+  handleMintNonFungible(user, event.contractAddress, nonFungiblePurchases);
+  /* Changes in ownership involving the current user */
+  const transfers = await checkTicketChanges(user, eventSC);
+  handleTicketTransferred(user, event.contractAddress, transfers);
+}
 
 export function ownsFungibles(user, eventContract, ticketType, amount) {
   return (

@@ -15,7 +15,7 @@ import {
   MESSAGE_PRESALE_CLAIMED,
   MESSAGE_PRESALE_JOINED,
 } from "./constants/constants";
-import { AFFILIATE_ADDRESS } from './constants/addresses';
+import { AFFILIATE_ADDRESS } from "./constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 
 import { ipfsClient } from "./ipfs/getIpfs";
@@ -26,17 +26,24 @@ export function presaleOver(ticket, currentBlock) {
   return Number(ticket.presaleClosingBlock) <= currentBlock;
 }
 
-export async function joinPresale(ticket, account, web3Instance, eventContractAddress) {
+export async function joinPresale(
+  ticket,
+  account,
+  web3Instance,
+  eventContractAddress
+) {
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
   );
-  const typeId = ticket.isNf ? getFullTicketTypeId(true, ticket.typeId) : getFullTicketTypeId(false, ticket.typeId)
+  const typeId = ticket.isNf
+    ? getFullTicketTypeId(true, ticket.typeId)
+    : getFullTicketTypeId(false, ticket.typeId);
   let result;
   try {
     result = contract.methods.joinPresale(typeId).send({
       value: String(ticket.price),
-      from: account
+      from: account,
     });
     if (result.status) {
       return {
@@ -45,20 +52,25 @@ export async function joinPresale(ticket, account, web3Instance, eventContractAd
         event: eventContractAddress,
       };
     }
-  } catch(e) {
+  } catch (e) {
     return decodeError(e);
   }
 }
 
-export async function claimPresale(ticket, account, web3Instance, eventContractAddress) {
+export async function claimPresale(
+  ticket,
+  account,
+  web3Instance,
+  eventContractAddress
+) {
   const contract = new web3Instance.eth.Contract(
     EVENT_MINTABLE_AFTERMARKET_ABI,
     eventContractAddress
   );
   let result;
   try {
-    result =  await contract.methods.claim(ticket.typeId).send({
-      from: account
+    result = await contract.methods.claim(ticket.typeId).send({
+      from: account,
     });
     if (result.status) {
       return {
@@ -71,7 +83,6 @@ export async function claimPresale(ticket, account, web3Instance, eventContractA
     return decodeError(e);
   }
 }
-
 
 /**
  * Returns the number of available seats for a ticket Type
@@ -667,7 +678,11 @@ export async function buyFungible(
   let result;
   console.log(price);
   await eventSC.methods
-    .mintFungible(getFullTicketTypeId(false, new BigNumber(ticketType)), amount, [AFFILIATE_ADDRESS])
+    .mintFungible(
+      getFullTicketTypeId(false, new BigNumber(ticketType)),
+      amount,
+      [AFFILIATE_ADDRESS]
+    )
     .send({
       from: account,
       value: String(amount * web3Instance.utils.toWei(price)),
@@ -705,7 +720,10 @@ export async function buyNonFungible(
   const eventSC = new web3Instance.eth.Contract(ABI, eventContractAddress);
   let result;
   await eventSC.methods
-    .mintNonFungibles([getFullTicketId(ticket, ticketType)], [AFFILIATE_ADDRESS])
+    .mintNonFungibles(
+      [getFullTicketId(ticket, ticketType)],
+      [AFFILIATE_ADDRESS]
+    )
     .send({
       from: account,
       value: String(web3Instance.utils.toWei(price)),
@@ -739,10 +757,15 @@ export async function loadIPFSMetadata(ticket) {
     return;
   }
   var ipfsData = null;
-  for await (const chunk of ipfsClient.cat(ticket.ipfsHash, {
-    timeout: 2000,
-  })) {
-    ipfsData = Buffer(chunk, "utf8").toString();
+  try {
+    for await (const chunk of ipfsClient.cat(ticket.ipfsHash, {
+      timeout: 5000,
+    })) {
+      ipfsData = Buffer(chunk, "utf8").toString();
+    }
+  } catch (error) {
+    console.log("could not get metadata", error);
+    return ticket;
   }
   const metadata = JSON.parse(ipfsData);
   ticket.description = metadata.ticket.description;
@@ -759,7 +782,6 @@ export async function loadIPFSMetadata(ticket) {
   }
   return ticket;
 }
-
 
 /**
  * Calculates the full Ticket Type Identifier

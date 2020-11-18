@@ -55,10 +55,10 @@ export default {
   },
   data() {
     return {
-      desiredMethod: "kyc",
+      desiredMethod: "",
       desiredLevel: 0,
       approver: undefined,
-      formOpen: true,
+      formOpen: false,
     };
   },
   watch: {},

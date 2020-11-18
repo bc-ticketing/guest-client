@@ -241,10 +241,14 @@ export class Event {
   }
 
   getLowestPrice() {
-    let lowestFungible = Math.min(
+    Array.min = function(array) {
+      return Math.min.apply(Math, array);
+    };
+
+    let lowestFungible = Array.min(
       this.fungibleTickets.map((ticket) => Number(ticket.price))
     );
-    let lowestNonFungible = Math.min(
+    let lowestNonFungible = Array.min(
       this.nonFungibleTickets.map((ticket) => Number(ticket.price))
     );
     return Math.min(lowestFungible, lowestNonFungible);
@@ -297,11 +301,17 @@ export class Event {
   }
 
   async loadIPFSMetadata() {
+    console.log("loading ipfs data for event", this.contractAddress);
     var ipfsData = null;
-    for await (const chunk of ipfsClient.cat(this.ipfsHash, {
-      timeout: 10000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
+    try {
+      for await (const chunk of ipfsClient.cat(this.ipfsHash, {
+        timeout: 5000,
+      })) {
+        ipfsData = Buffer(chunk, "utf8").toString();
+      }
+    } catch (error) {
+      console.log("could not get event metadata", error);
+      return;
     }
     console.log(String(ipfsData));
     const metadata = JSON.parse(ipfsData);
@@ -700,17 +710,20 @@ export class Event {
     this.identityLevel = identityLevel;
   }
 
-  // we dont need these events at the momont
+  // we dont need these events at the moment
   async handlePresaleCreated() {}
   async handlePresaleJoined() {}
   async handleValueTransferred() {}
 
   // go over all missed events while the app was offline and handle them
   async handleMissedEvents() {
+    // console.log("handling missed events");
     const events = await this.contract.getPastEvents("allEvents", {
-      fromBlock: this.lastFetchedBlock,
+      fromBlock: this.lastFetchedBlock + 1,
     });
+    // console.log(events);
     for (const event of events) {
+      // console.log("handling missed event", event.event);
       await this[`handle${event.event}`](event);
     }
     return true;

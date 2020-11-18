@@ -648,7 +648,9 @@ export default {
     },
     lowest_price() {
       try {
-        return this.event.getLowestPrice();
+        return this.$store.state.web3.web3Instance.utils.fromWei(
+          String(this.event.getLowestPrice())
+        );
       } catch (e) {
         return 0;
       }
@@ -678,7 +680,6 @@ export default {
       for (let i = 1; i <= ticket.aftermarketGranularity; i++) {
         percentages.push((100 / ticket.aftermarketGranularity) * i);
       }
-      console.log(percentages);
       return percentages;
     },
     getOrdersFromTicket(ticket, buyOrSell) {
@@ -822,7 +823,6 @@ export default {
           }
         });
       });
-      console.log(found_ticket);
       if (found_ticket) {
         return found_ticket;
       }
