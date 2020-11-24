@@ -87,7 +87,6 @@
 import TicketOverlay from "./../components/TicketOverlay";
 import Ticket from "./../components/Ticket";
 import { presaleOver, claimPresale } from "./../util/tickets";
-import { getNumberFungibleOwned } from "./../util/User";
 import { isNf, getTicketTypeIndex } from "idetix-utils";
 
 const BigNumber = require("bignumber.js");
@@ -137,40 +136,12 @@ export default {
           this.$store.state.activeUser.nonFungibleTickets.length == 0)
       );
     },
-    activeSellOrders() {
-      if (!this.$store.state.activeUser) {
-        return [];
-      }
-      try {
-        if (this.activeIsNf) {
-          let order = this.$store.state.activeUser.nonFungibleTickets[
-            this.activeSlide -
-              this.$store.state.activeUser.fungibleTickets.length
-          ].sellOrder;
-          order.quantity = 1;
-          return order.percentage ? [order] : [];
-        } else {
-          return this.$store.state.activeUser.fungibleTickets[this.activeSlide]
-            .sellOrders;
-        }
-      } catch (e) {
-        return [];
-      }
-    },
-    ticketsLeftToSell() {
-      let total = 0;
-      this.activeSellOrders.forEach((o) => {
-        total += o.quantity;
-      });
-      return this.amountOwned - total;
-    },
     amountOwned() {
       if (this.activeTicketType) {
         if (this.activeIsNf) {
           return 1;
         } else {
-          return getNumberFungibleOwned(
-            this.$store.state.activeUser,
+          return this.$store.state.activeUser.getNumberFungibleOwned(
             this.activeTicketEvent,
             this.activeTicketType
           );

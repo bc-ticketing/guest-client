@@ -742,7 +742,6 @@ export default {
         "updateEvent",
         ticketType.eventContractAddress
       );
-      await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("userUpdated");
       this.$root.$emit("updateCharts");
     },
@@ -753,6 +752,7 @@ export default {
         this.$store.state.web3.web3Instance,
         this.event.contractAddress
       );
+      await this.$store.dispatch("updateEvent", this.event.ContractAddress);
       this.$root.$emit("openMessageBus", result);
     },
     async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
@@ -765,6 +765,7 @@ export default {
         this.$store.state.web3.web3Instance,
         this.event.contractAddress
       );
+      await this.$store.dispatch("updateEvent", this.event.contractAddress);
       this.$root.$emit("openMessageBus", result);
     },
     async fillSellOrderFungible(ticketType) {
@@ -776,6 +777,10 @@ export default {
         this.$store.state.activeUser.account,
         this.$store.state.web3.web3Instance,
         this.event.contractAddress
+      );
+      await this.$store.dispatch(
+        "updateEvent",
+        ticketType.eventContractAddress
       );
       this.$root.$emit("openMessageBus", result);
     },

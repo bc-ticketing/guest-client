@@ -129,8 +129,6 @@ import {
   withdrawSellOrderFungible,
 } from "./../util/tickets";
 
-import { getNumberFungibleOwned } from "./../util/User";
-
 export default {
   name: "TicketOverlay",
   components: {},
@@ -194,29 +192,11 @@ export default {
     },
     getUserSellOrders() {
       if (!this.$store.state.activeUser) return [];
-      let userTicket;
-      if (this.isNf) {
-        userTicket = this.$store.state.activeUser.nonFungibleTickets.find(
-          (t) =>
-            t.eventContractAddress === this.eventContractAddress &&
-            t.ticketType === this.ticketTypeId
-        );
-      } else {
-        userTicket = this.$store.state.activeUser.fungibleTickets.find(
-          (t) =>
-            t.eventContractAddress === this.eventContractAddress &&
-            t.ticketType === this.ticketTypeId
-        );
-      }
-      if (userTicket) {
-        if (userTicket.sellOrders) {
-          return userTicket.sellOrders;
-        } else if (userTicket.sellOrder.percentage) {
-          return [userTicket.sellOrder];
-        }
-      }
-
-      return [];
+      return this.$store.state.activeUser.getSellOrders(
+        this.eventContractAddress,
+        this.ticketTypeId,
+        this.ticketId
+      );
     },
     amountOnAftermarket() {
       const orders = this.getUserSellOrders;
@@ -251,8 +231,7 @@ export default {
         if (this.isNf) {
           return 1;
         } else {
-          return getNumberFungibleOwned(
-            this.$store.state.activeUser,
+          return this.$store.state.activeUser.getNumberFungibleOwned(
             this.eventContractAddress,
             this.ticketTypeId
           );
@@ -288,7 +267,6 @@ export default {
         );
         if (result.status == 1) {
           await this.$store.dispatch("updateEvent", result.event);
-          await this.$store.dispatch("registerActiveUser");
           this.$root.$emit("userUpdated");
         }
         this.$root.$emit("openMessageBus", result);
@@ -304,7 +282,6 @@ export default {
         );
         if (result.status == 1) {
           await this.$store.dispatch("updateEvent", result.event);
-          await this.$store.dispatch("registerActiveUser");
           this.$root.$emit("userUpdated");
         }
         this.$root.$emit("openMessageBus", result);
@@ -332,9 +309,8 @@ export default {
           this.eventContractAddress
         );
       }
-      if (result.status == 1) {
+      if (result.status === 1) {
         await this.$store.dispatch("updateEvent", result.event);
-        await this.$store.dispatch("registerActiveUser");
         this.$root.$emit("userUpdated");
       }
       this.$root.$emit("openMessageBus", result);
@@ -362,7 +338,6 @@ export default {
         this.$root.$emit("openMessageBus", result);
       }
       await this.$store.dispatch("updateEvent", this.eventContractAddress);
-      await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("userUpdated");
       this.$root.$emit("updateCharts");
     },

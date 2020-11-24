@@ -4,7 +4,7 @@
       <div class="ticket-date">
         <div>
           <div class="month">{{ monthName }}</div>
-          <div class="day">{{ event.getDay() }}</div>
+          <div class="day">{{ day }}</div>
         </div>
       </div>
       <div class="ticket-content">
@@ -32,7 +32,6 @@
 </template>
 
 <script>
-import { getNumberFungibleOwned } from "./../util/User";
 import { MONTHS } from "./../util/constants/constants.js";
 
 export default {
@@ -60,7 +59,10 @@ export default {
   },
   computed: {
     monthName: function() {
-      return MONTHS[this.event.getMonth()];
+      return this.event ? MONTHS[this.event.getMonth()] : "";
+    },
+    day() {
+      return event ? event.getDay() : "";
     },
     event() {
       if (!this.eventContractAddress) return undefined;
@@ -105,8 +107,7 @@ export default {
               ).length
             : 0;
         } else {
-          return getNumberFungibleOwned(
-            this.$store.state.activeUser,
+          return this.$store.state.activeUser.getNumberFungibleOwned(
             this.eventContractAddress,
             this.ticketTypeId
           );

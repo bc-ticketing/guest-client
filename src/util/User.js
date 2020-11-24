@@ -1,15 +1,9 @@
 /* 
   This file contains a data class for the user and helper functions to get specific information from it and to load tickets for the user from the blockchain.
 */
-import {
-  MintFungibles,
-  MintNonFungibles,
-  ticketTransferred,
-  getJoinedPresales,
-  getTicketClaimed,
-  getTicketPriceRefunded,
-} from "./blockchainEventHandler";
-import { isNf, getTicketId, getTicketTypeIndex } from "idetix-utils";
+
+import { getTicketId, getTicketTypeIndex } from "idetix-utils";
+import { getTicketInfoFromType } from "./tickets";
 
 const BigNumber = require("bignumber.js");
 
@@ -25,8 +19,8 @@ export class User {
     this.lastFetchedBlock = 0;
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
-    this.fBuyOrders = [];
-    this.nfBuyOrders = [];
+    this.buyOrders = [];
+    this.sellOrders = [];
     this.account = account;
     this.balance = balance;
     this.presales = {
@@ -40,299 +34,358 @@ export class User {
     };
     this.approvalLevels = {};
   }
-}
 
-export function setApprovalLevel(user, approver, method) {
-  user.approvalLevels[approver] = method ? method : 0;
-}
-
-export function getApprovalLevelForApprover(user, approver) {
-  return user.approvalLevels[approver];
-}
-
-export function isApproved(user, approver, level) {
-  return (
-    user.approvalLevels[approver] &&
-    user.approvalLevels[approver].level >= level
-  );
-}
-
-export async function loadPresales(user, event, web3Instance, ABI) {
-  await loadJoinedPresales(user, event, web3Instance, ABI);
-  await loadClaimedPresales(user, event, web3Instance, ABI);
-}
-
-export async function loadJoinedPresales(user, event, web3Instance, ABI) {
-  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
-  const presales = await getJoinedPresales(eventSC, 0, user.account);
-  presales.forEach((presale) => {
-    user.presales.joined[event.contractAddress] = user.presales.joined[
-      event.contractAddress
-    ]
-      ? user.presales.joined[event.contractAddress]
-      : {};
-    user.presales.joined[event.contractAddress][
-      presale.returnValues.ticketType
-    ] = true;
-  });
-}
-
-export async function loadClaimedPresales(user, event, web3Instance, ABI) {
-  console.log("loading claimed presales");
-  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
-  const claims = await getTicketClaimed(eventSC, 0, user.account);
-  const refunds = await getTicketPriceRefunded(eventSC, 0, user.account);
-  for (const claim of claims) {
-    console.log(claim);
-    user.presales.joined[event.contractAddress][
-      claim.returnValues.ticketType
-    ] = false;
-  }
-  for (const refund of refunds) {
-    console.log(refund);
-    user.presales.joined[event.contractAddress][
-      refund.returnValues.ticketType
-    ] = false;
-  }
-}
-
-export function getNumberFungibleOwned(user, event, type) {
-  let amount = 0;
-  for (const t of user.fungibleTickets) {
-    if (t.eventContractAddress === event && t.ticketType === type) {
-      amount += Number(t.amount);
-    }
-  }
-  return amount;
-}
-
-export async function checkFungibleTicketPurchases(user, contract) {
-  const fungibles = await MintFungibles(
-    contract,
-    user.lastFetchedBlock + 1,
-    user.account
-  );
-  return fungibles;
-}
-export async function checkNonFungibleTicketPurchases(user, contract) {
-  const nonFungibles = await MintNonFungibles(
-    contract,
-    user.lastFetchedBlock + 1,
-    user.account
-  );
-  return nonFungibles;
-}
-
-export async function checkTicketChanges(user, contract) {
-  const seller = await ticketTransferred(
-    contract,
-    user.lastFetchedBlock + 1,
-    "seller",
-    user.account
-  );
-  seller.map((t) => {
-    t.changeType = "sold";
-  });
-  const buyer = await ticketTransferred(
-    contract,
-    user.lastFetchedBlock + 1,
-    "buyer",
-    user.account
-  );
-  buyer.map((t) => {
-    t.changeType = "bought";
-  });
-  return seller.concat(buyer);
-}
-
-export function loadAftermarketForEvent(user, event) {
-  for (const ticket of user.fungibleTickets) {
-    console.log("loading am for ticket: ", ticket);
-    if (ticket.eventContractAddress === event.contractAddress) {
-      const sellOrders = event.getSellOrdersByAddress(
-        user.account,
-        ticket.ticketType,
-        false
+  getTicket(eventContractAddress, ticketType, isNf) {
+    if (isNf) {
+      return this.nonFungibleTickets.find(
+        (t) =>
+          t.ticketType === ticketType &&
+          t.eventContractAddress === eventContractAddress &&
+          t.ticketId === isNf
       );
-      console.log("got sell orders", sellOrders);
-      ticket.sellOrders = sellOrders;
-    }
-  }
-  for (const ticket of user.nonFungibleTickets) {
-    if (ticket.eventContractAddress === event.contractAddress) {
-      const sellOrder = event.getSellOrdersByAddress(
-        user.account,
-        ticket.ticketType,
-        ticket.ticketId
+    } else {
+      return this.fungibleTickets.find(
+        (t) =>
+          t.ticketType === ticketType &&
+          t.eventContractAddress === eventContractAddress
       );
-      ticket.sellOrder = sellOrder;
     }
   }
-  user.fBuyOrders = user.fBuyOrders.concat(
-    event.getBuyOrdersByAddress(user.account, false)
-  );
-  user.nfBuyOrders = user.nfBuyOrders.concat(
-    event.getBuyOrdersByAddress(user.account, true)
-  );
-}
 
-async function handleMintFungible(user, eventContractAddress, events) {
-  for (const purchase of events) {
-    const ticketType = Number(
-      getTicketTypeIndex(
-        new BigNumber(purchase.returnValues.ticketType)
-      ).toFixed()
+  getSellOrders(eventContractAddress, ticketType, ticketId) {
+    if (ticketId) {
+      return this.sellOrders.filter(
+        (o) =>
+          o.event === eventContractAddress &&
+          o.ticketType === ticketType &&
+          o.ticketId === ticketId
+      );
+    } else {
+      return this.sellOrders.filter(
+        (o) => o.event === eventContractAddress && o.ticketType === ticketType
+      );
+    }
+  }
+
+  removeNfTicket(eventContractAddress, ticketType, ticketId) {
+    this.nonFungibleTickets = this.nonFungibleTickets.filter(
+      (t) =>
+        t.ticketType !== ticketType ||
+        t.eventContractAddress !== eventContractAddress ||
+        t.ticketId !== ticketId
     );
-    const quantity = purchase.returnValues.quantity;
-    let t = user.fungibleTickets.find(
+  }
+
+  removeSellOrder(eventContractAddress, ticketType, ticketId, percentage) {
+    if (ticketId) {
+      this.sellOrders = this.sellOrders.filter(
+        (o) =>
+          o.event !== eventContractAddress ||
+          o.ticketType !== ticketType ||
+          o.percentage !== percentage ||
+          o.ticketId !== ticketId
+      );
+    } else {
+      this.sellOrders = this.sellOrders.filter(
+        (o) =>
+          o.event !== eventContractAddress ||
+          o.ticketType !== ticketType ||
+          o.percentage !== percentage
+      );
+    }
+  }
+
+  removeBuyOrder(eventContractAddress, ticketType, ticketId, percentage) {
+    if (ticketId) {
+      this.buyOrders = this.buyOrders.filter(
+        (o) =>
+          o.event !== eventContractAddress ||
+          o.ticketType !== ticketType ||
+          o.percentage !== percentage ||
+          o.ticketId !== ticketId
+      );
+    } else {
+      this.buyOrders = this.buyOrders.filter(
+        (o) =>
+          o.event !== eventContractAddress ||
+          o.ticketType !== ticketType ||
+          o.percentage !== percentage
+      );
+    }
+  }
+
+  handleMintFungibles(eventContractAddress, event) {
+    console.log(event);
+    const ticketType = Number(
+      getTicketTypeIndex(new BigNumber(event.ticketType)).toFixed()
+    );
+    const quantity = event.quantity;
+    let t = this.fungibleTickets.find(
       (t) =>
         t.ticketType === ticketType &&
         t.eventContractAddress === eventContractAddress
     );
     if (t) {
       t.amount += Number(quantity);
-      console.log(user.fungibleTickets);
     } else {
-      user.fungibleTickets.push({
+      this.fungibleTickets.push({
         ticketType: ticketType,
         amount: Number(quantity),
         eventContractAddress: eventContractAddress,
       });
     }
-    console.log(user.fungibleTickets);
   }
-}
-
-async function handleMintNonFungible(user, eventContractAddress, events) {
-  for (const purchase of events) {
-    const ids = purchase.returnValues.ids;
+  handleMintNonFungibles(eventContractAddress, event) {
+    const ids = event.ids;
     for (const id of ids) {
       const ticketType = Number(
         getTicketTypeIndex(new BigNumber(id)).toFixed()
       );
       const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-      user.nonFungibleTickets.push({
-        ticketId: ticketId,
+      this.nonFungibleTickets.push({
+        ticketId,
         ticketType: ticketType,
         eventContractAddress: eventContractAddress,
       });
     }
   }
-}
-
-async function handleTicketTransferred(user, eventContractAddress, transfers) {
-  for (const change of transfers) {
-    const isNfTicketType = isNf(new BigNumber(change.returnValues.id));
-    const ticketTypeId = Number(
-      getTicketTypeIndex(new BigNumber(change.returnValues.id)).toFixed()
-    );
-    if (!isNfTicketType) {
-      // search for the ticket type in the inventory of the user
-      let ticketInInventory = user.fungibleTickets.find(
-        (t) =>
-          t.ticketType === ticketTypeId &&
-          t.eventContractAddress === eventContractAddress
-      );
-      if (change.changeType === "sold") {
-        if (ticketInInventory) {
-          ticketInInventory.amount -= 1;
-        }
-      } else {
-        if (ticketInInventory) {
-          ticketInInventory.amount += 1;
-        } else {
-          user.fungibleTickets.push({
-            ticketType: ticketTypeId,
-            amount: 1,
-            eventContractAddress: eventContractAddress,
-          });
-        }
-      }
-    } else {
-      const ticketId = Number(
-        getTicketId(new BigNumber(change.returnValues.id)).toFixed()
-      );
-      let ticketInInventory = user.nonFungibleTickets.find((t) => {
-        t.ticketType === ticketTypeId;
+  handleBuyOrderPlaced(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event.ticketType);
+    this.buyOrders.push({
+      percentage: Number(event.percentage),
+      quantity: Number(event.quantity),
+      event: eventContractAddress,
+      ticketType: info.ticketTypeId,
+      isNf: info.nf,
+      ticketId: info.ticketId,
+    });
+  }
+  handleSellOrderFungiblePlaced(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event.ticketType);
+    this.sellOrders.push({
+      percentage: Number(event.percentage),
+      quantity: Number(event.quantity),
+      event: eventContractAddress,
+      ticketType: info.ticketTypeId,
+      isNf: info.nf,
+      ticketId: info.ticketId,
+    });
+  }
+  handleSellOrderNonFungiblePlaced(eventContractAddress, event) {
+    for (const id of event.ids) {
+      let info = getTicketInfoFromType(id);
+      this.sellOrders.push({
+        percentage: Number(event.percentage),
+        quantity: Number(event.quantity),
+        event: eventContractAddress,
+        ticketType: info.ticketTypeId,
+        isNf: true,
+        ticketId: info.ticketId,
       });
-      if (change.changeType === "sold") {
-        console.log("sold nf ticket: " + ticketTypeId + " - " + ticketId);
-        if (ticketInInventory) {
-          user.nonFungibleTickets.filter((t) => {
-            t.ticketType === ticketTypeId && t.ticketId === ticketId;
-          });
-        }
-        console.log("nf tickets: ", user.nonFungibleTickets);
+    }
+  }
+
+  handleBuyOrderFungibleFilled(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event.ticketType);
+    let ticket = this.getTicket(
+      eventContractAddress,
+      info.ticketTypeId,
+      info.ticketId
+    );
+    // user is the one whe made the buy order and bought the ticket
+    if (event.returnValues.buyer === this.account) {
+      if (ticket) {
+        ticket.amount += 1;
       } else {
-        console.log("bought nf ticket: " + ticketTypeId + " - " + ticketId);
-        user.nonFungibleTickets.push({
-          ticketType: ticketTypeId,
-          ticketId: ticketId,
+        this.fungibleTickets.push({
+          ticketType: info.ticketTypeId,
+          amount: 1,
           eventContractAddress: eventContractAddress,
         });
-        console.log("nf tickets: ", user.nonFungibleTickets);
+      }
+      // user is the one whe filled the buy order and sold the ticket
+    } else {
+      ticket.quantity -= 1;
+    }
+  }
+  handleBuyOrderNonFungibleFilled(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event._id);
+    // user is the one whe made the buy order and bought the ticket
+    if (event.returnValues.buyer === this.account) {
+      let info = getTicketInfoFromType(event._id);
+      this.nonFungibleTickets.push({
+        ticketId: info.ticketId,
+        ticketType: info.ticketTypeId,
+        eventContractAddress: eventContractAddress,
+      });
+    } else {
+      this.removeNfTicket(
+        eventContractAddress,
+        info.ticketTypeId,
+        info.ticketId
+      );
+    }
+  }
+
+  handleSellOrderFungibleFilled(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event.ticketType);
+    let ticket = this.getTicket(
+      eventContractAddress,
+      info.ticketTypeId,
+      info.ticketId
+    );
+    // user is the one who made the sell order and sold the ticket
+    if (event.returnValues.seller === this.account) {
+      ticket.quantity -= 1;
+    } else {
+      if (ticket) {
+        ticket.amount += 1;
+      } else {
+        this.fungibleTickets.push({
+          ticketType: info.ticketTypeId,
+          amount: 1,
+          eventContractAddress: eventContractAddress,
+        });
       }
     }
   }
-}
 
-export async function loadTicketsForEvent(user, web3Instance, ABI, event) {
-  const eventSC = new web3Instance.eth.Contract(ABI, event.contractAddress);
-  const fungiblePurchases = await checkFungibleTicketPurchases(user, eventSC);
-  const nonFungiblePurchases = await checkNonFungibleTicketPurchases(
-    user,
-    eventSC
-  );
-  /* Purchases from Host directly */
-  handleMintFungible(user, event.contractAddress, fungiblePurchases);
-  handleMintNonFungible(user, event.contractAddress, nonFungiblePurchases);
-  /* Changes in ownership involving the current user */
-  const transfers = await checkTicketChanges(user, eventSC);
-  handleTicketTransferred(user, event.contractAddress, transfers);
-}
+  handleSellOrderNonFungibleFilled(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event._id);
+    // user is the one who made the sell order and sold the ticket
+    if (event.returnValues.seller === this.account) {
+      this.removeNfTicket(
+        eventContractAddress,
+        info.ticketTypeId,
+        info.ticketId
+      );
+    } else {
+      this.nonFungibleTickets.push({
+        ticketId: info.ticketId,
+        ticketType: info.ticketTypeId,
+        eventContractAddress: eventContractAddress,
+      });
+    }
+  }
 
-export function ownsFungibles(user, eventContract, ticketType, amount) {
-  return (
-    user.fungibleTickets.filter(
+  handleSellOrderFungibleWithdrawn(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event.ticketType);
+    this.removeSellOrder(
+      eventContractAddress,
+      info.ticketTypeId,
+      info.ticketId,
+      Number(event.percentage)
+    );
+  }
+
+  handleSellOrderNonFungibleWithdrawn(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event._id);
+    this.removeSellOrder(
+      eventContractAddress,
+      info.ticketTypeId,
+      info.ticketId,
+      Number(event.percentage)
+    );
+  }
+
+  handleBuyOrderWithdrawn(eventContractAddress, event) {
+    let info = getTicketInfoFromType(event.ticketType);
+    this.removeBuyOrder(
+      eventContractAddress,
+      info.ticketTypeId,
+      info.ticketId,
+      Number(event.percentage)
+    );
+  }
+
+  handlePresaleJoined(eventContractAddress, event) {
+    if (!this.presales.joined[eventContractAddress]) {
+      this.presales.joined[eventContractAddress] = {};
+    }
+    this.presales.joined[eventContractAddress][event.returnValues.ticketType] =
+      event.luckyNumber;
+  }
+
+  handleTicketClaimed(eventContractAddress, event) {
+    this.presales.joined[eventContractAddress][event.ticketType] = -1;
+  }
+
+  handleTicketPriceRefunded(eventContractAddress, event) {
+    this.presales.joined[eventContractAddress][event.ticketType] = -1;
+  }
+
+  handleTicketTransferred() {}
+
+  handleMissedEvents(eventContractAddress, events) {
+    console.log("handling missed user events");
+    for (const event of events) {
+      console.log("handling missed event for user", event.type);
+      this[`handle${event.type}`](eventContractAddress, event.event);
+    }
+  }
+
+  setApprovalLevel(approver, method) {
+    this.approvalLevels[approver] = method ? method : 0;
+  }
+  getApprovalLevelForApprover(approver) {
+    return this.approvalLevels[approver];
+  }
+  isApproved(approver, level) {
+    return (
+      this.approvalLevels[approver] &&
+      this.approvalLevels[approver].level >= level
+    );
+  }
+  getNumberFungibleOwned(event, type) {
+    let amount = 0;
+    for (const t of this.fungibleTickets) {
+      if (t.eventContractAddress === event && t.ticketType === type) {
+        amount += Number(t.amount);
+      }
+    }
+    return amount;
+  }
+  ownsFungibles(eventContract, ticketType, amount) {
+    return (
+      this.fungibleTickets.filter(
+        (t) =>
+          t.ticketType === ticketType &&
+          t.amount >= amount &&
+          t.eventContractAddress == eventContract
+      ).length > 0
+    );
+  }
+  ownsNonFungible(eventContract, ticketType, ticketNr) {
+    return this.nonFungibleTickets.find(
       (t) =>
         t.ticketType === ticketType &&
-        t.amount >= amount &&
-        t.eventContractAddress == eventContract
-    ).length > 0
-  );
-}
-
-export function ownsNonFungible(user, eventContract, ticketType, ticketNr) {
-  return user.nonFungibleTickets.find(
-    (t) =>
-      t.ticketType === ticketType &&
-      t.ticketId === ticketNr &&
-      t.eventContractAddress === eventContract
-  );
-}
-
-export async function requestIdentification(user) {
-  console.log(user);
-}
-
-export async function verify(user, payload) {
-  if (payload.method === "mail") {
-    user.addMailVerification(payload.mail);
-  } else if (payload.method === "phone") {
-    user.addPhoneVerification(payload.phone);
-  } else {
-    user.addPhoneVerification(payload.files);
+        t.ticketId === ticketNr &&
+        t.eventContractAddress === eventContract
+    );
   }
-}
+  requestIdentification() {
+    console.log("");
+  }
 
-export function addPhoneVerification(user, phone) {
-  console.log(phone);
-}
+  verify(payload) {
+    if (payload.method === "mail") {
+      this.addMailVerification(payload.mail);
+    } else if (payload.method === "phone") {
+      this.addPhoneVerification(payload.phone);
+    } else {
+      this.addPhoneVerification(payload.files);
+    }
+  }
 
-export function addMailVerification(user, mail) {
-  console.log(mail);
-}
+  addPhoneVerification(phone) {
+    console.log(phone);
+  }
 
-export function addKYCVerification(user, files) {
-  console.log(files);
+  addMailVerification(mail) {
+    console.log(mail);
+  }
+
+  addKYCVerification(files) {
+    console.log(files);
+  }
 }

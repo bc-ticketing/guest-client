@@ -3,16 +3,10 @@ import Vuex from "vuex";
 import state from "./state";
 import { getWeb3, updateWeb3 } from "../util/getWeb3";
 import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
-import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
 import { IDENTITY_ABI } from "./../util/abi/identity";
 import { Event } from "./../util/event";
-import { User, setApprovalLevel } from "./../util/User";
+import { User } from "./../util/User";
 import { ShoppingCart } from "./../util/shoppingCart";
-import {
-  loadTicketsForEvent,
-  loadAftermarketForEvent,
-  loadPresales,
-} from "./../util/User";
 import idb from "./../util/db/idb";
 import { IdentityApprover } from "../util/identity";
 //import { FungibleTicketType, NonFungibleTicketType, NonFungibleTicket } from "../util/tickets";
@@ -54,6 +48,19 @@ export default new Vuex.Store({
     updateEventStore(state, events) {
       state.events = events;
     },
+    addEventToStore(state, event) {
+      state.events.push(event);
+    },
+    updateEvent(state, event) {
+      let ev = state.events.find(
+        (e) => e.contractAddress === event.contractAddress
+      );
+      state.events = state.events.filter(
+        (e) => e.contractAddress !== event.contractAddress
+      );
+      ev = event;
+      state.events.push(ev);
+    },
     updateShoppingCartStore(state, cart) {
       state.shoppingCart = cart;
     },
@@ -92,79 +99,33 @@ export default new Vuex.Store({
       //check if the user is in the db already
       const inDB = await idb.getUser(state.web3.account);
       if (inDB) {
-        console.log("user in db");
         let user = new User(inDB);
-        console.log(user);
-        //if yes, update the data of the user to the current block
-        for (const event of state.events) {
-          console.log("loading tickets for" + event.contractAddress);
-          await loadTicketsForEvent(
-            user,
-            state.web3.web3Instance,
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            event
-          );
-          console.log(user);
-          console.log("loading am");
-          loadAftermarketForEvent(user, event);
-          console.log("loaded am");
-          await loadPresales(
-            user,
-            event,
-            state.web3.web3Instance,
-            EVENT_MINTABLE_AFTERMARKET_ABI
-          );
-          let approver = state.approvers.find(
-            (a) =>
-              String(a.approverAddress) ===
-              String(event.identityContractAddress)
-          );
-          const method = await approver.getApprovalLevel(
-            state.identity,
-            user.account
-          );
-          setApprovalLevel(user, approver.approverAddress, method);
-        }
         //and update the record in the db
-        const block = await state.web3.web3Instance.eth.getBlock("latest");
-        user.lastFetchedBlock = block.number;
         await idb.saveUser(user);
-        console.log(user);
         commit("setActiveUser", user);
       } else {
         //if not, create a new user from the web3 data and load his tickets
         let user = new User(state.web3.account, state.web3.balance);
-        for (const event of state.events) {
-          await loadTicketsForEvent(
-            user,
-            state.web3.web3Instance,
-            EVENT_MINTABLE_AFTERMARKET_ABI,
-            event
-          );
-          loadAftermarketForEvent(user, event);
-          await loadPresales(
-            user,
-            event,
-            state.web3.web3Instance,
-            EVENT_MINTABLE_AFTERMARKET_ABI
-          );
-          let approver = state.approvers.find(
-            (a) =>
-              String(a.approverAddress) ===
-              String(event.identityContractAddress)
-          );
-          const method = await approver.getApprovalLevel(
-            state.identity,
-            user.account
-          );
-          setApprovalLevel(user, approver.approverAddress, method);
-        }
         //and save it to the db
-        const block = await state.web3.web3Instance.eth.getBlock("latest");
-        user.lastFetchedBlock = block.number;
         await idb.saveUser(user);
         commit("setActiveUser", user);
       }
+    },
+    async getUserApprovalLevels({ commit }) {
+      let user = state.activeUser;
+      for (const event of state.events) {
+        let approver = state.approvers.find(
+          (a) =>
+            String(a.approverAddress) === String(event.identityContractAddress)
+        );
+        const method = await approver.getApprovalLevel(
+          state.identity,
+          user.account
+        );
+        user.setApprovalLevel(approver.approverAddress, method);
+      }
+
+      commit("setActiveUser", user);
     },
     async createShoppingCart({ commit }) {
       commit("updateShoppingCartStore", new ShoppingCart());
@@ -211,48 +172,70 @@ export default new Vuex.Store({
           fromBlock: 0,
         }
       );
-      var events = [];
+      let totalLoadingTime = 0;
+      let loadingTimes = [];
+      let fullLoads = 0;
+      let partLoads = 0;
       for (let i = 0; i < createdEvents.length; i++) {
+        let t1 = performance.now();
         const address = createdEvents[i].returnValues._contractAddress;
-        console.log("loading event; " + address);
         const inStore = await idb.getEvent(address);
         let event;
-        let success;
+        let result;
         if (!inStore) {
-          console.log("not in store");
+          fullLoads += 1;
           event = new Event(address, state.web3.web3Instance);
-          console.log(event);
         } else {
-          console.log("in store");
+          partLoads += 1;
           event = new Event(inStore, state.web3.web3Instance);
         }
-        success = await event.handleMissedEvents();
-        if (success) {
+        result = await event.handleMissedEvents(state.activeUser.account);
+        if (result.success) {
           const block = await state.web3.web3Instance.eth.getBlock("latest");
           event.lastFetchedBlock = block.number;
+        }
+        if (result.userEvents.length > 1) {
+          state.activeUser.handleMissedEvents(
+            event.contractAddress,
+            result.userEvents
+          );
+          await idb.saveUser(state.activeUser);
+          commit("setActiveUser", state.activeUser);
         }
         await event.verifySocials();
         //event.initSubscriptions(state.web3.web3Instance);
         await idb.saveEvent(event);
-        console.log("saved event");
-        events.push(event);
+        let t2 = performance.now();
+        loadingTimes.push(t2 - t1);
+        totalLoadingTime += t2 - t1;
+        console.info(
+          `loading time for event with ${event.fungibleTickets.length +
+            event.nonFungibleTickets.length} ticket types: ${t2 - t1}`
+        );
+        if (!inStore) {
+          commit("addEventToStore", event);
+        } else {
+          commit("updateEvent", event);
+        }
       }
-      commit("updateEventStore", events);
+      console.log(
+        `average loading time for ${
+          createdEvents.length
+        } events: ${totalLoadingTime / createdEvents.length}`
+      );
+      console.log(`Full loads: ${fullLoads}, Partial loads: ${partLoads}`);
     },
     async loadApprovers({ commit }) {
       let approvers = [];
       for (const event of state.events) {
         const approverAddress = event.identityContractAddress;
-        console.log(approverAddress);
         const inStore = await idb.getApprover(approverAddress);
         let approver;
         if (inStore) {
-          console.log("in store");
           approver = new IdentityApprover(inStore);
           approver.requestUrlVerification();
           approver.requestTwitterVerification();
         } else {
-          console.log("not in store");
           approver = new IdentityApprover(approverAddress);
           await approver.loadData(state.identity);
         }
@@ -271,18 +254,29 @@ export default new Vuex.Store({
       the changes in ownership live, without reloading the page.
     */
     async updateEvent({ commit }, address) {
+      console.info(`updtating event ${address}`);
       let event = state.events.find((e) => e.contractAddress === address);
-      let fetch = await event.loadData(
-        EVENT_MINTABLE_AFTERMARKET_ABI,
-        state.ipfsInstance,
-        state.web3.web3Instance
-      );
-      if (fetch) {
-        const block = await state.web3.web3Instance.eth.getBlock("latest");
+      let result = await event.handleMissedEvents(state.activeUser.account);
+
+      const block = await state.web3.web3Instance.eth.getBlock("latest");
+      if (result.success) {
         event.lastFetchedBlock = block.number;
       }
+      console.info(result.userEvents);
+      if (result.userEvents.length > 0) {
+        console.log("test");
+        state.activeUser.handleMissedEvents(
+          event.contractAddress,
+          result.userEvents
+        );
+        state.activeUser.lastFetchedBlock = block.number;
+        await idb.saveUser(state.activeUser);
+        commit("setActiveUser", state.activeUser);
+      }
+
+      event.lastFetchedBlock = block.number;
       await idb.saveEvent(event);
-      commit("updateEventStore", state.events);
+      commit("updateEvent", event);
     },
     async addTicketToCart({ commit }, selection) {
       state.shoppingCart.add(selection);

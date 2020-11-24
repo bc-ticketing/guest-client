@@ -1,21 +1,5 @@
 <template>
   <div id="app">
-    <!-- <walletInfo v-bind:open="infoOpen"></walletInfo> -->
-    <!--
-    <div id="nav" ref="nav">
-      <div class="container">
-        <div class="logo-container">
-           <img src="" alt="Logo" /> 
-          <h4 id="nav-title">Idetix</h4>
-        </div>
-        <div class="wallet-info">
-          
-        </div>
-         <Navigation v-bind:navHeight="navHeight" /> 
-      </div>
-      
-    </div>
-    -->
     <div class="content" ref="content">
       <overlayMessage></overlayMessage>
 
@@ -90,6 +74,8 @@ export default {
   async beforeCreate() {
     // load events when event factory is ready
     this.$root.$on("eventFactoryCreated", async () => {
+      await this.$store.dispatch("registerActiveUser");
+      console.log("loaded user");
       await this.loadEvents();
     });
 
@@ -97,9 +83,15 @@ export default {
     // since the ticket loading logic depends on the event metadata
     // being present.
     this.$root.$on("loadedEvents", async () => {
+      console.log("loaded events");
       await this.$store.dispatch("loadApprovers");
-      await this.$store.dispatch("registerActiveUser");
+      console.log("loaded approvers");
+      await this.$store.dispatch("getUserApprovalLevels");
       this.$root.$emit("userUpdated");
+      this.$root.$emit("openMessageBus", {
+        message: "Loaded all data",
+        status: "success",
+      });
     });
 
     /* 
@@ -119,7 +111,7 @@ export default {
     // Actual execution starts here
     // First we register ipfs and web3 handlers and emit the respective event
     await this.$store.dispatch("registerWeb3");
-    this.$root.$emit("web3Injected"); 
+    this.$root.$emit("web3Injected");
     // we subscribe to the accountsChanged event from web3 to detect thos
     this.$store.state.web3.ethereum.on("accountsChanged", () => {
       this.$root.$emit("accountChanged");
@@ -147,12 +139,6 @@ export default {
     this.$root.$emit("identityCreated");
     // We register a new, empty shopping cart
     await this.$store.dispatch("createShoppingCart");
-
-    //finally a message confirms that all the data is loaded
-    this.$root.$emit("openMessageBus", {
-      message: "Loaded all data",
-      status: "success",
-    });
   },
   mounted: async function() {
     console.log(process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);
@@ -292,7 +278,7 @@ a:hover {
 
 .slide-leave {
   position: absolute;
-  left:0;
+  left: 0;
 }
 .slide-leave-to {
   left: 100vw;

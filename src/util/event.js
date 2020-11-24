@@ -156,10 +156,13 @@ export class Event {
       return;
     }
     var first = response.data.results[0];
-    var latlong = {
-      lat: first.geometry.lat,
-      lng: first.geometry.lng,
-    };
+    if (first) {
+      var latlong = {
+        lat: first.geometry.lat,
+        lng: first.geometry.lng,
+      };
+    }
+
     this.latlong = latlong;
   }
 
@@ -301,7 +304,6 @@ export class Event {
   }
 
   async loadIPFSMetadata() {
-    console.log("loading ipfs data for event", this.contractAddress);
     var ipfsData = null;
     try {
       for await (const chunk of ipfsClient.cat(this.ipfsHash, {
@@ -313,7 +315,6 @@ export class Event {
       console.log("could not get event metadata", error);
       return;
     }
-    console.log(String(ipfsData));
     const metadata = JSON.parse(ipfsData);
     this.location = metadata.event.location;
     this.title = metadata.event.title;
@@ -369,7 +370,9 @@ export class Event {
     } else {
       ticketType = this.fungibleTickets.find((t) => t.typeId === ticketTypeId);
     }
-    ticketType.ticketsSold += amount;
+    if (ticketType) {
+      ticketType.ticketsSold += amount;
+    }
   }
 
   adjustOrders(
@@ -382,8 +385,13 @@ export class Event {
     address,
     ticketId = 0
   ) {
+    percentage = Number(percentage);
+    quantity = Number(quantity);
     if (!isNf) {
       let ticketType = this.getTicketType(ticketTypeId, false);
+      if (!ticketType) {
+        return false;
+      }
       if (buyOrSell === "buy") {
         if (placedOrFilled === "placed") {
           addBuyOrders(ticketType, percentage, quantity, address);
@@ -499,44 +507,42 @@ export class Event {
     );
   }
   handleBuyOrderNonFungibleFilled(event) {
-    const address = event.returnValues.addr;
-    for (const [index, id] of event.returnValues._ids.entries()) {
-      const ticketTypeId = Number(
-        getTicketTypeIndex(new BigNumber(id)).toFixed()
-      );
-      const percentage = event.returnValues.percentage[index];
-      const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-      this.adjustOrders(
-        ticketTypeId,
-        true,
-        percentage,
-        1,
-        "buy",
-        "filled",
-        address,
-        ticketId
-      );
-    }
+    const ticketTypeId = Number(
+      getTicketTypeIndex(new BigNumber(event.returnValues._id)).toFixed()
+    );
+    const percentage = event.returnValues.percentage;
+    const ticketId = Number(
+      getTicketId(new BigNumber(event.returnValues._id)).toFixed()
+    );
+    this.adjustOrders(
+      ticketTypeId,
+      true,
+      percentage,
+      1,
+      "buy",
+      "filled",
+      event.returnValues.buyer,
+      ticketId
+    );
   }
   handleSellOrderNonFungibleFilled(event) {
-    const address = event.returnValues.addr;
-    for (const [index, id] of event.returnValues._ids.entries()) {
-      const ticketTypeId = Number(
-        getTicketTypeIndex(new BigNumber(id)).toFixed()
-      );
-      const percentage = event.returnValues.percentage[index];
-      const ticketId = Number(getTicketId(new BigNumber(id)).toFixed());
-      this.adjustOrders(
-        ticketTypeId,
-        true,
-        percentage,
-        1,
-        "sell",
-        "filled",
-        address,
-        ticketId
-      );
-    }
+    const ticketTypeId = Number(
+      getTicketTypeIndex(new BigNumber(event.returnValues._id)).toFixed()
+    );
+    const percentage = event.returnValues.percentage;
+    const ticketId = Number(
+      getTicketId(new BigNumber(event.returnValues._id)).toFixed()
+    );
+    this.adjustOrders(
+      ticketTypeId,
+      true,
+      percentage,
+      1,
+      "sell",
+      "filled",
+      event.returnValues.seller,
+      ticketId
+    );
   }
   handleSellOrderNonFungiblePlaced(event) {
     const address = event.returnValues.addr;
@@ -562,34 +568,30 @@ export class Event {
     const ticketTypeId = Number(
       getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed()
     );
-    const quantity = event.returnValues.quantity;
-    const address = event.returnValues.addr;
     const percentage = event.returnValues.percentage;
     this.adjustOrders(
       ticketTypeId,
       false,
       percentage,
-      quantity,
+      1,
       "buy",
       "filled",
-      address
+      event.returnValues.buyer
     );
   }
   handleSellOrderFungibleFilled(event) {
     const ticketTypeId = Number(
       getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed()
     );
-    const quantity = event.returnValues.quantity;
-    const address = event.returnValues.addr;
     const percentage = event.returnValues.percentage;
     this.adjustOrders(
       ticketTypeId,
       false,
       percentage,
-      quantity,
+      1,
       "sell",
       "filled",
-      address
+      event.returnValues.seller
     );
   }
   handleSellOrderFungiblePlaced(event) {
@@ -609,7 +611,7 @@ export class Event {
       address
     );
   }
-  handleBuyOrderPlaced(event) {
+  handleBuyOrderPlaced(event, currentUserAddress, userEvents) {
     const ticketTypeId = Number(
       getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed()
     );
@@ -632,6 +634,28 @@ export class Event {
       address,
       ticketId
     );
+    if (address === currentUserAddress) {
+      userEvents.push({ type: event.event, event });
+    }
+  }
+  async handlePresaleJoined(event) {
+    const ticketTypeNr = getTicketTypeIndex(
+      new BigNumber(event.returnValues.ticketTypeId)
+    ).toFixed();
+    const isNfTT = isNf(new BigNumber(event.returnValues.ticketTypeId));
+    let ticketType = this.getTicketType(ticketTypeNr, isNfTT);
+    ticketType.presaleParticipants += 1;
+  }
+  async handleTicketClaimed() {}
+  async handlePresaleCreated(event) {
+    const ticketTypeNr = getTicketTypeIndex(
+      new BigNumber(event.returnValues.ticketTypeId)
+    ).toFixed();
+    const isNfTT = isNf(new BigNumber(event.returnValues.ticketTypeId));
+    let ticketType = this.getTicketType(ticketTypeNr, isNfTT);
+    ticketType.presaleSupply = event.returnValues.supply;
+    ticketType.presaleClosingBlock = event.returnValues.block;
+    ticketType.presaleParticipants = 0;
   }
   async handleTicketMetadata(event) {
     const ticketTypeNr = getTicketTypeIndex(
@@ -661,7 +685,7 @@ export class Event {
     ticketType.ipfsHash = ipfsHash;
     const granularity = await this.contract.methods.granularity().call();
     ticketType.aftermarketGranularity = Number(granularity);
-    // check presale
+    // TODO: check if still needed with the handlePresaleCreated event
     const lottery = await this.contract.methods
       .lotteries(event.returnValues.ticketTypeId)
       .call();
@@ -671,7 +695,11 @@ export class Event {
     }
     if (isNfTT) {
       for (let j = 1; j <= Number(ticketType.supply); j++) {
-        const ticketId = getIdAsBigNumber(true, ticketTypeNr, j).toFixed();
+        const ticketId = getIdAsBigNumber(
+          true,
+          Number(ticketTypeNr),
+          j
+        ).toFixed();
         let ticket = this.hasNonFungibleTicket(ticketTypeNr, j);
         if (!ticket) {
           ticket = new NonFungibleTicket(this.contractAddress, ticketTypeNr, j);
@@ -711,21 +739,39 @@ export class Event {
   }
 
   // we dont need these events at the moment
-  async handlePresaleCreated() {}
-  async handlePresaleJoined() {}
+
   async handleValueTransferred() {}
 
   // go over all missed events while the app was offline and handle them
-  async handleMissedEvents() {
+  async handleMissedEvents(currentUserAddress) {
     // console.log("handling missed events");
     const events = await this.contract.getPastEvents("allEvents", {
       fromBlock: this.lastFetchedBlock + 1,
     });
-    // console.log(events);
+    // this list will be populated by the event handlers and contain all events which are relevant for the current user!
+    let userEvents = [];
     for (const event of events) {
-      // console.log("handling missed event", event.event);
-      await this[`handle${event.event}`](event);
+      console.debug("handling missed event", event.event);
+      try {
+        await this[`handle${event.event}`](event);
+      } catch (e) {
+        console.info(`i dont have an event handler for ${event.event}`);
+        console.info(e);
+      }
+      if (
+        (event.returnValues.owner &&
+          event.returnValues.owner === currentUserAddress) ||
+        (event.returnValues.addr &&
+          event.returnValues.addr === currentUserAddress) ||
+        (event.returnValues.seller &&
+          event.returnValues.seller === currentUserAddress) ||
+        (event.returnValues.buyer &&
+          event.returnValues.buyer === currentUserAddress)
+      ) {
+        console.log("forwarding to user");
+        userEvents.push({ type: event.event, event: event.returnValues });
+      }
     }
-    return true;
+    return { success: true, userEvents };
   }
 }

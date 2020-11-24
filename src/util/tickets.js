@@ -1,7 +1,13 @@
 /* 
   This file contains data classes for all ticket types and utility functions for state alterations. All functions that interact with the blockchain for buying/selling tickets are contained here as well as helper functions to get infos from ticket objects
 */
-import { getIdAsBigNumber } from "idetix-utils";
+import {
+  getIdAsBigNumber,
+  isNf,
+  getTicketId,
+  getTicketTypeIndex,
+} from "idetix-utils";
+
 import {
   NULL_ADDRESS,
   MESSAGE_TRANSACTION_DENIED,
@@ -676,7 +682,6 @@ export async function buyFungible(
 ) {
   const eventSC = new web3Instance.eth.Contract(ABI, eventContractAddress);
   let result;
-  console.log(price);
   await eventSC.methods
     .mintFungible(
       getFullTicketTypeId(false, new BigNumber(ticketType)),
@@ -688,7 +693,6 @@ export async function buyFungible(
       value: String(amount * web3Instance.utils.toWei(price)),
     })
     .on("receipt", function(receipt) {
-      console.log(receipt);
       if (receipt.status) {
         result = {
           message: MESSAGE_TICKET_BOUGHT,
@@ -699,7 +703,6 @@ export async function buyFungible(
     })
     .on("error", function(error) {
       result = decodeError(error);
-      console.log(error);
     })
     .catch(function(e) {
       result = decodeError(e);
@@ -768,6 +771,9 @@ export async function loadIPFSMetadata(ticket) {
     return ticket;
   }
   const metadata = JSON.parse(ipfsData);
+  if (!metadata.ticket) {
+    return ticket;
+  }
   ticket.description = metadata.ticket.description;
   ticket.seatMapping = metadata.ticket.mapping;
   ticket.title = metadata.ticket.title;
@@ -791,6 +797,19 @@ export async function loadIPFSMetadata(ticket) {
  */
 export function getFullTicketTypeId(isNf, typeId) {
   return getIdAsBigNumber(isNf, typeId).toFixed();
+}
+
+export function getTicketInfoFromType(ticketType) {
+  const ticketTypeId = Number(
+    getTicketTypeIndex(new BigNumber(ticketType)).toFixed()
+  );
+  const nf = isNf(new BigNumber(ticketType));
+  const ticketId = nf
+    ? Number(
+        getTicketId(new BigNumber(event.returnValues.ticketType)).toFixed()
+      )
+    : undefined;
+  return { ticketTypeId, nf, ticketId };
 }
 
 /**
@@ -886,6 +905,7 @@ export function removeSellOrders(
   ticketId = 0
 ) {
   if (ticketId == 0) {
+    console.debug(ticketType, percentage, quantity, address);
     let order = ticketType.sellOrders.find(
       (o) => o.address === address && Number(o.percentage) == Number(percentage)
     );
