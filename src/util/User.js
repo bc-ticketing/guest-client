@@ -16,7 +16,7 @@ export class User {
       this.balance = balance;
       return;
     }
-    this.lastFetchedBlock = 0;
+    this.lastFetchedBlocks = {};
     this.fungibleTickets = [];
     this.nonFungibleTickets = [];
     this.buyOrders = [];
@@ -115,7 +115,6 @@ export class User {
   }
 
   handleMintFungibles(eventContractAddress, event) {
-    console.log(event);
     const ticketType = Number(
       getTicketTypeIndex(new BigNumber(event.ticketType)).toFixed()
     );
@@ -193,7 +192,7 @@ export class User {
       info.ticketId
     );
     // user is the one whe made the buy order and bought the ticket
-    if (event.returnValues.buyer === this.account) {
+    if (event.buyer === this.account) {
       if (ticket) {
         ticket.amount += 1;
       } else {
@@ -211,7 +210,7 @@ export class User {
   handleBuyOrderNonFungibleFilled(eventContractAddress, event) {
     let info = getTicketInfoFromType(event._id);
     // user is the one whe made the buy order and bought the ticket
-    if (event.returnValues.buyer === this.account) {
+    if (event.buyer === this.account) {
       let info = getTicketInfoFromType(event._id);
       this.nonFungibleTickets.push({
         ticketId: info.ticketId,
@@ -235,7 +234,7 @@ export class User {
       info.ticketId
     );
     // user is the one who made the sell order and sold the ticket
-    if (event.returnValues.seller === this.account) {
+    if (event.seller === this.account) {
       ticket.quantity -= 1;
     } else {
       if (ticket) {
@@ -253,7 +252,7 @@ export class User {
   handleSellOrderNonFungibleFilled(eventContractAddress, event) {
     let info = getTicketInfoFromType(event._id);
     // user is the one who made the sell order and sold the ticket
-    if (event.returnValues.seller === this.account) {
+    if (event.seller === this.account) {
       this.removeNfTicket(
         eventContractAddress,
         info.ticketTypeId,
@@ -302,7 +301,7 @@ export class User {
     if (!this.presales.joined[eventContractAddress]) {
       this.presales.joined[eventContractAddress] = {};
     }
-    this.presales.joined[eventContractAddress][event.returnValues.ticketType] =
+    this.presales.joined[eventContractAddress][event.ticketType] =
       event.luckyNumber;
   }
 
@@ -316,12 +315,54 @@ export class User {
 
   handleTicketTransferred() {}
 
-  handleMissedEvents(eventContractAddress, events) {
-    console.log("handling missed user events");
-    for (const event of events) {
-      console.log("handling missed event for user", event.type);
-      this[`handle${event.type}`](eventContractAddress, event.event);
+  async handleMissedEvents(
+    eventContractAddress,
+    events,
+    eventUpdateBlock,
+    eventSC
+  ) {
+    if (!this.lastFetchedBlocks[eventContractAddress]) {
+      this.lastFetchedBlocks[eventContractAddress] = 0;
     }
+    console.info("handling missed user events");
+    console.info(
+      `event at block ${eventUpdateBlock} user at block ${this.lastFetchedBlocks[eventContractAddress]}`
+    );
+    let allEvents = [];
+    // if the users last update block is lower than the events one,
+    // we have to cover all events between those block numbers
+    if (eventUpdateBlock > this.lastFetchedBlocks[eventContractAddress] + 1) {
+      console.info("event was ahead");
+      const eventsMissedByEventLoader = await eventSC.getPastEvents(
+        "allEvents",
+        {
+          fromBlock: this.lastFetchedBlocks[eventContractAddress] + 1,
+          toBlock: eventUpdateBlock,
+        }
+      );
+      allEvents = allEvents.concat(
+        eventsMissedByEventLoader.map(
+          (e) => (e = { type: e.event, event: e.returnValues })
+        )
+      );
+    }
+    allEvents = allEvents.concat(events);
+    for (const event of allEvents) {
+      console.info("handling missed event for user", event.type);
+      try {
+        this[`handle${event.type}`](eventContractAddress, event.event);
+      } catch {
+        console.debug(`I don't have an event handler for ${event.type}!`);
+      }
+    }
+  }
+
+  hasActivePresale() {
+    return Object.keys(this.presales).length > 0;
+  }
+
+  setEventUpToDate(eventContractAddress, block) {
+    this.lastFetchedBlocks[eventContractAddress] = block;
   }
 
   setApprovalLevel(approver, method) {

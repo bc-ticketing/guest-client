@@ -1,7 +1,11 @@
 <template>
   <div class="events">
+    <div class="header">
+      <div class="container">
+        <h3>{{ $store.state.events.length }} events</h3>
+      </div>
+    </div>
     <div class="container">
-      <h3>{{ $store.state.events.length }} events</h3>
       <isotope
         ref="isotope"
         class="event-list"
@@ -105,9 +109,22 @@ export default {
 </script>
 
 <style scoped>
+.header h3 {
+  margin: 0 !important;
+}
+.header {
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 999;
+  padding: 1rem 0;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+    0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
 .events {
   min-height: 100vh;
-  padding-top: 2rem;
 }
 .item {
   width: 100%;
@@ -147,6 +164,7 @@ export default {
   border: black dotted 0.001rem;
 }
 .event-list {
+  margin-top: 1rem;
   z-index: 5;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

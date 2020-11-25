@@ -241,11 +241,15 @@ a:hover {
 /* ---------- Navigation Bar ---------- */
 
 /* ---------- Basic Components ---------- */
+#app {
+  min-height: 100vh;
+  max-height: 100vh;
+}
+
 .content,
 #app {
   padding-top: 0;
-  overflow-x: hidden;
-  min-height: 100vh;
+  /*overflow-x: hidden;*/
   position: relative;
   width: 100vw;
   max-width: 100vw;

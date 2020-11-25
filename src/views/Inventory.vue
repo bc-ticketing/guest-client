@@ -43,6 +43,15 @@
         </div>
       </md-tab>
       <md-tab id="tab-presales" md-label="Presales">
+        <div class="empty-message" v-if="noPresalesJoined">
+          <div class="empty-icon">
+            <md-icon>confirmation_number</md-icon>
+          </div>
+          <p>
+            Looks like its empty here! Checkout some of our events to join an
+            active presale!
+          </p>
+        </div>
         <div class="container presales">
           <div
             class="presale"
@@ -128,6 +137,11 @@ export default {
         }
       }
       return presales;
+    },
+    noPresalesJoined() {
+      return (
+        !this.$store.activeUser || !this.$store.activeUser.hasActivePresale()
+      );
     },
     noTicketsOwned() {
       return (

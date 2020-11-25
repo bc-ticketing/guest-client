@@ -200,7 +200,7 @@
       <div class="container">
         <h2>Tickets</h2>
       </div>
-      <div class="container-fluid">
+      <div class="container-fluid" v-if="hasSeatMapping">
         <div class="seating-container" :ref="'cont'" draggable="false">
           <div class="col" v-for="col in cols" v-bind:key="'col_' + col">
             <div
@@ -211,6 +211,41 @@
               v-for="row in rows"
               v-bind:key="'seat_' + row"
             ></div>
+          </div>
+        </div>
+      </div>
+      <div class="container" v-else>
+        <p>
+          Unfortunately, this event does not have a seat map available. You can
+          still buy tickets, check the event website for more information on the
+          ticket categories.
+        </p>
+        <div class="tickets">
+          <div
+            class="ticket"
+            v-for="ticket in fungibleTickets"
+            :key="'ticket_f_' + ticket.typeId"
+          >
+            <p class="bold">{{ ticket.title }}</p>
+            <button
+              class="md-button md-raised"
+              @click="selectTicketDirectly(ticket)"
+            >
+              select
+            </button>
+          </div>
+          <div
+            class="ticket"
+            v-for="ticket in nonFungibleTickets"
+            :key="'ticket_nf_' + ticket.typeId"
+          >
+            <p class="bold">{{ ticket.title }}</p>
+            <button
+              class="md-button md-raised"
+              @click="selectTicketDirectly(ticket)"
+            >
+              select
+            </button>
           </div>
         </div>
       </div>
@@ -238,6 +273,14 @@
           v-for="ticket in nonFungibleTicketsWithPresale"
           v-bind:key="'presale_nonfungible_' + ticket.typeId"
         ></div>
+        <div
+          v-if="
+            fungibleTicketsWithPresale.length === 0 &&
+              nonFungibleTicketsWithPresale.length === 0
+          "
+        >
+          <p>This event does not have any active presales</p>
+        </div>
       </div>
     </section>
     <!-- aftermarket -->
@@ -541,6 +584,7 @@ export default {
         type: "",
         isNf: false,
       },
+      hasSeatMapping: false,
       queueToJoin: "0",
       aftermarket_price: 0,
       showDialog: false,
@@ -861,6 +905,21 @@ export default {
       this.selection.active = true;
       //await this.buyTicket(selected_ticket.typeIndex, selected_ticket.index, selected_ticket.price, selected_ticket.isNF)
     },
+    selectTicketDirectly(ticket) {
+      this.selection.ticket = ticket;
+      if (ticket.isNf) {
+        this.selection.ticketId = ticket.ticketId;
+        this.selection.ticketTypeId = ticket.ticketTypeId;
+        this.selection.isNf = true;
+        this.selection.eventContractAddress = ticket.eventContractAddress;
+      } else {
+        this.selection.ticketTypeId = ticket.typeId;
+        this.selection.ticketId = 0;
+        this.selection.isNf = false;
+        this.selection.eventContractAddress = ticket.eventContractAddress;
+      }
+      this.selection.active = true;
+    },
     toggleTab: function(tab) {
       this.tabs.forEach((t) => {
         this.$refs[t].classList.remove("active");
@@ -937,6 +996,9 @@ export default {
       });
       this.rows = max_row;
       this.cols = max_col;
+      if (this.rows > 0 && this.cols > 0) {
+        this.hasSeatMapping = true;
+      }
       this.$refs[
         "cont"
       ].style.gridTemplateColumns = `repeat(${this.cols},minmax(25px,1fr))`;
@@ -1011,7 +1073,7 @@ export default {
   padding-bottom: 100px;
 }
 .event {
-  height: 100vh;
+  min-height: 100vh;
 }
 .event .top-bar {
   width: 100%;
@@ -1399,5 +1461,14 @@ i.shopping-cart {
   visibility: visible;
   -webkit-transform: translateX(-50%) translateY(0);
   transform: translateX(-50%) translateY(0);
+}
+
+.ticket {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+p.bold {
+  font-weight: bold;
 }
 </style>

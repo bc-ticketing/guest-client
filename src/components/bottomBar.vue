@@ -59,7 +59,7 @@ export default {
 
 <style scoped>
 .bottom-bar {
-  position: fixed;
+  position: sticky;
   bottom: 0;
   z-index: 99;
 }

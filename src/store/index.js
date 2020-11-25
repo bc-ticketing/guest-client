@@ -87,30 +87,6 @@ export default new Vuex.Store({
     async setEventFactoryContractAddress({ commit }, address) {
       commit("setEventFactoryContractAddress", address);
     },
-    /* 
-      Responsible for getting the current user object.
-      First checks if the IDB contains a user with the account
-      we get from web3, else creates a new user.
-      Then the user is updated with events from the Blockchain only
-      from the 'lastFetchedBlock', which is 0 in the case of a new account
-      Finally we store the user in the db/update the old record.
-    */
-    async registerActiveUser({ commit }) {
-      //check if the user is in the db already
-      const inDB = await idb.getUser(state.web3.account);
-      if (inDB) {
-        let user = new User(inDB);
-        //and update the record in the db
-        await idb.saveUser(user);
-        commit("setActiveUser", user);
-      } else {
-        //if not, create a new user from the web3 data and load his tickets
-        let user = new User(state.web3.account, state.web3.balance);
-        //and save it to the db
-        await idb.saveUser(user);
-        commit("setActiveUser", user);
-      }
-    },
     async getUserApprovalLevels({ commit }) {
       let user = state.activeUser;
       for (const event of state.events) {
@@ -153,7 +129,39 @@ export default new Vuex.Store({
       );
       commit("setIdentity", identity);
     },
-
+    /* 
+      Responsible for getting the current user object.
+      First checks if the IDB contains a user with the account
+      we get from web3, else creates a new user.
+      Then the user is updated with events from the Blockchain only
+      from the 'lastFetchedBlock', which is 0 in the case of a new account
+      Finally we store the user in the db/update the old record.
+    */
+    async registerActiveUser({ commit }) {
+      //check if the user is in the db already
+      const inDB = await idb.getUser(state.web3.account);
+      let user;
+      if (inDB) {
+        user = new User(inDB);
+      } else {
+        //if not, create a new user from the web3 data and load his tickets
+        user = new User(state.web3.account, state.web3.balance);
+      }
+      // update the user to the status of the event
+      console.info("updating user to event status");
+      for (const event of state.events) {
+        user.handleMissedEvents(
+          event.contractAddress,
+          [],
+          event.lastFetchedBlock + 1,
+          event.contract
+        );
+        user.setEventUpToDate(event.contractAddress, event.lastFetchedBlock);
+      }
+      //and update the record in the db
+      await idb.saveUser(user);
+      commit("setActiveUser", user);
+    },
     /* 
       Loads all events from the IDB and Blockchain.
       First gets all the event addresses from the eventFactory Smart contract.
@@ -176,6 +184,7 @@ export default new Vuex.Store({
       let loadingTimes = [];
       let fullLoads = 0;
       let partLoads = 0;
+      let user = state.activeUser;
       for (let i = 0; i < createdEvents.length; i++) {
         let t1 = performance.now();
         const address = createdEvents[i].returnValues._contractAddress;
@@ -192,16 +201,20 @@ export default new Vuex.Store({
         result = await event.handleMissedEvents(state.activeUser.account);
         if (result.success) {
           const block = await state.web3.web3Instance.eth.getBlock("latest");
+          if (result.userEvents.length > 0) {
+            await user.handleMissedEvents(
+              event.contractAddress,
+              result.userEvents,
+              event.lastFetchedBlock + 1,
+              event.contract
+            );
+            user.setEventUpToDate(event.contractAddress, block.number);
+            await idb.saveUser(user);
+            commit("setActiveUser", user);
+          }
           event.lastFetchedBlock = block.number;
         }
-        if (result.userEvents.length > 1) {
-          state.activeUser.handleMissedEvents(
-            event.contractAddress,
-            result.userEvents
-          );
-          await idb.saveUser(state.activeUser);
-          commit("setActiveUser", state.activeUser);
-        }
+
         await event.verifySocials();
         //event.initSubscriptions(state.web3.web3Instance);
         await idb.saveEvent(event);
@@ -224,6 +237,36 @@ export default new Vuex.Store({
         } events: ${totalLoadingTime / createdEvents.length}`
       );
       console.log(`Full loads: ${fullLoads}, Partial loads: ${partLoads}`);
+    },
+    /* 
+      Updates a specific event in the same manner as described in 'updateEvents'.
+      This is used, e.g., when a user buys a ticket, in order to display
+      the changes in ownership live, without reloading the page.
+    */
+    async updateEvent({ commit }, address) {
+      console.info(`updtating event ${address}`);
+      let event = state.events.find((e) => e.contractAddress === address);
+      let result = await event.handleMissedEvents(state.activeUser.account);
+
+      if (result.success) {
+        const block = await state.web3.web3Instance.eth.getBlock("latest");
+        if (result.userEvents.length > 0) {
+          let user = state.activeUser;
+          await user.handleMissedEvents(
+            event.contractAddress,
+            result.userEvents,
+            event.lastFetchedBlock + 1,
+            event.contract
+          );
+          user.setEventUpToDate(event.contractAddress, block.number);
+          await idb.saveUser(user);
+          commit("setActiveUser", user);
+        }
+        event.lastFetchedBlock = block.number;
+      }
+
+      await idb.saveEvent(event);
+      commit("updateEvent", event);
     },
     async loadApprovers({ commit }) {
       let approvers = [];
@@ -248,36 +291,7 @@ export default new Vuex.Store({
       }
       commit("updateApproverStore", approvers);
     },
-    /* 
-      Updates a specific event in the same manner as described in 'updateEvents'.
-      This is used, e.g., when a user buys a ticket, in order to display
-      the changes in ownership live, without reloading the page.
-    */
-    async updateEvent({ commit }, address) {
-      console.info(`updtating event ${address}`);
-      let event = state.events.find((e) => e.contractAddress === address);
-      let result = await event.handleMissedEvents(state.activeUser.account);
 
-      const block = await state.web3.web3Instance.eth.getBlock("latest");
-      if (result.success) {
-        event.lastFetchedBlock = block.number;
-      }
-      console.info(result.userEvents);
-      if (result.userEvents.length > 0) {
-        console.log("test");
-        state.activeUser.handleMissedEvents(
-          event.contractAddress,
-          result.userEvents
-        );
-        state.activeUser.lastFetchedBlock = block.number;
-        await idb.saveUser(state.activeUser);
-        commit("setActiveUser", state.activeUser);
-      }
-
-      event.lastFetchedBlock = block.number;
-      await idb.saveEvent(event);
-      commit("updateEvent", event);
-    },
     async addTicketToCart({ commit }, selection) {
       state.shoppingCart.add(selection);
       commit("updateShoppingCartStore", state.shoppingCart);
