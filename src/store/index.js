@@ -6,7 +6,6 @@ import { EVENT_FACTORY_ABI } from "./../util/abi/eventFactory";
 import { IDENTITY_ABI } from "./../util/abi/identity";
 import { Event } from "./../util/event";
 import { User } from "./../util/User";
-import { ShoppingCart } from "./../util/shoppingCart";
 import idb from "./../util/db/idb";
 import { IdentityApprover } from "../util/identity";
 //import { FungibleTicketType, NonFungibleTicketType, NonFungibleTicket } from "../util/tickets";
@@ -61,9 +60,6 @@ export default new Vuex.Store({
       ev = event;
       state.events.push(ev);
     },
-    updateShoppingCartStore(state, cart) {
-      state.shoppingCart = cart;
-    },
     setUsers(state, users) {
       state.users = users;
     },
@@ -102,9 +98,6 @@ export default new Vuex.Store({
       }
 
       commit("setActiveUser", user);
-    },
-    async createShoppingCart({ commit }) {
-      commit("updateShoppingCartStore", new ShoppingCart());
     },
     registerWeb3: async function({ commit }) {
       const web3 = await getWeb3();
@@ -150,7 +143,7 @@ export default new Vuex.Store({
       // update the user to the status of the event
       console.info("updating user to event status");
       for (const event of state.events) {
-        user.handleMissedEvents(
+        await user.handleMissedEvents(
           event.contractAddress,
           [],
           event.lastFetchedBlock + 1,
@@ -184,7 +177,15 @@ export default new Vuex.Store({
       let loadingTimes = [];
       let fullLoads = 0;
       let partLoads = 0;
-      let user = state.activeUser;
+      const inDB = await idb.getUser(state.web3.account);
+      let user;
+      if (inDB) {
+        user = new User(inDB);
+      } else {
+        //if not, create a new user from the web3 data and load his tickets
+        user = new User(state.web3.account, state.web3.balance);
+      }
+      //let user = state.activeUser;
       for (let i = 0; i < createdEvents.length; i++) {
         let t1 = performance.now();
         const address = createdEvents[i].returnValues._contractAddress;
@@ -201,17 +202,16 @@ export default new Vuex.Store({
         result = await event.handleMissedEvents(state.activeUser.account);
         if (result.success) {
           const block = await state.web3.web3Instance.eth.getBlock("latest");
-          if (result.userEvents.length > 0) {
-            await user.handleMissedEvents(
-              event.contractAddress,
-              result.userEvents,
-              event.lastFetchedBlock + 1,
-              event.contract
-            );
-            user.setEventUpToDate(event.contractAddress, block.number);
-            await idb.saveUser(user);
-            commit("setActiveUser", user);
-          }
+          await user.handleMissedEvents(
+            event.contractAddress,
+            result.userEvents,
+            event.lastFetchedBlock + 1,
+            event.contract
+          );
+          user.setEventUpToDate(event.contractAddress, block.number);
+          await idb.saveUser(user);
+          commit("setActiveUser", user);
+
           event.lastFetchedBlock = block.number;
         }
 
@@ -250,18 +250,17 @@ export default new Vuex.Store({
 
       if (result.success) {
         const block = await state.web3.web3Instance.eth.getBlock("latest");
-        if (result.userEvents.length > 0) {
-          let user = state.activeUser;
-          await user.handleMissedEvents(
-            event.contractAddress,
-            result.userEvents,
-            event.lastFetchedBlock + 1,
-            event.contract
-          );
-          user.setEventUpToDate(event.contractAddress, block.number);
-          await idb.saveUser(user);
-          commit("setActiveUser", user);
-        }
+        let user = state.activeUser;
+        await user.handleMissedEvents(
+          event.contractAddress,
+          result.userEvents,
+          event.lastFetchedBlock + 1,
+          event.contract
+        );
+        user.setEventUpToDate(event.contractAddress, block.number);
+        await idb.saveUser(user);
+        commit("setActiveUser", user);
+
         event.lastFetchedBlock = block.number;
       }
 
@@ -290,19 +289,6 @@ export default new Vuex.Store({
         }
       }
       commit("updateApproverStore", approvers);
-    },
-
-    async addTicketToCart({ commit }, selection) {
-      state.shoppingCart.add(selection);
-      commit("updateShoppingCartStore", state.shoppingCart);
-    },
-    async removeTicketFromCart({ commit }, toRemove) {
-      state.shoppingCart.removeByIndex(toRemove.index, toRemove.fungible);
-      commit("updateShoppingCartStore", state.shoppingCart);
-    },
-    async clearShoppingCart({ commit }) {
-      state.shoppingCart.clear();
-      commit("updateShoppingCartStore", state.shoppingCart);
     },
   },
   modules: {},

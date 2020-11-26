@@ -74,9 +74,7 @@ export default {
       this.close();
     });
   },
-  created: function() {
-    
-  },
+  created: function() {},
 };
 </script>
 
@@ -85,6 +83,7 @@ export default {
   cursor: pointer;
 }
 .search-bar {
+  bottom: -2rem;
   z-index: 99;
   padding: 0.5rem 0.5rem;
   position: fixed;

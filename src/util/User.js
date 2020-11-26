@@ -324,7 +324,6 @@ export class User {
     if (!this.lastFetchedBlocks[eventContractAddress]) {
       this.lastFetchedBlocks[eventContractAddress] = 0;
     }
-    console.info("handling missed user events");
     console.info(
       `event at block ${eventUpdateBlock} user at block ${this.lastFetchedBlocks[eventContractAddress]}`
     );
@@ -332,29 +331,35 @@ export class User {
     // if the users last update block is lower than the events one,
     // we have to cover all events between those block numbers
     if (eventUpdateBlock > this.lastFetchedBlocks[eventContractAddress] + 1) {
-      console.info("event was ahead");
-      const eventsMissedByEventLoader = await eventSC.getPastEvents(
-        "allEvents",
-        {
-          fromBlock: this.lastFetchedBlocks[eventContractAddress] + 1,
-          toBlock: eventUpdateBlock,
-        }
-      );
-      allEvents = allEvents.concat(
-        eventsMissedByEventLoader.map(
-          (e) => (e = { type: e.event, event: e.returnValues })
-        )
-      );
+      let eventsMissedByEventLoader = await eventSC.getPastEvents("allEvents", {
+        fromBlock: this.lastFetchedBlocks[eventContractAddress] + 1,
+        toBlock: eventUpdateBlock,
+      });
+      eventsMissedByEventLoader = eventsMissedByEventLoader
+        .map((e) => (e = { type: e.event, event: e.returnValues }))
+        .filter((e) => this.eventConcernsMe(e.event));
+      allEvents = allEvents.concat(eventsMissedByEventLoader);
     }
     allEvents = allEvents.concat(events);
     for (const event of allEvents) {
-      console.info("handling missed event for user", event.type);
       try {
         this[`handle${event.type}`](eventContractAddress, event.event);
       } catch {
         console.debug(`I don't have an event handler for ${event.type}!`);
       }
     }
+  }
+
+  eventConcernsMe(event) {
+    if (
+      event.owner === this.account ||
+      event.addr === this.account ||
+      event.seller === this.account ||
+      event.buyer === this.account
+    ) {
+      return true;
+    }
+    return false;
   }
 
   hasActivePresale() {

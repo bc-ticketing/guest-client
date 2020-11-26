@@ -9,7 +9,7 @@
     </div>
     <messageBus v-bind:yPos="messagePos"></messageBus>
     <searchBar v-bind:yPos="navHeight"></searchBar>
-    <bottomBar ref="nav" v-on:height="setNavHeight"></bottomBar>
+    <bottomBar ref="nav"></bottomBar>
   </div>
 </template>
 

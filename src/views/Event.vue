@@ -538,11 +538,7 @@
         </div>
       </div>
     </section>
-    <!--  <div class="container">
-      <div class="event-info-wrapper" ref="content-checkout">
-        <ShoppingCart></ShoppingCart>
-      </div>
-    </div> -->
+
     <SelectionView
       v-bind:ticketId="selection.ticketId"
       v-bind:ticketTypeId="selection.ticketTypeId"
@@ -555,7 +551,6 @@
 </template>
 
 <script>
-// import ShoppingCart from "./ShoppingCart";
 import ChartTest from "./../components/ChartTest.vue";
 
 import SelectionView from "./SelectionView";
@@ -606,7 +601,6 @@ export default {
     };
   },
   components: {
-    // ShoppingCart,
     SelectionView,
     ChartTest,
   },
@@ -706,9 +700,7 @@ export default {
         return 0;
       }
     },
-    shoppingCartItems() {
-      return this.$store.state.shoppingCart.getAmountOfItems();
-    },
+
     tickets() {
       if (this.$store.state.events[this.event_id]) {
         return this.$store.state.events[this.event_id].tickets;
@@ -1323,13 +1315,6 @@ export default {
   cursor: pointer;
 }
 
-.shopping-cart {
-  padding-right: 1rem;
-  color: white;
-}
-i.shopping-cart {
-  color: white !important;
-}
 .queue-wrapper {
   display: flex;
   flex-wrap: wrap;

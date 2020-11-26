@@ -27,7 +27,11 @@
         backgroundImage: `url(${eventImage})`,
         backgroundColor: `${eventColor}`,
       }"
-    ></div>
+    >
+      <md-button class="md-raised md-primary" @click="useTicket()"
+        >use</md-button
+      >
+    </div>
   </div>
 </template>
 
@@ -56,13 +60,16 @@ export default {
     openTicketOverlay: function() {
       this.$emit("openOverlay");
     },
+    useTicket() {
+      this.$emit("useTicket");
+    },
   },
   computed: {
     monthName: function() {
       return this.event ? MONTHS[this.event.getMonth()] : "";
     },
     day() {
-      return event ? event.getDay() : "";
+      return this.event ? this.event.getDay() : "";
     },
     event() {
       if (!this.eventContractAddress) return undefined;
@@ -132,7 +139,7 @@ export default {
   border: 1px solid rgba(0, 0, 0, 0.329);
   border-radius: 10px;
 
-  flex-basis: 80%;
+  flex-basis: 70%;
   display: flex;
   padding: 1rem;
 }
@@ -158,7 +165,10 @@ export default {
 .ticket-img {
   border: 1px solid rgba(0, 0, 0, 0.329);
   border-radius: 10px;
-  flex-basis: 20%;
+  flex-basis: 30%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .ticket-content h2 {

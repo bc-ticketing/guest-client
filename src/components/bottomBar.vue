@@ -61,6 +61,7 @@ export default {
 .bottom-bar {
   position: sticky;
   bottom: 0;
+  height: 56px;
   z-index: 99;
 }
 .bottom-bar.teal {

@@ -189,22 +189,7 @@ export default {
     getStepSize(granularity) {
       return Math.floor(100 / granularity);
     },
-    addToCart: async function() {
-      await this.$store.dispatch("addTicketToCart", {
-        ticket: this.ticketId,
-        ticketType: this.ticketTypeId,
-        price: this.price,
-        eventContractAddress: this.eventContractAddress,
-        amount: this.amount,
-        isNf: this.isNf,
-      });
-      this.$root.$emit("shoppingCartChanged");
-      this.$root.$emit("openMessageBus", {
-        message: "Ticket added to cart",
-        status: 1,
-      });
-      this.close();
-    },
+
     buy: async function() {
       if (!this.isNf) {
         const result = await buyFungible(

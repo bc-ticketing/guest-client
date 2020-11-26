@@ -10,7 +10,7 @@
         ref="isotope"
         class="event-list"
         :options="getOptions()"
-        :list="$store.state.events"
+        :list="events"
         @filter="filterOption = arguments[0]"
         @sort="sortOption = arguments[0]"
       >
@@ -35,6 +35,9 @@ export default {
     isotope,
   },
   computed: {
+    events() {
+      return this.$store.state.events;
+    },
     web3() {
       return this.$store.state.web3.web3Instance;
     },
@@ -54,6 +57,7 @@ export default {
   },
   mounted: function() {
     this.$root.$emit("openSearchBar");
+    // this.$refs["isotope"].arrange("isotope");
   },
   methods: {
     updateFilters: function(value) {
