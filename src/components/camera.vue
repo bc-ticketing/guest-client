@@ -29,6 +29,7 @@ export default {
   },
   props: {
     size: String,
+    mode: Boolean,
   },
   mounted() {
     this.startCamera();
@@ -38,7 +39,7 @@ export default {
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
-          facingMode: "user",
+          facingMode: this.mode ? "user" : "environment",
         },
       });
 
@@ -103,7 +104,7 @@ export default {
 .overlay {
   background: white;
   z-index: 9;
-  height: 80px;
+  height: 130px;
   position: absolute;
   left: 0;
   width: 100%;
@@ -120,6 +121,6 @@ export default {
 }
 
 video {
-  height: 240px;
+  height: 390px !important;
 }
 </style>

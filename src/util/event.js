@@ -292,12 +292,20 @@ export class Event {
   }
 
   async requestTwitterVerification() {
+    if (!this.twitter.url || this.twitter.url.length === 0) {
+      this.twitter.verification = false;
+      return;
+    }
     this.twitter.verification = await requestTwitterVerification(
       getHandle(this.twitter.url)
     );
   }
 
   async requestUrlVerification() {
+    if (!this.website.url || this.website.url.length === 0) {
+      this.website.verification = false;
+      return;
+    }
     this.website.verification = await requestWebsiteVerification(
       this.website.url
     );
@@ -744,19 +752,18 @@ export class Event {
 
   // go over all missed events while the app was offline and handle them
   async handleMissedEvents(currentUserAddress) {
-    // console.log("handling missed events");
     const events = await this.contract.getPastEvents("allEvents", {
       fromBlock: this.lastFetchedBlock + 1,
     });
     // this list will be populated by the event handlers and contain all events which are relevant for the current user!
     let userEvents = [];
     for (const event of events) {
-      console.debug("handling missed event", event.event);
+      // console.debug("handling missed event", event.event);
       try {
         await this[`handle${event.event}`](event);
-      } catch (e) {
-        console.info(`i dont have an event handler for ${event.event}`);
-        console.info(e);
+      } catch {
+        //console.info(`i dont have an event handler for ${event.event}`);
+        //console.info(e);
       }
       if (
         (event.returnValues.owner &&
@@ -768,7 +775,7 @@ export class Event {
         (event.returnValues.buyer &&
           event.returnValues.buyer === currentUserAddress)
       ) {
-        console.log("forwarding to user");
+        // console.log("forwarding to user");
         userEvents.push({ type: event.event, event: event.returnValues });
       }
     }

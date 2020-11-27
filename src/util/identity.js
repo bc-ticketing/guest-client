@@ -65,12 +65,20 @@ export class IdentityApprover {
   }
 
   async requestTwitterVerification() {
+    if (!this.twitter.url || this.twitter.url.length === 0) {
+      this.twitter.verification = false;
+      return;
+    }
     this.twitter.verification = await requestTwitterVerification(
       getHandle(this.twitter.url)
     );
   }
 
   async requestUrlVerification() {
+    if (!this.website.url || this.website.url.length === 0) {
+      this.website.verification = false;
+      return;
+    }
     this.website.verification = await requestWebsiteVerification(
       this.website.url
     );
@@ -95,11 +103,9 @@ export function getHandle(url) {
 }
 
 export async function requestTwitterVerification(handle) {
-  const VERIFIER_URL = process.env.VUE_APP_TRUST_CERTIFICATES_API_URL;
-  const VERIFIER_PORT = process.env.VUE_APP_TRUST_CERTIFICATES_API_PORT;
   try {
     let response = await axios.get(
-      `${VERIFIER_URL}:${VERIFIER_PORT}/api/twitter?username=${handle}`
+      `${process.env.VUE_APP_TOKEN_VERIFIER}/api/twitter?username=${handle}`
     );
     if (response.status == Number(200)) {
       console.log(response);
@@ -113,11 +119,9 @@ export async function requestTwitterVerification(handle) {
 }
 
 export async function requestWebsiteVerification(url) {
-  const VERIFIER_URL = process.env.VUE_APP_TRUST_CERTIFICATES_API_URL;
-  const VERIFIER_PORT = process.env.VUE_APP_TRUST_CERTIFICATES_API_PORT;
   try {
     let response = await axios.get(
-      `${VERIFIER_URL}:${VERIFIER_PORT}/api/website?url=${url}`
+      `${process.env.VUE_APP_TOKEN_VERIFIER}/api/website?url=${url}`
     );
     if (response.status == Number(200)) {
       console.log(response);

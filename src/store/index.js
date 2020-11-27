@@ -66,8 +66,15 @@ export default new Vuex.Store({
     setActiveUser(state, user) {
       state.activeUser = user;
     },
-    updateApproverStore(state, approvers) {
-      state.approvers = approvers;
+    updateApproverStore(state, approver) {
+      let ap = state.approvers.find(
+        (e) => e.contractAddress === approver.contractAddress
+      );
+      state.approvers = state.approvers.filter(
+        (e) => e.contractAddress !== approver.contractAddress
+      );
+      ap = approver;
+      state.approvers.push(ap);
     },
     setIdentityContractAddress(state, address) {
       state.IDENTITY_ADDRESS = address;
@@ -90,11 +97,13 @@ export default new Vuex.Store({
           (a) =>
             String(a.approverAddress) === String(event.identityContractAddress)
         );
-        const method = await approver.getApprovalLevel(
-          state.identity,
-          user.account
-        );
-        user.setApprovalLevel(approver.approverAddress, method);
+        if (approver) {
+          const method = await approver.getApprovalLevel(
+            state.identity,
+            user.account
+          );
+          user.setApprovalLevel(approver.approverAddress, method);
+        }
       }
 
       commit("setActiveUser", user);
@@ -133,6 +142,7 @@ export default new Vuex.Store({
     async registerActiveUser({ commit }) {
       //check if the user is in the db already
       const inDB = await idb.getUser(state.web3.account);
+
       let user;
       if (inDB) {
         user = new User(inDB);
@@ -141,7 +151,6 @@ export default new Vuex.Store({
         user = new User(state.web3.account, state.web3.balance);
       }
       // update the user to the status of the event
-      console.info("updating user to event status");
       for (const event of state.events) {
         await user.handleMissedEvents(
           event.contractAddress,
@@ -173,10 +182,7 @@ export default new Vuex.Store({
           fromBlock: 0,
         }
       );
-      let totalLoadingTime = 0;
-      let loadingTimes = [];
-      let fullLoads = 0;
-      let partLoads = 0;
+
       const inDB = await idb.getUser(state.web3.account);
       let user;
       if (inDB) {
@@ -187,16 +193,15 @@ export default new Vuex.Store({
       }
       //let user = state.activeUser;
       for (let i = 0; i < createdEvents.length; i++) {
-        let t1 = performance.now();
         const address = createdEvents[i].returnValues._contractAddress;
         const inStore = await idb.getEvent(address);
         let event;
         let result;
         if (!inStore) {
-          fullLoads += 1;
+          // fullLoads += 1;
           event = new Event(address, state.web3.web3Instance);
         } else {
-          partLoads += 1;
+          // partLoads += 1;
           event = new Event(inStore, state.web3.web3Instance);
         }
         result = await event.handleMissedEvents(state.activeUser.account);
@@ -209,34 +214,22 @@ export default new Vuex.Store({
             event.contract
           );
           user.setEventUpToDate(event.contractAddress, block.number);
-          await idb.saveUser(user);
+          // user.setEventUpToDate(event.contractAddress, loadToBlock);
+          // await idb.saveUser(user);
           commit("setActiveUser", user);
 
           event.lastFetchedBlock = block.number;
+          // event.lastFetchedBlock = loadToBlock;
         }
-
         await event.verifySocials();
         //event.initSubscriptions(state.web3.web3Instance);
         await idb.saveEvent(event);
-        let t2 = performance.now();
-        loadingTimes.push(t2 - t1);
-        totalLoadingTime += t2 - t1;
-        console.info(
-          `loading time for event with ${event.fungibleTickets.length +
-            event.nonFungibleTickets.length} ticket types: ${t2 - t1}`
-        );
         if (!inStore) {
           commit("addEventToStore", event);
         } else {
           commit("updateEvent", event);
         }
       }
-      console.log(
-        `average loading time for ${
-          createdEvents.length
-        } events: ${totalLoadingTime / createdEvents.length}`
-      );
-      console.log(`Full loads: ${fullLoads}, Partial loads: ${partLoads}`);
     },
     /* 
       Updates a specific event in the same manner as described in 'updateEvents'.
@@ -268,27 +261,23 @@ export default new Vuex.Store({
       commit("updateEvent", event);
     },
     async loadApprovers({ commit }) {
-      let approvers = [];
       for (const event of state.events) {
         const approverAddress = event.identityContractAddress;
-        const inStore = await idb.getApprover(approverAddress);
-        let approver;
-        if (inStore) {
-          approver = new IdentityApprover(inStore);
-          approver.requestUrlVerification();
-          approver.requestTwitterVerification();
-        } else {
-          approver = new IdentityApprover(approverAddress);
-          await approver.loadData(state.identity);
-        }
-        await idb.saveApprover(approver);
-        if (
-          !approvers.find((a) => a.approverAddress === approver.approverAddress)
-        ) {
-          approvers.push(approver);
+        if (approverAddress && approverAddress.length > 0) {
+          const inStore = await idb.getApprover(approverAddress);
+          let approver;
+          if (inStore) {
+            approver = new IdentityApprover(inStore);
+            approver.requestUrlVerification();
+            approver.requestTwitterVerification();
+          } else {
+            approver = new IdentityApprover(approverAddress);
+            await approver.loadData(state.identity);
+          }
+          await idb.saveApprover(approver);
+          commit("updateApproverStore", approver);
         }
       }
-      commit("updateApproverStore", approvers);
     },
   },
   modules: {},

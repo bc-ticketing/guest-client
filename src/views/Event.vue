@@ -200,13 +200,15 @@
       <div class="container">
         <h2>Tickets</h2>
       </div>
-      <div class="container-fluid" v-if="hasSeatMapping">
+      <div class="container-fluid">
         <div class="seating-container" :ref="'cont'" draggable="false">
           <div class="col" v-for="col in cols" v-bind:key="'col_' + col">
             <div
               :ref="'seat_' + col + '_' + row"
               @click="selectTicket(col, row)"
               data-status=""
+              :data-row="row"
+              :data-col="col"
               class="seat"
               v-for="row in rows"
               v-bind:key="'seat_' + row"
@@ -214,7 +216,7 @@
           </div>
         </div>
       </div>
-      <div class="container" v-else>
+      <div class="container" v-if="!hasSeatMapping">
         <p>
           Unfortunately, this event does not have a seat map available. You can
           still buy tickets, check the event website for more information on the
@@ -884,12 +886,12 @@ export default {
       const ticket = this.findTicketIndex(col, row);
       this.selection.ticket = ticket;
       if (ticket.isNf) {
-        this.selection.ticketId = ticket.ticketId;
-        this.selection.ticketTypeId = ticket.ticketTypeId;
+        this.selection.ticketId = Number(ticket.ticketId);
+        this.selection.ticketTypeId = Number(ticket.ticketTypeId);
         this.selection.isNf = true;
         this.selection.eventContractAddress = ticket.eventContractAddress;
       } else {
-        this.selection.ticketTypeId = ticket.typeId;
+        this.selection.ticketTypeId = Number(ticket.typeId);
         this.selection.ticketId = 0;
         this.selection.isNf = false;
         this.selection.eventContractAddress = ticket.eventContractAddress;
@@ -1004,6 +1006,7 @@ export default {
         ticket.seatMapping.forEach((mapping) => {
           let x = Number(mapping.split("/")[0]);
           let y = Number(mapping.split("/")[1]);
+          // console.log(x, y);
           // check if this fungible category still has seats available
           const seat = this.$refs[`seat_${x}_${y}`];
           seat[0].classList.add("fungible");
@@ -1023,7 +1026,7 @@ export default {
           let y = Number(ticket.seatMapping.split("/")[1]);
 
           const seat = this.$refs[`seat_${x}_${y}`];
-          console.log(seat);
+          //console.log(seat);
           seat[0].style.backgroundColor = ticketType.color;
           if (isFree(ticket)) {
             seat[0].dataset.status = "free";

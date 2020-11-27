@@ -159,12 +159,18 @@
             :md-editable="false"
             :md-done.sync="kycForm.progress.kyc_mrz"
           >
-            <div class="form-group">
-              <p>
-                In this first step of the approval process we will take a
-                picture of the back of your identity card
-              </p>
-              <camera @picture="assignMrzFile" v-bind:size="'small'"/>
+            <div class="step-content">
+              <div class="form-group">
+                <p>
+                  In this first step of the approval process we will take a
+                  picture of the back of your identity card
+                </p>
+                <camera
+                  @picture="assignMrzFile"
+                  v-bind:size="'small'"
+                  v-bind:mode="false"
+                />
+              </div>
             </div>
           </md-step>
           <md-step
@@ -172,12 +178,18 @@
             :md-editable="false"
             :md-done.sync="kycForm.progress.kyc_front"
           >
-            <div class="form-group">
-              <p>
-                In this second step of the approval process we will take a
-                picture of the front of your identity card
-              </p>
-              <camera @picture="assignFrontFile" v-bind:size="'normal'"/>
+            <div class="step-content">
+              <div class="form-group">
+                <p>
+                  In this second step of the approval process we will take a
+                  picture of the front of your identity card
+                </p>
+                <camera
+                  @picture="assignFrontFile"
+                  v-bind:size="'normal'"
+                  v-bind:mode="false"
+                />
+              </div>
             </div>
           </md-step>
           <md-step
@@ -185,12 +197,18 @@
             :md-editable="false"
             :md-done.sync="kycForm.progress.kyc_selfie"
           >
-            <div class="form-group">
-              <p>
-                In this third step of the approval process we will take a selfie
-                of you
-              </p>
-              <camera @picture="assignSelfieFile" v-bind:size="'normal'"/>
+            <div class="step-content">
+              <div class="form-group">
+                <p>
+                  In this third step of the approval process we will take a
+                  selfie of you
+                </p>
+                <camera
+                  @picture="assignSelfieFile"
+                  v-bind:size="'normal'"
+                  v-bind:mode="true"
+                />
+              </div>
             </div>
           </md-step>
           <md-step
@@ -198,18 +216,35 @@
             :md-editable="false"
             :md-done.sync="kycForm.progress.kyc_submit"
           >
-            <div class="form-group">
-              <p>
-                In last step you will submit the files
-              </p>
-              <div class="img-list">
-                <img class="preview-img" :src="getImageUrl(kycForm.mrz)" v-if="kycForm.mrz" alt="" />
-                <img class="preview-img" :src="getImageUrl(kycForm.front)" v-if="kycForm.front" alt="" />
-                <img class="preview-img" :src="getImageUrl(kycForm.selfie)" v-if="kycForm.selfie" alt="" />
+            <div class="step-content">
+              <div class="form-group">
+                <p>
+                  In last step you will submit the files
+                </p>
+                <div class="img-list">
+                  <img
+                    class="preview-img"
+                    :src="getImageUrl(kycForm.mrz)"
+                    v-if="kycForm.mrz"
+                    alt=""
+                  />
+                  <img
+                    class="preview-img"
+                    :src="getImageUrl(kycForm.front)"
+                    v-if="kycForm.front"
+                    alt=""
+                  />
+                  <img
+                    class="preview-img"
+                    :src="getImageUrl(kycForm.selfie)"
+                    v-if="kycForm.selfie"
+                    alt=""
+                  />
+                </div>
+                <button class="md-button md-raised" @click="submitKyc()">
+                  submit
+                </button>
               </div>
-              <button class="md-button md-raised" @click="submitKyc()">
-                submit
-              </button>
             </div>
           </md-step>
           <md-step
@@ -396,13 +431,18 @@ export default {
 </script>
 
 <style scoped>
+.step-content {
+  min-height: 70vh;
+}
 .preview-img {
   max-width: 80px;
+  height: auto;
 }
 
 .selection {
   position: absolute;
   top: 100vh;
+  height: 90vh;
   left: 0;
   transition: transform 0.5s ease-in-out;
   width: 100vw;

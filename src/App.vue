@@ -137,8 +137,6 @@ export default {
 
     await this.$store.dispatch("createIdentity");
     this.$root.$emit("identityCreated");
-    // We register a new, empty shopping cart
-    await this.$store.dispatch("createShoppingCart");
   },
   mounted: async function() {
     console.log(process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);

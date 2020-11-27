@@ -905,11 +905,11 @@ export function removeSellOrders(
   ticketId = 0
 ) {
   if (ticketId == 0) {
-    console.debug(ticketType, percentage, quantity, address);
+    // console.debug(ticketType, percentage, quantity, address);
     let order = ticketType.sellOrders.find(
       (o) => o.address === address && Number(o.percentage) == Number(percentage)
     );
-    console.log(order);
+    //console.log(order);
     if (!order) {
       return;
     }

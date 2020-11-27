@@ -6,16 +6,22 @@ export async function getWeb3() {
   try {
     // Acccounts now exposed
     var web3 = {};
+    console.log(window.web3);
     // link to actual web3 object
     web3.web3Instance = window.web3;
     web3.ethereum = window.ethereum;
+    console.log("success0");
     // some usefuell values to minimize web3 api calls
-    web3.networkId = await window.web3.eth.net.getId();
+    // web3.networkId = await window.web3.eth.net.getId();
+    console.log("success1");
     web3.accounts = await window.web3.eth.getAccounts();
     web3.account = web3.accounts[0];
+    console.log("success");
+
     web3.balance = await window.web3.eth.getBalance(web3.account);
-    const block = await window.web3.eth.getBlock('latest');
+    const block = await window.web3.eth.getBlock("latest");
     web3.currentBlock = block.number;
+    console.log("success");
     return web3;
   } catch (error) {
     // User denied account access...
@@ -34,7 +40,7 @@ export async function updateWeb3() {
     web3.web3Instance = window.web3;
     web3.account = web3.accounts[0];
     web3.balance = await window.web3.eth.getBalance(web3.account);
-    const block = await window.web3.eth.getBlock('latest');
+    const block = await window.web3.eth.getBlock("latest");
     web3.currentBlock = block.number;
     return web3;
   } catch (error) {
@@ -47,13 +53,14 @@ export async function updateWeb3() {
 async function linkWeb3(walletConnect) {
   if (walletConnect) {
     //  Create WalletConnect Provider
+    console.log(process.env.VUE_APP_INFURA_ID);
     const provider = new WalletConnectProvider({
-      infuraId: "a98a81d8c657449c8538f7bffbf73050", // Required
+      infuraId: process.env.VUE_APP_INFURA_ID, // Required
     });
 
     //  Enable session (triggers QR Code modal)
     await provider.enable();
-
+    console.log(provider);
     //  Create Web3
     window.web3 = new Web3(provider);
   } else {

@@ -10,13 +10,12 @@
     </div>
     <div class="result" v-if="result">
       <p>You have to sign the following message in order to entry:</p>
-      <div class="info" v-for="string in resultProps" :key="string">
-        {{ string }}: {{ result[string] }}
-      </div>
+      <div class="info">message: {{ result.randId }}</div>
       <md-button class="md-raised md-primary" @click="signMessage()">
         sign
       </md-button>
     </div>
+    <div class="result" v-if="response">{{ response }}</div>
   </div>
 </template>
 
@@ -32,7 +31,7 @@ export default {
   data() {
     return {
       result: undefined,
-      rawResult: "",
+      response: undefined,
     };
   },
   props: {
@@ -97,24 +96,24 @@ export default {
     },
     onDecode(result) {
       this.result = JSON.parse(result);
-      this.rawResult = result;
     },
     async signMessage() {
       const signedMessage = await this.$store.state.web3.web3Instance.eth.personal.sign(
-        this.result.randomString,
+        this.result.randId,
         this.$store.state.activeUser.account
       );
       console.info(signedMessage);
       let response;
       try {
         response = await axios.post(
-          `${this.result.url}/?RandId=${
-            this.result.randomString
+          `${this.result.url}/verifyOwnershipOfTicket?RandId=${
+            this.result.randId
           }?numberOfGuests=${1}?signature=${signedMessage}?ethAddress=${
             this.$store.state.activeUser.account
           }`
         );
         console.log(response);
+        this.response = response;
       } catch {
         console.log("api call error");
       }

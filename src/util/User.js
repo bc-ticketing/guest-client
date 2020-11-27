@@ -324,9 +324,9 @@ export class User {
     if (!this.lastFetchedBlocks[eventContractAddress]) {
       this.lastFetchedBlocks[eventContractAddress] = 0;
     }
-    console.info(
+    /*     console.info(
       `event at block ${eventUpdateBlock} user at block ${this.lastFetchedBlocks[eventContractAddress]}`
-    );
+    ); */
     let allEvents = [];
     // if the users last update block is lower than the events one,
     // we have to cover all events between those block numbers

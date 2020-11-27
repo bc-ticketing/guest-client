@@ -1,5 +1,3 @@
-import { ShoppingCart } from "../util/shoppingCart";
-
 let state = {
   web3: {
     isInjected: false,
@@ -11,9 +9,7 @@ let state = {
     error: null,
     currentBlock: null,
   },
-  pageTransition: {
-    
-  },
+  pageTransition: {},
   eventAddresses: [],
   events: [],
   eventFactory: null,
@@ -21,7 +17,6 @@ let state = {
   approvers: [],
   ipfsInstance: null,
   activeUser: undefined,
-  shoppingCart: new ShoppingCart(),
   lastFetchedBlock: 1,
 };
 export default state;
