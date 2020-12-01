@@ -1,8 +1,7 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
-import { ipfsClient } from "./ipfs/getIpfs";
 
-const IDETIX_APPROVAL_SERVER = "http://identity.icu.uzh.ch:9191";
+const IDETIX_APPROVAL_SERVER = "https://identity.icuzh.ch:9191";
 
 export class IdentityApprover {
   constructor(approverAddress) {
@@ -40,21 +39,19 @@ export class IdentityApprover {
   }
 
   async loadIPFSMetadata() {
-    var ipfsData = null;
-    try {
-      for await (const chunk of ipfsClient.cat(this.ipfsHash, {
-        timeout: 2000,
-      })) {
-        ipfsData = Buffer(chunk, "utf8").toString();
-      }
-      const metadata = JSON.parse(ipfsData);
-      this.title = metadata.approver.title;
-      this.website.url = metadata.approver.url;
-      this.twitter.url = metadata.approver.twitter;
-      this.methods = metadata.approver.methods;
-    } catch {
-      return;
+    var ipfsData;
+    const url = "https://ipfs.io/ipfs/" + this.ipfsHash;
+    const response = await axios.get(url, { timeout: 5000 });
+    if (response.status == 200) {
+      ipfsData = response.request.responseText;
+    } else {
+      return false;
     }
+    const metadata = JSON.parse(ipfsData);
+    this.title = metadata.approver.title;
+    this.website.url = metadata.approver.url;
+    this.twitter.url = metadata.approver.twitter;
+    this.methods = metadata.approver.methods;
   }
 
   async loadData(identitySC, ipfsInstance) {
@@ -69,9 +66,8 @@ export class IdentityApprover {
       this.twitter.verification = false;
       return;
     }
-    this.twitter.verification = await requestTwitterVerification(
-      getHandle(this.twitter.url)
-    );
+    let address = await requestTwitterVerification(getHandle(this.twitter.url));
+    this.twitter.verification = address === this.approverAddress;
   }
 
   async requestUrlVerification() {
@@ -79,15 +75,17 @@ export class IdentityApprover {
       this.website.verification = false;
       return;
     }
-    this.website.verification = await requestWebsiteVerification(
-      this.website.url
-    );
+    let address = await requestWebsiteVerification(this.website.url);
+    this.website.verification = address === this.approverAddress;
   }
 
   async getApprovalLevel(identitySC, userAddress) {
+    console.log(`user address: ${userAddress}`);
+    console.log(`approver address: ${this.approverAddress}`);
     const level = await identitySC.methods
       .getSecurityLevel(this.approverAddress, userAddress)
       .call();
+    console.log(`level: ${level}`);
     let method = this.methods.find((m) => Number(m.level) === Number(level));
     return method;
   }
@@ -108,8 +106,7 @@ export async function requestTwitterVerification(handle) {
       `${process.env.VUE_APP_TOKEN_VERIFIER}/api/twitter?username=${handle}`
     );
     if (response.status == Number(200)) {
-      console.log(response);
-      return true;
+      return response.data.data.eth_address;
     } else {
       return false;
     }
@@ -124,8 +121,7 @@ export async function requestWebsiteVerification(url) {
       `${process.env.VUE_APP_TOKEN_VERIFIER}/api/website?url=${url}`
     );
     if (response.status == Number(200)) {
-      console.log(response);
-      return true;
+      return response.data.data.eth_address;
     } else {
       return false;
     }

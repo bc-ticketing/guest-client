@@ -63,7 +63,7 @@ export default {
 
 <style scoped>
 .phone-viewport {
-  width: 100vw;
+  width: var(--vw);
   height: 200px;
   display: inline-flex;
   align-items: flex-end;
@@ -192,9 +192,9 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  transform: translateX(-100vw);
-  height: 100vh;
-  width: 100vw;
+  transform: translateX(var(--vw));
+  height: var(--vh);
+  width: var(--vw);
   transition: transform 0.3s linear;
   background-color: white;
   padding: 50px;

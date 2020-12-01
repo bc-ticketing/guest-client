@@ -83,13 +83,13 @@ export default {
   cursor: pointer;
 }
 .search-bar {
-  bottom: -2rem;
   z-index: 99;
+  bottom: 10px;
   padding: 0.5rem 0.5rem;
   position: fixed;
   transform: translate(-80%, -100%);
   transition: transform 0.4s ease-in-out;
-  width: 100vw;
+  width: var(--vw);
   padding: 1rem;
 }
 .search-bar-wrapper {

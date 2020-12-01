@@ -1,15 +1,14 @@
 <template>
-  <div id="identity">
+  <div id="identity" class="content">
     <div class="container">
-      <md-card>
+      <md-card
+        v-for="approver in $store.state.approvers"
+        v-bind:key="approver.approverAddress"
+      >
         <md-card-content>
-          <div
-            class="approver"
-            v-for="approver in $store.state.approvers"
-            v-bind:key="approver.approverAddress"
-          >
+          <div class="approver">
             <div class="md-title">{{ approver.title }}</div>
-            <div class="md-subhead">
+            <div class="md-subhead" v-if="isIdetix(approver.approverAddress)">
               You can verify yourself with idetix right in the application. Make
               sure to check which approvers are listed on the events you are
               interested in!
@@ -22,12 +21,18 @@
               <h4>{{ method.value }}</h4>
 
               <md-button
-                v-if="!userVerified(approver, method.level)"
+                v-if="
+                  !userVerified(approver, method.level) &&
+                    isIdetix(approver.approverAddress)
+                "
                 class="md-raised"
                 @click="openForm(approver, method.level, method.value)"
                 >Verify</md-button
               >
-              <span class="status good" v-else>
+              <span
+                class="status good"
+                v-if="userVerified(approver, method.level)"
+              >
                 <md-icon>done</md-icon>
               </span>
             </div>
@@ -63,6 +68,9 @@ export default {
   },
   watch: {},
   methods: {
+    isIdetix(address) {
+      return address === process.env.VUE_APP_IDETIX_APPROVER;
+    },
     userVerified(approver, level) {
       try {
         const approvedLevel = this.$store.state.activeUser.approvalLevels[
@@ -93,7 +101,7 @@ export default {
 <style>
 #identity {
   padding-top: 2rem;
-  height: 100vh;
+  height: var(--vh);
   overflow-y: hidden;
   position: relative;
 }

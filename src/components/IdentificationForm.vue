@@ -7,7 +7,7 @@
 
       <div
         class="form-version mail"
-        v-bind:class="{ active: this.method === 'email' }"
+        v-bind:class="{ active: this.method === 'eMail' }"
       >
         <md-steppers md-linear :md-active-step.sync="mailForm.progress.active">
           <md-step
@@ -79,7 +79,7 @@
 
       <div
         class="form-version phone"
-        v-bind:class="{ active: this.method === 'mobile phone' }"
+        v-bind:class="{ active: this.method === 'Phone' }"
       >
         <md-steppers md-linear :md-active-step.sync="phoneForm.progress.active">
           <md-step
@@ -151,7 +151,7 @@
 
       <div
         class="form-version kyc"
-        v-bind:class="{ active: this.method === 'kyc' }"
+        v-bind:class="{ active: this.method === 'KYC' }"
       >
         <md-steppers md-linear :md-active-step.sync="kycForm.progress.active">
           <md-step
@@ -292,7 +292,7 @@ export default {
         },
       },
       phoneForm: {
-        phone: "",
+        phone: "+41",
         secret: "",
         signedSecret: "",
         progress: {
@@ -383,6 +383,7 @@ export default {
         this.kycForm.selfie
       );
       console.log(result);
+      this.$root.dispatch("getUserApprovalLevels");
     },
     /*
       @RequestParam String eMail
@@ -405,7 +406,7 @@ export default {
       console.log(result);
       if (result) {
         this.mailForm.progress.active = "mail_done";
-        this.$root.dispatch("registerActiveUser");
+        this.$store.dispatch("getUserApprovalLevels");
       }
     },
     verifyPhone: async function() {
@@ -420,10 +421,9 @@ export default {
         signedSecret,
         this.$store.state.activeUser.account
       );
-      console.log(result);
       if (result) {
         this.phoneForm.progress.active = "phone_done";
-        this.$root.dispatch("registerActiveUser");
+        this.$store.dispatch("getUserApprovalLevels");
       }
     },
   },
@@ -431,8 +431,10 @@ export default {
 </script>
 
 <style scoped>
+.md-button {
+  min-width: unset;
+}
 .step-content {
-  min-height: 70vh;
 }
 .preview-img {
   max-width: 80px;
@@ -441,11 +443,11 @@ export default {
 
 .selection {
   position: absolute;
-  top: 100vh;
-  height: 90vh;
+  top: var(--vh);
+  height: var(--vh);
   left: 0;
   transition: transform 0.5s ease-in-out;
-  width: 100vw;
+  width: var(--vw);
   background-color: white;
   z-index: 9999;
 }

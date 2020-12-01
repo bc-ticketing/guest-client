@@ -1,398 +1,358 @@
 <template>
   <div class="event">
-    <!-- navigation bar -->
-    <div class="top-bar">
-      <h1>{{ event.title }}</h1>
-      <router-link to="/event-list"
-        ><md-icon>arrow_back_ios</md-icon></router-link
-      >
+    <div class="header">
+      <div class="tab-headers">
+        <h1>{{ event.title }}</h1>
+        <router-link to="/event-list"
+          ><md-icon>arrow_back_ios</md-icon></router-link
+        >
+      </div>
     </div>
-    <!-- big image -->
-    <div class="header-img" :style="{ backgroundColor: `${event.color}` }">
-      <img :src="event.image" alt="" />
-    </div>
+    <div class="content">
+      <!-- big image -->
+      <div class="header-img" :style="{ backgroundColor: `${event.color}` }">
+        <img :src="event.image" alt="" />
+      </div>
 
-    <!-- general event information -->
-    <section class="event-information">
-      <div class="container">
-        <md-card>
-          <md-card-content>
-            <p class="event-description">
-              {{ event.description }}
-            </p>
-            <div class="info-group">
-              <md-icon class="info-title">location_on</md-icon>
-              <span class="info-value">{{ event.location }}</span>
-            </div>
-            <div class="info-group">
-              <md-icon class="info-title">event</md-icon>
-              <span class="info-value">{{ event_date }}</span>
-            </div>
-            <div class="info-group">
-              <md-icon class="info-title">label</md-icon>
-              <span class="info-value tag">{{ event.category }}</span>
-            </div>
-            <div class="info-group">
-              <md-icon class="info-title">local_offer</md-icon>
-              <span class="info-value">From {{ lowest_price }} ETH</span>
-            </div>
-          </md-card-content>
-        </md-card>
-      </div>
-    </section>
-    <!-- information about the host -->
-    <section class="host-information">
-      <div class="container">
-        <md-card
-          ><md-card-content>
-            <h2>Organizer name</h2>
-            <div class="info-group split">
-              <div>
-                <md-icon class="info-title">link</md-icon>
-                <a class="info-value" :href="eventWebsite.url" target="_blank"
-                  >Website</a
+      <!-- general event information -->
+      <section class="event-information">
+        <div class="container">
+          <md-card>
+            <md-card-content>
+              <p class="event-description">
+                {{ event.description }}
+              </p>
+              <div class="info-group">
+                <md-icon class="info-title">location_on</md-icon>
+                <span class="info-value">{{ event.location }}</span>
+              </div>
+              <div class="info-group">
+                <md-icon class="info-title">event</md-icon>
+                <span class="info-value">{{ event_date }}</span>
+              </div>
+              <div class="info-group">
+                <md-icon class="info-title">label</md-icon>
+                <span class="info-value tag">{{ event.category }}</span>
+              </div>
+              <div class="info-group">
+                <md-icon class="info-title">local_offer</md-icon>
+                <span class="info-value"
+                  >From {{ lowest_price }}ETH/{{
+                    getPriceConverted(lowest_price)
+                  }}
+                  CHF</span
                 >
-              </div>
-              <div>
-                <span class="info-value-status">
-                  <md-progress-spinner
-                    v-if="eventWebsite.verification === 'pending'"
-                    :md-diameter="20"
-                    :md-stroke="4"
-                    md-mode="indeterminate"
-                  ></md-progress-spinner>
-                  <span class="danger"
-                    ><md-icon
-                      class="danger"
-                      v-if="eventWebsite.verification == false"
-                      >warning</md-icon
-                    ></span
-                  >
-                  <span class="good"
-                    ><md-icon v-if="eventWebsite.verification == true"
-                      >done</md-icon
-                    ></span
-                  >
-                </span>
-              </div>
-            </div>
-            <div class="info-group split">
-              <div>
-                <md-icon class="info-title">delete</md-icon>
-                <a class="info-value" :href="eventTwitter.url" target="_blank"
-                  >Twitter</a
-                >
-              </div>
-              <div>
-                <span class="info-value-status">
-                  <md-progress-spinner
-                    v-if="eventTwitter.verification === 'pending'"
-                    :md-diameter="20"
-                    :md-stroke="4"
-                    md-mode="indeterminate"
-                  ></md-progress-spinner>
-                  <span class="danger"
-                    ><md-icon v-if="eventTwitter.verification == false"
-                      >warning</md-icon
-                    ></span
-                  >
-                  <span class="good"
-                    ><md-icon v-if="eventTwitter.verification == true"
-                      >done</md-icon
-                    ></span
-                  >
-                </span>
-              </div>
-            </div>
-          </md-card-content></md-card
-        >
-      </div>
-    </section>
-    <!-- information about the identity service -->
-    <section class="identity-information">
-      <div class="container">
-        <md-card
-          ><md-card-content>
-            <h2>{{ approverTitle }}</h2>
-            <div class="info-group split">
-              <div>
-                <md-icon class="info-title">link</md-icon>
-                <a
+                <span
                   class="info-value"
-                  :href="approverWebsite.url"
-                  target="_blank"
-                  >Website</a
+                  style="margin-left: 1rem; display: inline-block;"
+                  >(Max {{ max_tickets }} Tickets/Person)</span
                 >
               </div>
-              <div>
-                <span class="info-value-status">
-                  <md-progress-spinner
-                    v-if="approverWebsite.verification === 'pending'"
-                    :md-diameter="20"
-                    :md-stroke="4"
-                    md-mode="indeterminate"
-                  ></md-progress-spinner>
-                  <span class="danger"
-                    ><md-icon
-                      class="danger"
-                      v-if="approverWebsite.verification == false"
-                      >warning</md-icon
-                    ></span
-                  >
-                  <span class="good"
-                    ><md-icon v-if="approverWebsite.verification == true"
-                      >done</md-icon
-                    ></span
-                  >
-                </span>
-              </div>
-            </div>
-            <div class="info-group split">
-              <div>
-                <md-icon class="info-title">delete</md-icon>
-                <a
-                  class="info-value"
-                  :href="approverTwitter.url"
-                  target="_blank"
-                  >Twitter</a
-                >
-              </div>
-              <div>
-                <span class="info-value-status">
-                  <md-progress-spinner
-                    v-if="approverTwitter.verification === 'pending'"
-                    :md-diameter="20"
-                    :md-stroke="4"
-                    md-mode="indeterminate"
-                  ></md-progress-spinner>
-                  <span class="danger"
-                    ><md-icon
-                      class="danger"
-                      v-if="approverTwitter.verification == false"
-                      >warning</md-icon
-                    ></span
-                  >
-                  <span class="good"
-                    ><md-icon v-if="approverTwitter.verification == true"
-                      >done</md-icon
-                    ></span
-                  >
-                </span>
-              </div>
-            </div>
-            <div class="info-group">
-              <md-icon class="info-title">mail_outline</md-icon>
-              <span class="info-value"
-                >{{ requiredIdentityLevel }} -
-                {{ requiredIdentityMethod }}</span
-              >
-            </div>
-            <div class="info-group" v-if="userIsApproved">
-              You are approved with {{ approverTitle }} at the required level to
-              buy tickets.
-            </div>
-          </md-card-content></md-card
-        >
-      </div>
-    </section>
-    <!-- tickets -->
-    <section class="tickets">
-      <div class="container">
-        <h2>Tickets</h2>
-      </div>
-      <div class="container-fluid">
-        <div class="seating-container" :ref="'cont'" draggable="false">
-          <div class="col" v-for="col in cols" v-bind:key="'col_' + col">
-            <div
-              :ref="'seat_' + col + '_' + row"
-              @click="selectTicket(col, row)"
-              data-status=""
-              :data-row="row"
-              :data-col="col"
-              class="seat"
-              v-for="row in rows"
-              v-bind:key="'seat_' + row"
-            ></div>
-          </div>
-        </div>
-      </div>
-      <div class="container" v-if="!hasSeatMapping">
-        <p>
-          Unfortunately, this event does not have a seat map available. You can
-          still buy tickets, check the event website for more information on the
-          ticket categories.
-        </p>
-        <div class="tickets">
-          <div
-            class="ticket"
-            v-for="ticket in fungibleTickets"
-            :key="'ticket_f_' + ticket.typeId"
-          >
-            <p class="bold">{{ ticket.title }}</p>
-            <button
-              class="md-button md-raised"
-              @click="selectTicketDirectly(ticket)"
-            >
-              select
-            </button>
-          </div>
-          <div
-            class="ticket"
-            v-for="ticket in nonFungibleTickets"
-            :key="'ticket_nf_' + ticket.typeId"
-          >
-            <p class="bold">{{ ticket.title }}</p>
-            <button
-              class="md-button md-raised"
-              @click="selectTicketDirectly(ticket)"
-            >
-              select
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- Presale -->
-    <section>
-      <div class="container">
-        <h2>Presale</h2>
-        <div
-          class="presale-type"
-          v-for="ticket in fungibleTicketsWithPresale"
-          v-bind:key="'presale_fungible_' + ticket.typeId"
-        >
-          <div class="presale">
-            <md-card>
-              <md-card-content>
-                <div class="md-card-title">{{ ticket.title }}</div>
-                <md-button @click="joinPresale(ticket)">Join</md-button>
-              </md-card-content>
-            </md-card>
-          </div>
-        </div>
-        <div
-          class="presale-type"
-          v-for="ticket in nonFungibleTicketsWithPresale"
-          v-bind:key="'presale_nonfungible_' + ticket.typeId"
-        ></div>
-        <div
-          v-if="
-            fungibleTicketsWithPresale.length === 0 &&
-              nonFungibleTicketsWithPresale.length === 0
-          "
-        >
-          <p>This event does not have any active presales</p>
-        </div>
-      </div>
-    </section>
-    <!-- aftermarket -->
-    <section class="aftermarket">
-      <div class="container">
-        <h2>Aftermarket</h2>
-        <div
-          class="ticket-type-am"
-          v-for="ticket in fungibleTickets"
-          v-bind:key="'fungible_' + ticket.typeId"
-        >
-          <h3>{{ ticket.title }}</h3>
-          <md-card class="queue-wrapper buying">
-            <div class="top">
-              <div class="chart-wrapper">
-                <chart-test
-                  v-bind:chartId="`${ticket.typeId}_buy`"
-                  v-bind:chartdata="{
-                    labels: getPercentagesFromTicket(ticket),
-                    datasets: [
-                      {
-                        label: 'orders',
-                        borderWidth: 2,
-                        backgroundColor: '#1dba9d',
-                        borderColor: 'white',
-                        data: getOrdersFromTicket(ticket, 'buy').map(
-                          (o) => o.amount
-                        ),
-                      },
-                    ],
-                  }"
-                />
-              </div>
-            </div>
-            <div class="bottom">
-              <md-card-expand>
-                <md-card-actions md-alignment="space-between">
-                  <p>
-                    buying queue
-                  </p>
-                  <md-card-expand-trigger>
-                    <md-button class="md-icon-button">
-                      <md-icon>keyboard_arrow_down</md-icon>
-                    </md-button>
-                  </md-card-expand-trigger>
-                </md-card-actions>
-                <md-card-expand-content>
-                  Join queue at
-                  <div class="selection">
-                    <md-field>
-                      <md-select
-                        md-dense
-                        v-model="queueToJoin"
-                        name="queue"
-                        id="queue"
-                      >
-                        <md-option
-                          v-for="perc in getPercentagesFromTicket(ticket)"
-                          v-bind:key="'ticket.typeId_buying_' + perc"
-                          :value="perc"
-                        >
-                          {{ perc }}%
-                        </md-option>
-                      </md-select>
-                    </md-field>
-                  </div>
-                  <md-button @click="createBuyOrder(ticket)">Join</md-button>
-                </md-card-expand-content>
-                <div></div>
-              </md-card-expand>
-            </div>
+            </md-card-content>
           </md-card>
-
-          <md-card class="queue-wrapper selling">
-            <div class="top">
-              <div class="chart-wrapper">
-                <chart-test
-                  v-bind:chartId="`${ticket.typeId}_sell`"
-                  v-bind:chartdata="{
-                    labels: getPercentagesFromTicket(ticket),
-                    datasets: [
-                      {
-                        label: 'orders',
-                        borderWidth: 2,
-                        backgroundColor: '#1dba9d',
-                        borderColor: 'white',
-                        data: getOrdersFromTicket(ticket, 'sell').map(
-                          (o) => o.amount
-                        ),
-                      },
-                    ],
-                  }"
-                />
+        </div>
+      </section>
+      <!-- information about the host -->
+      <section class="host-information">
+        <div class="container">
+          <md-card
+            ><md-card-content>
+              <h2>Organizer name</h2>
+              <div class="info-group split">
+                <div>
+                  <md-icon class="info-title">link</md-icon>
+                  <a class="info-value" :href="eventWebsite.url" target="_blank"
+                    >Website</a
+                  >
+                </div>
+                <div>
+                  <span class="info-value-status">
+                    <md-progress-spinner
+                      v-if="eventWebsite.verification === 'pending'"
+                      :md-diameter="20"
+                      :md-stroke="4"
+                      md-mode="indeterminate"
+                    ></md-progress-spinner>
+                    <span class="danger"
+                      ><md-icon
+                        class="danger"
+                        v-if="eventWebsite.verification == false"
+                        >warning</md-icon
+                      ></span
+                    >
+                    <span class="good"
+                      ><md-icon v-if="eventWebsite.verification == true"
+                        >done</md-icon
+                      ></span
+                    >
+                  </span>
+                </div>
               </div>
+              <div class="info-group split">
+                <div>
+                  <md-icon class="info-title">delete</md-icon>
+                  <a class="info-value" :href="eventTwitter.url" target="_blank"
+                    >Twitter</a
+                  >
+                </div>
+                <div>
+                  <span class="info-value-status">
+                    <md-progress-spinner
+                      v-if="eventTwitter.verification === 'pending'"
+                      :md-diameter="20"
+                      :md-stroke="4"
+                      md-mode="indeterminate"
+                    ></md-progress-spinner>
+                    <span class="danger"
+                      ><md-icon v-if="eventTwitter.verification == false"
+                        >warning</md-icon
+                      ></span
+                    >
+                    <span class="good"
+                      ><md-icon v-if="eventTwitter.verification == true"
+                        >done</md-icon
+                      ></span
+                    >
+                  </span>
+                </div>
+              </div>
+            </md-card-content></md-card
+          >
+        </div>
+      </section>
+      <!-- information about the identity service -->
+      <section class="identity-information">
+        <div class="container">
+          <md-card
+            ><md-card-content>
+              <h2>{{ approverTitle }}</h2>
+              <div class="info-group split">
+                <div>
+                  <md-icon class="info-title">link</md-icon>
+                  <a
+                    class="info-value"
+                    :href="approverWebsite.url"
+                    target="_blank"
+                    >Website</a
+                  >
+                </div>
+                <div>
+                  <span class="info-value-status">
+                    <md-progress-spinner
+                      v-if="approverWebsite.verification === 'pending'"
+                      :md-diameter="20"
+                      :md-stroke="4"
+                      md-mode="indeterminate"
+                    ></md-progress-spinner>
+                    <span class="danger"
+                      ><md-icon
+                        class="danger"
+                        v-if="approverWebsite.verification == false"
+                        >warning</md-icon
+                      ></span
+                    >
+                    <span class="good"
+                      ><md-icon v-if="approverWebsite.verification == true"
+                        >done</md-icon
+                      ></span
+                    >
+                  </span>
+                </div>
+              </div>
+              <div class="info-group split">
+                <div>
+                  <md-icon class="info-title">delete</md-icon>
+                  <a
+                    class="info-value"
+                    :href="approverTwitter.url"
+                    target="_blank"
+                    >Twitter</a
+                  >
+                </div>
+                <div>
+                  <span class="info-value-status">
+                    <md-progress-spinner
+                      v-if="approverTwitter.verification === 'pending'"
+                      :md-diameter="20"
+                      :md-stroke="4"
+                      md-mode="indeterminate"
+                    ></md-progress-spinner>
+                    <span class="danger"
+                      ><md-icon
+                        class="danger"
+                        v-if="approverTwitter.verification == false"
+                        >warning</md-icon
+                      ></span
+                    >
+                    <span class="good"
+                      ><md-icon v-if="approverTwitter.verification == true"
+                        >done</md-icon
+                      ></span
+                    >
+                  </span>
+                </div>
+              </div>
+              <div class="info-group">
+                <md-icon class="info-title">mail_outline</md-icon>
+                <span class="info-value"
+                  >{{ requiredIdentityLevel }} -
+                  {{ requiredIdentityMethod }}</span
+                >
+              </div>
+              <div class="info-group" v-if="userIsApproved">
+                You are approved with {{ approverTitle }} at the required level
+                to buy tickets.
+              </div>
+              <div class="info-group" v-else>
+                You are not approved with {{ approverTitle }} at the required
+                level to buy tickets.
+              </div>
+            </md-card-content></md-card
+          >
+        </div>
+      </section>
+      <!-- tickets -->
+      <section class="tickets">
+        <div class="container">
+          <h2>Tickets</h2>
+          <p>
+            You can still buy {{ ticketsToBuyLeft }} Tickets for this event!
+          </p>
+        </div>
+        <div class="container-fluid">
+          <div class="seating-container" :ref="'cont'" draggable="false">
+            <div class="col" v-for="col in cols" v-bind:key="'col_' + col">
+              <div
+                :ref="'seat_' + col + '_' + row"
+                @click="selectTicket(col, row)"
+                data-status=""
+                :data-row="row"
+                :data-col="col"
+                class="seat"
+                v-for="row in rows"
+                v-bind:key="'seat_' + row"
+              ></div>
             </div>
-            <div class="bottom">
-              <md-card-expand>
-                <md-card-actions md-alignment="space-between">
-                  <p>
-                    selling queue
-                  </p>
-                  <md-card-expand-trigger>
-                    <md-button class="md-icon-button">
-                      <md-icon>keyboard_arrow_down</md-icon>
-                    </md-button>
-                  </md-card-expand-trigger>
-                </md-card-actions>
-                <md-card-expand-content>
-                  <div v-if="getOrdersFromTicket(ticket, 'sell').length > 0">
-                    Buy for
+          </div>
+        </div>
+        <div class="container" v-if="!hasSeatMapping">
+          <p>
+            Unfortunately, this event does not have a seat map available. You
+            can still buy tickets, check the event website for more information
+            on the ticket categories.
+          </p>
+          <div class="tickets">
+            <div
+              class="ticket"
+              v-for="ticket in fungibleTickets"
+              :key="'ticket_f_' + ticket.typeId"
+            >
+              <p class="bold">{{ ticket.title }}</p>
+              <button
+                class="md-button md-raised"
+                @click="selectTicketDirectly(ticket)"
+              >
+                select
+              </button>
+            </div>
+            <div
+              class="ticket"
+              v-for="ticket in nonFungibleTickets"
+              :key="'ticket_nf_' + ticket.typeId"
+            >
+              <p class="bold">{{ ticket.title }}</p>
+              <button
+                class="md-button md-raised"
+                @click="selectTicketDirectly(ticket)"
+              >
+                select
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Presale -->
+      <section>
+        <div class="container">
+          <h2>Presale</h2>
+          <div
+            class="presale-type"
+            v-for="ticket in fungibleTicketsWithPresale"
+            v-bind:key="'presale_fungible_' + ticket.typeId"
+          >
+            <div class="presale">
+              <md-card>
+                <md-card-content>
+                  <div class="md-card-title">{{ ticket.title }}</div>
+                  <md-button @click="joinPresale(ticket)">Join</md-button>
+                </md-card-content>
+              </md-card>
+            </div>
+          </div>
+          <div
+            class="presale-type"
+            v-for="ticket in nonFungibleTicketsWithPresale"
+            v-bind:key="'presale_nonfungible_' + ticket.typeId"
+          ></div>
+          <div
+            v-if="
+              fungibleTicketsWithPresale.length === 0 &&
+                nonFungibleTicketsWithPresale.length === 0
+            "
+          >
+            <p>This event does not have any active presales</p>
+          </div>
+        </div>
+      </section>
+      <!-- aftermarket -->
+      <section class="aftermarket">
+        <div class="container">
+          <h2>Aftermarket</h2>
+          <div
+            class="ticket-type-am"
+            v-for="ticket in fungibleTickets"
+            v-bind:key="'fungible_' + ticket.typeId"
+          >
+            <h3>{{ ticket.title }}</h3>
+            <md-card class="queue-wrapper buying">
+              <div class="top">
+                <div class="chart-wrapper">
+                  <chart-test
+                    v-bind:chartId="`${ticket.typeId}_buy`"
+                    v-bind:chartdata="{
+                      labels: getPercentagesFromTicket(ticket),
+                      datasets: [
+                        {
+                          label: 'orders',
+                          borderWidth: 2,
+                          backgroundColor: '#1dba9d',
+                          borderColor: 'white',
+                          data: getOrdersFromTicket(ticket, 'buy').map(
+                            (o) => o.amount
+                          ),
+                        },
+                      ],
+                    }"
+                  />
+                </div>
+              </div>
+              <div class="bottom">
+                <md-card-content v-if="ticketsToBuyLeft === 0">
+                  You already own the maximum allowed tickets for this event.
+                </md-card-content>
+                <md-card-expand v-else>
+                  <md-card-actions md-alignment="space-between">
+                    <p>
+                      buying queue
+                    </p>
+                    <md-card-expand-trigger>
+                      <md-button class="md-icon-button">
+                        <md-icon>keyboard_arrow_down</md-icon>
+                      </md-button>
+                    </md-card-expand-trigger>
+                  </md-card-actions>
+                  <md-card-expand-content>
+                    Join queue at
                     <div class="selection">
                       <md-field>
                         <md-select
@@ -402,144 +362,218 @@
                           id="queue"
                         >
                           <md-option
-                            v-for="order in getOrdersFromTicket(
-                              ticket,
-                              'sell'
-                            ).filter((o) => o.amount > 0)"
-                            v-bind:key="
-                              'ticket.typeId_buying_' + order.percentage
-                            "
-                            :value="order.percentage"
+                            v-for="perc in getPercentagesFromTicket(ticket)"
+                            v-bind:key="'ticket.typeId_buying_' + perc"
+                            :value="perc"
                           >
-                            {{ order.percentage }}%
+                            {{ perc }}%
                           </md-option>
                         </md-select>
                       </md-field>
                     </div>
-                    <md-button @click="fillSellOrderFungible(ticket)"
-                      >Buy</md-button
-                    >
-                  </div>
-                  <div v-else>
-                    <p>No tickets currently for sale in this category</p>
-                  </div>
-                </md-card-expand-content>
-              </md-card-expand>
-            </div>
-          </md-card>
-        </div>
-        <div
-          class="ticket-type-am"
-          v-for="ticket in nonFungibleTickets"
-          v-bind:key="'nonfungible_' + ticket.typeId"
-        >
-          <h3>{{ ticket.title }}</h3>
-          <md-card class="queue-wrapper buying">
-            <div class="top">
-              <div class="chart-wrapper">
-                <chart-test
-                  v-bind:chartId="`${ticket.typeId}_nf_buy`"
-                  v-bind:chartdata="{
-                    labels: getPercentagesFromTicket(ticket),
-                    datasets: [
-                      {
-                        label: 'orders',
-                        borderWidth: 2,
-                        backgroundColor: '#1dba9d',
-                        borderColor: 'white',
-                        data: getOrdersFromTicket(ticket, 'buy').map(
-                          (o) => o.amount
-                        ),
-                      },
-                    ],
-                  }"
-                />
+                    <md-button @click="createBuyOrder(ticket)">Join</md-button>
+                  </md-card-expand-content>
+                  <div></div>
+                </md-card-expand>
               </div>
-            </div>
-            <div class="bottom">
-              <md-card-expand>
-                <md-card-actions md-alignment="space-between">
-                  <p>
-                    buying queue
-                  </p>
-                  <md-card-expand-trigger>
-                    <md-button class="md-icon-button">
-                      <md-icon>keyboard_arrow_down</md-icon>
-                    </md-button>
-                  </md-card-expand-trigger>
-                </md-card-actions>
-                <md-card-expand-content>
-                  Join queue at
-                  <div class="selection">
-                    <md-field>
-                      <md-select md-dense v-model="queueToJoin" name="queue">
-                        <md-option
-                          v-for="perc in getPercentagesFromTicket(ticket)"
-                          v-bind:key="'ticket.typeId_buying_' + perc"
-                          :value="perc"
-                        >
-                          {{ perc }}%
-                        </md-option>
-                      </md-select>
-                    </md-field>
-                  </div>
-                  <md-button @click="createBuyOrder(ticket)">Join</md-button>
-                </md-card-expand-content>
-                <div></div>
-              </md-card-expand>
-            </div>
-          </md-card>
-          <md-card class="queue-wrapper nf">
-            <div class="top">
-              <h3>Tickets for sale</h3>
-            </div>
-            <div class="bottom">
-              <md-card-expand>
-                <md-card-actions md-alignment="space-between">
-                  <p>
-                    {{ allSellOferingsNfTicketType(ticket).length }} tickets
-                  </p>
-                  <md-card-expand-trigger>
-                    <md-button class="md-icon-button">
-                      <md-icon>keyboard_arrow_down</md-icon>
-                    </md-button>
-                  </md-card-expand-trigger>
-                </md-card-actions>
-                <md-card-expand-content>
-                  <div class="sell-offers-nf">
-                    <div
-                      class="sell-offering"
-                      v-for="(offering, index) in allSellOferingsNfTicketType(
-                        ticket
-                      )"
-                      v-bind:key="'sellOffering_' + index"
-                    >
-                      <span class="ticket-number"
-                        >Seat Number {{ offering.ticketId }}</span
+            </md-card>
+
+            <md-card class="queue-wrapper selling">
+              <div class="top">
+                <div class="chart-wrapper">
+                  <chart-test
+                    v-bind:chartId="`${ticket.typeId}_sell`"
+                    v-bind:chartdata="{
+                      labels: getPercentagesFromTicket(ticket),
+                      datasets: [
+                        {
+                          label: 'orders',
+                          borderWidth: 2,
+                          backgroundColor: '#1dba9d',
+                          borderColor: 'white',
+                          data: getOrdersFromTicket(ticket, 'sell').map(
+                            (o) => o.amount
+                          ),
+                        },
+                      ],
+                    }"
+                  />
+                </div>
+              </div>
+              <div class="bottom">
+                <md-card-content v-if="ticketsToBuyLeft === 0">
+                  You already own the maximum allowed tickets for this event.
+                </md-card-content>
+                <md-card-expand v-else>
+                  <md-card-actions md-alignment="space-between">
+                    <p>
+                      selling queue
+                    </p>
+                    <md-card-expand-trigger>
+                      <md-button class="md-icon-button">
+                        <md-icon>keyboard_arrow_down</md-icon>
+                      </md-button>
+                    </md-card-expand-trigger>
+                  </md-card-actions>
+                  <md-card-expand-content>
+                    <div v-if="getOrdersFromTicket(ticket, 'sell').length > 0">
+                      Buy for
+                      <div class="selection">
+                        <md-field>
+                          <md-select
+                            md-dense
+                            v-model="queueToJoin"
+                            name="queue"
+                            id="queue"
+                          >
+                            <md-option
+                              v-for="order in getOrdersFromTicket(
+                                ticket,
+                                'sell'
+                              ).filter((o) => o.amount > 0)"
+                              v-bind:key="
+                                'ticket.typeId_buying_' + order.percentage
+                              "
+                              :value="order.percentage"
+                            >
+                              {{ order.percentage }}%
+                            </md-option>
+                          </md-select>
+                        </md-field>
+                      </div>
+                      <md-button @click="fillSellOrderFungible(ticket)"
+                        >Buy</md-button
                       >
-                      <span class="percentage">{{ offering.percentage }}%</span>
-                      <span
-                        class="fill-sell"
-                        @click="
-                          fillSellOrderNonFungible(
-                            ticket.typeId,
-                            offering.ticketId,
-                            offering.percentage,
-                            ticket.price
-                          )
-                        "
-                      >
-                        <md-icon>shop</md-icon>
-                      </span>
                     </div>
-                  </div>
-                </md-card-expand-content>
-              </md-card-expand>
-            </div>
-          </md-card>
+                    <div v-else>
+                      <p>No tickets currently for sale in this category</p>
+                    </div>
+                  </md-card-expand-content>
+                </md-card-expand>
+              </div>
+            </md-card>
+          </div>
+          <div
+            class="ticket-type-am"
+            v-for="ticket in nonFungibleTickets"
+            v-bind:key="'nonfungible_' + ticket.typeId"
+          >
+            <h3>{{ ticket.title }}</h3>
+            <md-card class="queue-wrapper buying">
+              <div class="top">
+                <div class="chart-wrapper">
+                  <chart-test
+                    v-bind:chartId="`${ticket.typeId}_nf_buy`"
+                    v-bind:chartdata="{
+                      labels: getPercentagesFromTicket(ticket),
+                      datasets: [
+                        {
+                          label: 'orders',
+                          borderWidth: 2,
+                          backgroundColor: '#1dba9d',
+                          borderColor: 'white',
+                          data: getOrdersFromTicket(ticket, 'buy').map(
+                            (o) => o.amount
+                          ),
+                        },
+                      ],
+                    }"
+                  />
+                </div>
+              </div>
+              <div class="bottom">
+                <md-card-content v-if="ticketsToBuyLeft === 0">
+                  You already own the maximum allowed tickets for this event.
+                </md-card-content>
+                <md-card-expand v-else>
+                  <md-card-actions md-alignment="space-between">
+                    <p>
+                      buying queue
+                    </p>
+                    <md-card-expand-trigger>
+                      <md-button class="md-icon-button">
+                        <md-icon>keyboard_arrow_down</md-icon>
+                      </md-button>
+                    </md-card-expand-trigger>
+                  </md-card-actions>
+                  <md-card-expand-content>
+                    Join queue at
+                    <div class="selection">
+                      <md-field>
+                        <md-select md-dense v-model="queueToJoin" name="queue">
+                          <md-option
+                            v-for="perc in getPercentagesFromTicket(ticket)"
+                            v-bind:key="'ticket.typeId_buying_' + perc"
+                            :value="perc"
+                          >
+                            {{ perc }}%
+                          </md-option>
+                        </md-select>
+                      </md-field>
+                    </div>
+                    <md-button @click="createBuyOrder(ticket)">Join</md-button>
+                  </md-card-expand-content>
+                  <div></div>
+                </md-card-expand>
+              </div>
+            </md-card>
+            <md-card class="queue-wrapper nf">
+              <div class="top">
+                <h3>Tickets for sale</h3>
+              </div>
+              <div class="bottom">
+                <md-card-content v-if="ticketsToBuyLeft === 0">
+                  You already own the maximum allowed tickets for this event.
+                </md-card-content>
+                <md-card-expand v-else>
+                  <md-card-actions md-alignment="space-between">
+                    <p>
+                      {{ allSellOferingsNfTicketType(ticket).length }} tickets
+                    </p>
+                    <md-card-expand-trigger>
+                      <md-button class="md-icon-button">
+                        <md-icon>keyboard_arrow_down</md-icon>
+                      </md-button>
+                    </md-card-expand-trigger>
+                  </md-card-actions>
+                  <md-card-expand-content>
+                    <div class="sell-offers-nf">
+                      <div
+                        class="sell-offering"
+                        v-for="(offering, index) in allSellOferingsNfTicketType(
+                          ticket
+                        )"
+                        v-bind:key="'sellOffering_' + index"
+                      >
+                        <span class="ticket-number"
+                          >Seat Number {{ offering.ticketId }}</span
+                        >
+                        <span class="percentage"
+                          >{{ offering.percentage }}%</span
+                        >
+                        <span
+                          class="fill-sell"
+                          @click="
+                            fillSellOrderNonFungible(
+                              ticket.typeId,
+                              offering.ticketId,
+                              offering.percentage,
+                              ticket.price
+                            )
+                          "
+                        >
+                          <md-icon>shop</md-icon>
+                        </span>
+                      </div>
+                    </div>
+                  </md-card-expand-content>
+                </md-card-expand>
+              </div>
+            </md-card>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <SelectionView
       v-bind:ticketId="selection.ticketId"
@@ -547,6 +581,7 @@
       v-bind:eventContractAddress="selection.eventContractAddress"
       v-bind:isNf="selection.isNf"
       v-bind:open="selection.active"
+      v-bind:exchangeRate="exchangeRate"
       v-on:close="clearSelection"
     ></SelectionView>
   </div>
@@ -554,6 +589,7 @@
 
 <script>
 import ChartTest from "./../components/ChartTest.vue";
+import axios from "axios";
 
 import SelectionView from "./SelectionView";
 import {
@@ -574,6 +610,7 @@ export default {
   name: "Event",
   data() {
     return {
+      exchangeRate: 0,
       event: {},
       activeQueueTip: {
         ticketType: 0,
@@ -608,12 +645,6 @@ export default {
   },
   props: {},
   computed: {
-    myStyles() {
-      return {
-        height: `${50}px`,
-        position: "relative",
-      };
-    },
     approver() {
       return this.event.identityContractAddress
         ? this.$store.state.approvers.find(
@@ -695,6 +726,15 @@ export default {
         return 0;
       }
     },
+    ticketsToBuyLeft() {
+      return this.event && this.$store.state.activeUser
+        ? this.max_tickets -
+            this.$store.state.activeUser.ticketsOwnedForEvent(this.event_id)
+        : 0;
+    },
+    max_tickets() {
+      return this.event ? this.event.maxTicketsPerPerson : 0;
+    },
     event_date() {
       try {
         return this.event.getTimeAndDate();
@@ -713,6 +753,22 @@ export default {
   },
   watch: {},
   methods: {
+    getPriceConverted(value) {
+      return (this.exchangeRate * value).toFixed(2);
+    },
+    async getEthPrice() {
+      const response = await axios.get(
+        "https://trust-certificates.herokuapp.com/api/exchange/eth-chf",
+        {
+          timeout: 5000,
+        }
+      );
+      let eth_chf;
+      if (Number(response.status) === 200) {
+        eth_chf = response.data.data["1027"].quote.CHF.price;
+        this.exchangeRate = eth_chf;
+      }
+    },
     getPercentagesFromTicket(ticket) {
       let percentages = [];
       for (let i = 1; i <= ticket.aftermarketGranularity; i++) {
@@ -752,6 +808,8 @@ export default {
       this.selectedQueue.percentage = percentage;
     },
     async createBuyOrder(ticketType) {
+      this.$root.$emit("transactionStarted");
+
       if (ticketType.isNf) {
         const result = await makeBuyOrderNonFungible(
           ticketType.typeId,
@@ -775,6 +833,7 @@ export default {
         );
         this.$root.$emit("openMessageBus", result);
       }
+      this.$root.$emit("transactionEnded");
 
       await this.$store.dispatch(
         "updateEvent",
@@ -784,16 +843,21 @@ export default {
       this.$root.$emit("updateCharts");
     },
     async joinPresale(ticket) {
+      this.$root.$emit("transactionStarted");
+
       const result = await joinPresale(
         ticket,
         this.$store.state.activeUser.account,
         this.$store.state.web3.web3Instance,
         this.event.contractAddress
       );
+      this.$root.$emit("transactionEnded");
+
       await this.$store.dispatch("updateEvent", this.event.ContractAddress);
       this.$root.$emit("openMessageBus", result);
     },
     async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
+      this.$root.$emit("transactionStarted");
       const result = await fillSellOrderNonFungible(
         ticketTypeId,
         ticketId,
@@ -803,10 +867,12 @@ export default {
         this.$store.state.web3.web3Instance,
         this.event.contractAddress
       );
+      this.$root.$emit("transactionEnded");
       await this.$store.dispatch("updateEvent", this.event.contractAddress);
       this.$root.$emit("openMessageBus", result);
     },
     async fillSellOrderFungible(ticketType) {
+      this.$root.$emit("transactionStarted");
       const result = await fillSellOrderFungible(
         ticketType.typeId,
         1,
@@ -816,6 +882,7 @@ export default {
         this.$store.state.web3.web3Instance,
         this.event.contractAddress
       );
+      this.$root.$emit("transactionEnded");
       await this.$store.dispatch(
         "updateEvent",
         ticketType.eventContractAddress
@@ -1052,6 +1119,7 @@ export default {
     this.$root.$emit("hideSearchBar");
     this.fetchEventInfo();
     this.fetchTicketInfo();
+    this.getEthPrice();
   },
 };
 </script>
@@ -1068,21 +1136,25 @@ export default {
   padding-bottom: 100px;
 }
 .event {
-  min-height: 100vh;
+  min-height: var(--vh);
 }
-.event .top-bar {
-  width: 100%;
-  background-color: white;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
+.header {
   position: sticky;
   top: 0;
-  z-index: 9;
+  padding: 5px;
+}
+.tab-headers {
+  padding: 1rem;
+  border-radius: 12px;
+  color: black;
+  display: flex;
+  justify-content: space-between;
+  background: white;
   box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
 }
-.top-bar h1 {
+
+.header h1 {
   font-size: 1.5rem;
   margin: 0;
   font-weight: 400;

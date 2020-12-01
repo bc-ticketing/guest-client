@@ -1,7 +1,7 @@
 <template>
   <div class="home">
-    <div class="container-fluid content-container" ref="content">
-      <div class="content" id="map">
+    <div class="container-fluid content" ref="content">
+      <div id="map">
         <!--
         <div class="search-wrapper">
           <div class="drag-wrapper">
@@ -25,7 +25,7 @@
             rotateControl: false,
             fullscreenControl: false,
             disableDefaultUI: false,
-            styles: mapStyles
+            styles: mapStyles,
           }"
           map-type-id="roadmap"
           style="width: 100%; height: 100%"
@@ -73,9 +73,9 @@ import * as VueGoogleMaps from "gmap-vue";
 Vue.use(VueGoogleMaps, {
   load: {
     key: "AIzaSyC698VZ_qNCEtFGDRtevgX2f1n9uK4P7Gw",
-    libraries: "places"
+    libraries: "places",
   },
-  installComponents: true
+  installComponents: true,
 });
 // import Button from "./../components/basics/Button";
 export default {
@@ -88,7 +88,7 @@ export default {
       selectedEvent: {},
       tooltipActive: false,
       searchInput: "",
-      mapStyles: GMAP_STYLES
+      mapStyles: GMAP_STYLES,
     };
   },
   methods: {
@@ -98,18 +98,18 @@ export default {
     },
     hideTooltip: function() {
       this.tooltipActive = false;
-    }
+    },
   },
   computed: {
-    google: gmapApi
+    google: gmapApi,
   },
   watch: {},
   mounted() {
     this.$root.$emit("hideSearchBar");
-    this.$refs.map.$mapPromise.then(map => {
+    this.$refs.map.$mapPromise.then((map) => {
       this.map = map;
     });
-  }
+  },
 };
 </script>
 
@@ -135,17 +135,21 @@ export default {
 .content-container {
   height: 100vh;
 }
-.content-container .content {
+#map {
   height: 100%;
   width: 100%;
+}
+.content {
   position: relative;
+  max-height: 608px;
+  height: 608px;
 }
 .content .search-wrapper {
   position: absolute;
   bottom: 55px;
   left: 0;
   z-index: 100;
-  width: 100vw;
+  width: var(--vw);
   background-color: rgba(0, 0, 0, 0.2);
 }
 .search-bar {

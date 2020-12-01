@@ -10,7 +10,9 @@
         <p v-if="isNf">Seat Number {{ seatNumber }}</p>
         <div class="group">
           <div class="label"><md-icon>local_offer</md-icon></div>
-          <div class="value">{{ price }} ETH</div>
+          <div class="value">
+            {{ price }} ETH (ca. {{ getPriceConverted(price) }} CHF)
+          </div>
         </div>
         <div class="group">
           <div class="label"><md-icon>score</md-icon></div>
@@ -39,8 +41,11 @@
             This Ticket Category is sold out, you can create an aftermarket
             listing if you want to queue up for it.
           </div>
+          <div v-if="ticketsToBuyLeft < 1">
+            You already own the maximum allowed amount of tickets for this event
+          </div>
         </div>
-        <div class="group" v-if="available">
+        <div class="group" v-if="available && ticketsToBuyLeft > 0">
           <div v-if="!isNf" class="amount-selection">
             <div
               class="icon-wrap"
@@ -85,6 +90,7 @@ export default {
     };
   },
   props: {
+    exchangeRate: Number,
     ticketId: Number,
     ticketTypeId: Number,
     isNf: Boolean,
@@ -180,19 +186,33 @@ export default {
     fSoldOut() {
       return this.event ? !this.event.isAvailable(this.ticketTypeId) : false;
     },
+    ticketsToBuyLeft() {
+      return this.event && this.$store.state.activeUser
+        ? this.max_tickets -
+            this.$store.state.activeUser.ticketsOwnedForEvent(this.event_id)
+        : 0;
+    },
+    max_tickets() {
+      return this.event ? this.event.maxTicketsPerPerson : 0;
+    },
   },
   methods: {
+    getPriceConverted(value) {
+      return (this.exchangeRate * value).toFixed(2);
+    },
     changeSelectionAmount(amount) {
       this.amount += amount;
-      this.amount = Math.max(1, this.amount);
+      this.amount = Math.max(1, Math.min(this.ticketsToBuyLeft, this.amount));
     },
     getStepSize(granularity) {
       return Math.floor(100 / granularity);
     },
 
     buy: async function() {
+      this.$root.$emit("transactionStarted");
+      let result;
       if (!this.isNf) {
-        const result = await buyFungible(
+        result = await buyFungible(
           this.ticketTypeId,
           this.amount,
           this.price,
@@ -201,9 +221,8 @@ export default {
           this.$store.state.activeUser.account,
           this.eventContractAddress
         );
-        this.$root.$emit("openMessageBus", result);
       } else {
-        const result = await buyNonFungible(
+        result = await buyNonFungible(
           this.ticketTypeId,
           this.ticketId,
           this.price,
@@ -212,15 +231,19 @@ export default {
           this.$store.state.activeUser.account,
           this.eventContractAddress
         );
-        this.$root.$emit("openMessageBus", result);
       }
+      this.$root.$emit("transactionEnded");
+      this.$root.$emit("openMessageBus", result);
+
       await this.$store.dispatch("updateEvent", this.eventContractAddress);
       await this.$store.dispatch("registerActiveUser");
       this.$root.$emit("userUpdated");
     },
     createBuyOrder: async function() {
+      this.$root.$emit("transactionStarted");
+      let result;
       if (this.isNf) {
-        const result = await makeBuyOrderNonFungible(
+        result = await makeBuyOrderNonFungible(
           this.ticketTypeId,
           this.amount,
           this.percentage,
@@ -231,7 +254,7 @@ export default {
         );
         this.$root.$emit("openMessageBus", result);
       } else {
-        const result = await makeBuyOrderFungible(
+        result = await makeBuyOrderFungible(
           this.ticketTypeId,
           this.amount,
           this.percentage,
@@ -240,12 +263,18 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
-        this.$root.$emit("openMessageBus", result);
       }
+      this.$root.$emit("transactionEnded");
+      this.$root.$emit("openMessageBus", result);
+      await this.$store.dispatch("updateEvent", this.eventContractAddress);
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("userUpdated");
     },
     fillSellOrder: async function() {
+      this.$root.$emit("transactionStarted");
+      let result;
       if (this.isNf) {
-        const result = await fillSellOrderNonFungible(
+        result = await fillSellOrderNonFungible(
           this.ticketTypeId,
           this.ticketId,
           this.lowestSellOrder,
@@ -254,9 +283,8 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
-        this.$root.$emit("openMessageBus", result);
       } else {
-        const result = await fillSellOrderFungible(
+        result = await fillSellOrderFungible(
           this.ticketTypeId,
           this.amount,
           this.price,
@@ -265,8 +293,12 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
-        this.$root.$emit("openMessageBus", result);
       }
+      this.$root.$emit("transactionEnded");
+      this.$root.$emit("openMessageBus", result);
+      await this.$store.dispatch("updateEvent", this.eventContractAddress);
+      await this.$store.dispatch("registerActiveUser");
+      this.$root.$emit("userUpdated");
     },
     close: function() {
       this.$emit("close");

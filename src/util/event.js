@@ -25,7 +25,6 @@ import { NULL_ADDRESS } from "./constants/constants";
 import { loadIPFSMetadata } from "./tickets";
 
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "../util/abi/eventMintableAftermarket";
-import { ipfsClient } from "./ipfs/getIpfs";
 
 import {
   requestTwitterVerification,
@@ -64,6 +63,7 @@ export class Event {
     this.identityContractAddress = "";
     this.identityLevel = 0;
     this.date = new Date();
+    this.maxTicketsPerPerson = 0;
     this.website = {
       url: "",
       verification: "pending",
@@ -296,9 +296,8 @@ export class Event {
       this.twitter.verification = false;
       return;
     }
-    this.twitter.verification = await requestTwitterVerification(
-      getHandle(this.twitter.url)
-    );
+    let address = await requestTwitterVerification(getHandle(this.twitter.url));
+    this.twitter.verification = address === this.contractAddress;
   }
 
   async requestUrlVerification() {
@@ -306,23 +305,21 @@ export class Event {
       this.website.verification = false;
       return;
     }
-    this.website.verification = await requestWebsiteVerification(
-      this.website.url
-    );
+    let address = await requestWebsiteVerification(this.website.url);
+    this.website.verification = address === this.contractAddress;
   }
 
   async loadIPFSMetadata() {
-    var ipfsData = null;
-    try {
-      for await (const chunk of ipfsClient.cat(this.ipfsHash, {
-        timeout: 5000,
-      })) {
-        ipfsData = Buffer(chunk, "utf8").toString();
-      }
-    } catch (error) {
-      console.log("could not get event metadata", error);
-      return;
+    var ipfsData;
+    const url = "https://ipfs.io/ipfs/" + this.ipfsHash;
+    // const url = "https://gateway.pinata.cloud/ipfs/" + hash;
+    const response = await axios.get(url, { timeout: 5000 });
+    if (response.status == 200) {
+      ipfsData = response.request.responseText;
+    } else {
+      return false;
     }
+
     const metadata = JSON.parse(ipfsData);
     this.location = metadata.event.location;
     this.title = metadata.event.title;
@@ -431,6 +428,12 @@ export class Event {
         }
       }
     }
+  }
+
+  async getMaxTicketsPerPerson() {
+    const tickets = await this.contract.methods.maxTicketsPerPerson().call();
+    console.log(tickets);
+    this.maxTicketsPerPerson = Number(tickets);
   }
 
   // --------------------------------- Event Handlers ---------------------------------
@@ -733,6 +736,7 @@ export class Event {
       event.returnValues.size,
       event.returnValues.digest
     );
+    await this.getMaxTicketsPerPerson();
     await this.loadIPFSMetadata();
     await this.fetchPosition();
 

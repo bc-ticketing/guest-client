@@ -1,5 +1,5 @@
 <template>
-  <div class="cont" v-bind:class="{open:isOpen}">
+  <div class="cont" v-bind:class="{ open: isOpen }">
     <div class="overlay invisible" ref="overlay">
       <div class="message-wrapper">
         <div class="message" ref="message">
@@ -25,27 +25,27 @@ export default {
   data() {
     return {
       isOpen: false,
-      message:
-        "Looks like you changed your Account, hang on for a second while we load your tickets!",
     };
   },
   props: {
+    message: String,
     yPos: Number,
+    autoClose: Boolean,
   },
   computed: {},
   watch: {},
   methods: {
     open: async function() {
       this.isOpen = true;
-      const delay = (millis) =>
+      /* const delay = (millis) =>
         new Promise((resolve) => {
           setTimeout(() => resolve(), millis);
-        });
+        }); */
       this.$refs["overlay"].classList.remove("invisible");
       this.$refs["overlay"].classList.add("open");
-      
-      await delay(20000);
-      this.hide();
+
+      // await delay(20000);
+      // this.hide();
     },
     close: function() {
       this.$refs["overlay"].classList.remove("invisible");
@@ -88,19 +88,19 @@ export default {
   cursor: pointer;
 }
 .cont {
-  transform: translateX(-100vw);
+  transform: translateX(var(--vw));
   position: absolute;
-  top:0px;
-    z-index: 99999999999;
-  left:0px;
+  top: 0px;
+  z-index: 99999999999;
+  left: 0px;
 }
 .cont.open {
   transform: translateX(0);
 }
 .overlay {
   position: relative;
-  height: 100vh;
-  width: 100vw;
+  height: var(--vh);
+  width: var(--vw);
   position: absolute;
   transition: opacity 0.4s ease-in-out;
   opacity: 0;
@@ -122,17 +122,17 @@ export default {
   position: relative;
 }
 .message {
-    width: 60%;
+  width: 60%;
   max-width: 400px;
   text-align: center;
 }
 
 .loader {
-  position:absolute;
+  position: absolute;
   width: 400px;
   height: 400px;
   -webkit-filter: contrast(30);
-          filter: contrast(30);
+  filter: contrast(30);
 }
 
 .blob {
@@ -145,73 +145,72 @@ export default {
   background-color: #00ffeb;
   content: "";
   -webkit-filter: blur(10px);
-          filter: blur(10px);
+  filter: blur(10px);
   -webkit-transform: translateY(-100px);
-          transform: translateY(-100px);
+  transform: translateY(-100px);
 }
 .blob:nth-child(1) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.1s;
-          animation-delay: 0.1s;
+  animation-delay: 0.1s;
 }
 .blob:nth-child(2) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.2s;
-          animation-delay: 0.2s;
+  animation-delay: 0.2s;
 }
 .blob:nth-child(3) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.3s;
-          animation-delay: 0.3s;
+  animation-delay: 0.3s;
 }
 .blob:nth-child(4) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.4s;
-          animation-delay: 0.4s;
+  animation-delay: 0.4s;
 }
 .blob:nth-child(5) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.5s;
-          animation-delay: 0.5s;
+  animation-delay: 0.5s;
 }
 .blob:nth-child(6) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.6s;
-          animation-delay: 0.6s;
+  animation-delay: 0.6s;
 }
 .blob:nth-child(7) {
   -webkit-animation: spin 2.5s infinite ease-in-out;
-          animation: spin 2.5s infinite ease-in-out;
+  animation: spin 2.5s infinite ease-in-out;
   -webkit-animation-delay: 0.7s;
-          animation-delay: 0.7s;
+  animation-delay: 0.7s;
 }
 
 @-webkit-keyframes spin {
   0% {
     -webkit-transform: rotate(0deg) translateY(-100px) rotate(0deg);
-            transform: rotate(0deg) translateY(-100px) rotate(0deg);
+    transform: rotate(0deg) translateY(-100px) rotate(0deg);
   }
   70% {
     -webkit-transform: rotate(360deg) translateY(-100px) rotate(-360deg);
-            transform: rotate(360deg) translateY(-100px) rotate(-360deg);
+    transform: rotate(360deg) translateY(-100px) rotate(-360deg);
   }
 }
 
 @keyframes spin {
   0% {
     -webkit-transform: rotate(0deg) translateY(-100px) rotate(0deg);
-            transform: rotate(0deg) translateY(-100px) rotate(0deg);
+    transform: rotate(0deg) translateY(-100px) rotate(0deg);
   }
   70% {
     -webkit-transform: rotate(360deg) translateY(-100px) rotate(-360deg);
-            transform: rotate(360deg) translateY(-100px) rotate(-360deg);
+    transform: rotate(360deg) translateY(-100px) rotate(-360deg);
   }
 }
-
 </style>

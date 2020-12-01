@@ -6,27 +6,21 @@ export async function getWeb3() {
   try {
     // Acccounts now exposed
     var web3 = {};
-    console.log(window.web3);
     // link to actual web3 object
     web3.web3Instance = window.web3;
     web3.ethereum = window.ethereum;
-    console.log("success0");
     // some usefuell values to minimize web3 api calls
     // web3.networkId = await window.web3.eth.net.getId();
-    console.log("success1");
     web3.accounts = await window.web3.eth.getAccounts();
     web3.account = web3.accounts[0];
-    console.log("success");
 
     web3.balance = await window.web3.eth.getBalance(web3.account);
     const block = await window.web3.eth.getBlock("latest");
     web3.currentBlock = block.number;
-    console.log("success");
     return web3;
-  } catch (error) {
+  } catch {
     // User denied account access...
-    console.log(error);
-    return new Error("Unable to connect to Metamask");
+    return false;
   }
 }
 
@@ -49,7 +43,9 @@ export async function updateWeb3() {
     return new Error("Web3 has not been linked yet");
   }
 }
-
+/* 
+This is currently broken due to the walletConnect library having a recent open, breaking issue on git
+*/
 async function linkWeb3(walletConnect) {
   if (walletConnect) {
     //  Create WalletConnect Provider

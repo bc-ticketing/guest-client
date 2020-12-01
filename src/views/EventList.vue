@@ -1,25 +1,27 @@
 <template>
   <div class="events">
     <div class="header">
-      <div class="container">
+      <div class="tab-headers">
         <h3>{{ $store.state.events.length }} events</h3>
       </div>
     </div>
-    <div class="container">
-      <isotope
-        ref="isotope"
-        class="event-list"
-        :options="getOptions()"
-        :list="events"
-        @filter="filterOption = arguments[0]"
-        @sort="sortOption = arguments[0]"
-      >
-        <EventEntry
-          v-for="event in $store.state.events"
-          v-bind:key="event.contractAddress"
-          v-bind:event="event"
-        ></EventEntry>
-      </isotope>
+    <div class="content">
+      <div class="container">
+        <isotope
+          ref="isotope"
+          class="event-list"
+          :options="getOptions()"
+          :list="events"
+          @filter="filterOption = arguments[0]"
+          @sort="sortOption = arguments[0]"
+        >
+          <EventEntry
+            v-for="event in $store.state.events"
+            v-bind:key="event.contractAddress"
+            v-bind:event="event"
+          ></EventEntry>
+        </isotope>
+      </div>
     </div>
   </div>
 </template>
@@ -117,18 +119,22 @@ export default {
   margin: 0 !important;
 }
 .header {
-  display: flex;
-  align-items: center;
   position: sticky;
   top: 0;
+  padding: 5px;
+}
+.tab-headers {
+  padding: 1rem;
+  border-radius: 12px;
+  color: black;
+  display: flex;
+  justify-content: start;
   background: white;
-  z-index: 999;
-  padding: 1rem 0;
   box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
 }
 .events {
-  min-height: 100vh;
+  min-height: var(--vh);
 }
 .item {
   width: 100%;

@@ -7,6 +7,7 @@ import {
   getTicketId,
   getTicketTypeIndex,
 } from "idetix-utils";
+import axios from "axios";
 
 import {
   NULL_ADDRESS,
@@ -23,8 +24,6 @@ import {
 } from "./constants/constants";
 import { AFFILIATE_ADDRESS } from "./constants/addresses";
 import { EVENT_MINTABLE_AFTERMARKET_ABI } from "./../util/abi/eventMintableAftermarket";
-
-import { ipfsClient } from "./ipfs/getIpfs";
 
 const BigNumber = require("bignumber.js");
 
@@ -759,16 +758,14 @@ export async function loadIPFSMetadata(ticket) {
   if (ticket.ipfsHash === "") {
     return;
   }
-  var ipfsData = null;
-  try {
-    for await (const chunk of ipfsClient.cat(ticket.ipfsHash, {
-      timeout: 5000,
-    })) {
-      ipfsData = Buffer(chunk, "utf8").toString();
-    }
-  } catch (error) {
-    console.log("could not get metadata", error);
-    return ticket;
+  var ipfsData;
+  const url = "https://ipfs.io/ipfs/" + ticket.ipfsHash;
+  // const url = "https://gateway.pinata.cloud/ipfs/" + hash;
+  const response = await axios.get(url, { timeout: 5000 });
+  if (response.status == 200) {
+    ipfsData = response.request.responseText;
+  } else {
+    return false;
   }
   const metadata = JSON.parse(ipfsData);
   if (!metadata.ticket) {

@@ -1,17 +1,12 @@
 <template>
   <div class="camera-component" ontouchstart="" :class="size">
-    <section
-      id="camera"
-      v-if="stream"
-      class="absolute flex flex-col inset-0 items-center justify-end px-4 py-8 z-20"
-    ></section>
+    <section id="camera" v-if="stream"></section>
 
     <div class="camera-wrapper">
       <div class="overlay top" v-if="size === 'small'"></div>
       <video ref="video" autoplay muted playsinline></video>
       <div class="overlay bottom" v-if="size === 'small'"></div>
     </div>
-
     <button class="md-button md-raised" @click="capturePhoto">Snap</button>
   </div>
 </template>
@@ -36,12 +31,17 @@ export default {
   },
   methods: {
     async startCamera() {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          facingMode: this.mode ? "user" : "environment",
-        },
-      });
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: this.mode ? "user" : "environment",
+          },
+        });
+      } catch {
+        console.log("no camera");
+        return;
+      }
 
       this.$refs.video.srcObject = this.stream;
 
@@ -62,7 +62,6 @@ export default {
         this.size === "small" ? video.videoHeight / 3 : video.videoHeight;
       videoCanvas.width = video.videoWidth;
       let videoContext = videoCanvas.getContext("2d");
-      console.log(video, 0, video.videoHeight, video.videoWidth);
       if (this.size === "small") {
         videoContext.drawImage(
           video,
@@ -99,12 +98,11 @@ export default {
 
 <style>
 .camera-component {
-  min-height: 500px;
 }
 .overlay {
-  background: white;
+  background: black;
   z-index: 9;
-  height: 130px;
+  height: 111px;
   position: absolute;
   left: 0;
   width: 100%;
@@ -118,9 +116,10 @@ export default {
 
 .camera-wrapper {
   position: relative;
+  background-color: black;
 }
 
 video {
-  height: 390px !important;
+  height: 333px !important;
 }
 </style>

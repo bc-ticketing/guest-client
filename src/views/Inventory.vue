@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid inventory">
+  <div class="inventory">
     <!-- <h1>Tickets</h1> -->
 
     <div class="header">
@@ -16,107 +16,111 @@
         </div>
       </v-touch>
     </div>
-    <div class="tabs">
-      <div class="tab tickets active" id="tab-owned">
-        <div class="empty-message" v-if="noTicketsOwned">
-          <div class="empty-icon">
-            <md-icon>confirmation_number</md-icon>
+    <div class="container-fluid">
+      <div class="tabs">
+        <div class="tab tickets active" id="tab-owned">
+          <div class="empty-message" v-if="noTicketsOwned">
+            <div class="empty-icon">
+              <md-icon>confirmation_number</md-icon>
+            </div>
+            <p>
+              Looks like its empty here! Checkout some of our events to get your
+              first ticket!
+            </p>
           </div>
-          <p>
-            Looks like its empty here! Checkout some of our events to get your
-            first ticket!
-          </p>
+          <div
+            ref="ticketList"
+            class="container ticket-list"
+            v-if="$store.state.activeUser"
+          >
+            <div
+              class="ticket"
+              v-for="(ticket, index) in fungibleTickets"
+              v-bind:key="'fungible_' + index"
+            >
+              <Ticket
+                v-bind:ticketTypeId="ticket.ticketType"
+                v-bind:ticketId="ticket.ticketId"
+                v-bind:eventContractAddress="ticket.eventContractAddress"
+                v-bind:isNf="false"
+                v-on:openOverlay="openTicketOverlay(ticket, false)"
+                v-on:useTicket="useTicket(ticket, false)"
+              />
+            </div>
+            <div
+              class="ticket"
+              v-for="(ticket, index) in nonFungibleTickets"
+              v-bind:key="'nonfungible_' + index"
+            >
+              <Ticket
+                v-bind:ticketTypeId="ticket.ticketType"
+                v-bind:ticketId="ticket.ticketId"
+                v-bind:eventContractAddress="ticket.eventContractAddress"
+                v-bind:isNf="true"
+                v-on:openOverlay="openTicketOverlay(ticket, true)"
+                v-on:useTicket="useTicket(ticket, true)"
+              />
+            </div>
+          </div>
         </div>
-        <div
-          ref="ticketList"
-          class="container ticket-list"
-          v-if="$store.state.activeUser"
-        >
-          <div
-            class="ticket"
-            v-for="(ticket, index) in fungibleTickets"
-            v-bind:key="'fungible_' + index"
-          >
-            <Ticket
-              v-bind:ticketTypeId="ticket.ticketType"
-              v-bind:ticketId="ticket.ticketId"
-              v-bind:eventContractAddress="ticket.eventContractAddress"
-              v-bind:isNf="false"
-              v-on:openOverlay="openTicketOverlay(ticket, false)"
-              v-on:useTicket="useTicket(ticket, false)"
-            />
+        <div class="tab presales" id="tab-presales">
+          <div class="empty-message" v-if="noPresalesJoined">
+            <div class="empty-icon">
+              <md-icon>confirmation_number</md-icon>
+            </div>
+            <p>
+              Looks like its empty here! Checkout some of our events to join an
+              active presale!
+            </p>
           </div>
-          <div
-            class="ticket"
-            v-for="(ticket, index) in nonFungibleTickets"
-            v-bind:key="'nonfungible_' + index"
-          >
-            <Ticket
-              v-bind:ticketTypeId="ticket.ticketType"
-              v-bind:ticketId="ticket.ticketId"
-              v-bind:eventContractAddress="ticket.eventContractAddress"
-              v-bind:isNf="true"
-              v-on:openOverlay="openTicketOverlay(ticket, true)"
-              v-on:useTicket="useTicket(ticket, true)"
-            />
+          <div class="container presales">
+            <div
+              class="presale"
+              v-for="(presale, index) in joinedPresales"
+              v-bind:key="'presale_' + index"
+            >
+              <md-card>
+                <md-card-content>
+                  <div class="md-title">{{ getEventTitle(presale.event) }}</div>
+                  <div class="md-subhead">
+                    {{ getTicketTitle(presale.event, presale.ticketType) }}
+                  </div>
+                  <div v-if="getPresaleOver(presale.event, presale.ticketType)">
+                    <md-button
+                      @click="
+                        makePresaleClaim(presale.event, presale.ticketType)
+                      "
+                    >
+                      Claim</md-button
+                    >
+                  </div>
+                  <div v-else>
+                    This Presale is still running, wait until it is over to see
+                    if you won the lottery
+                  </div>
+                </md-card-content>
+              </md-card>
+            </div>
           </div>
         </div>
       </div>
-      <div class="tab presales" id="tab-presales">
-        <div class="empty-message" v-if="noPresalesJoined">
-          <div class="empty-icon">
-            <md-icon>confirmation_number</md-icon>
-          </div>
-          <p>
-            Looks like its empty here! Checkout some of our events to join an
-            active presale!
-          </p>
-        </div>
-        <div class="container presales">
-          <div
-            class="presale"
-            v-for="(presale, index) in joinedPresales"
-            v-bind:key="'presale_' + index"
-          >
-            <md-card>
-              <md-card-content>
-                <div class="md-title">{{ getEventTitle(presale.event) }}</div>
-                <div class="md-subhead">
-                  {{ getTicketTitle(presale.event, presale.ticketType) }}
-                </div>
-                <div v-if="getPresaleOver(presale.event, presale.ticketType)">
-                  <md-button
-                    @click="makePresaleClaim(presale.event, presale.ticketType)"
-                  >
-                    Claim</md-button
-                  >
-                </div>
-                <div v-else>
-                  This Presale is still running, wait until it is over to see if
-                  you won the lottery
-                </div>
-              </md-card-content>
-            </md-card>
-          </div>
-        </div>
-      </div>
+      <TicketOverlay
+        v-bind:eventContractAddress="activeTicketEvent"
+        v-bind:ticketId="activeTicket"
+        v-bind:ticketTypeId="activeTicketType"
+        v-bind:isNf="activeIsNf"
+        v-bind:open="ticketOverlay.open"
+        v-on:close="ticketOverlay.open = false"
+      />
+      <TicketScanner
+        v-bind:eventContractAddress="activeTicketEvent"
+        v-bind:ticketId="activeTicket"
+        v-bind:ticketTypeId="activeTicketType"
+        v-bind:isNf="activeIsNf"
+        v-bind:open="ticketScanner.open"
+        v-on:close="ticketScanner.open = false"
+      />
     </div>
-    <TicketOverlay
-      v-bind:eventContractAddress="activeTicketEvent"
-      v-bind:ticketId="activeTicket"
-      v-bind:ticketTypeId="activeTicketType"
-      v-bind:isNf="activeIsNf"
-      v-bind:open="ticketOverlay.open"
-      v-on:close="ticketOverlay.open = false"
-    />
-    <TicketScanner
-      v-bind:eventContractAddress="activeTicketEvent"
-      v-bind:ticketId="activeTicket"
-      v-bind:ticketTypeId="activeTicketType"
-      v-bind:isNf="activeIsNf"
-      v-bind:open="ticketScanner.open"
-      v-on:close="ticketScanner.open = false"
-    />
   </div>
 </template>
 
@@ -298,7 +302,13 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+.container-fluid {
+  height: 545px;
+  position: relative;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
 .header {
   position: sticky;
   top: 0;
@@ -324,8 +334,9 @@ export default {
 .tabs {
   position: relative;
   overflow-x: hidden;
-  width: 100vw;
-  height: calc(100vh - 106px);
+  width: var(--vw);
+  overflow-y: scroll;
+  height: 545px;
 }
 
 .tab {
@@ -334,13 +345,13 @@ export default {
   top: 0;
   transition: 0.3s ease-in-out;
   transform: translateX(0);
-  width: 100vw;
+  width: var(--vw);
 }
 .tab.tickets {
-  transform: translateX(-100vw);
+  transform: translateX(var(--negative-vw));
 }
 .tab.presales {
-  transform: translateX(100vw);
+  transform: translateX(var(--vw));
 }
 .tab.tickets.active {
   transform: translateX(0);
@@ -353,7 +364,6 @@ export default {
   margin-bottom: 1rem;
 }
 .ticket-list {
-  overflow-y: scroll;
 }
 h1 {
   margin-left: 1rem;
@@ -399,9 +409,6 @@ h1 {
   font-size: 2rem;
 }
 .inventory {
-  height: 100vh;
-  position: relative;
-  overflow-y: hidden;
 }
 
 .amount-selection {

@@ -30,13 +30,17 @@ export default new Vuex.Store({
       }
     },
     updateWeb3(state, web3) {
-      state.web3.web3Instance = web3.web3Instance;
-      state.web3.account = web3.account;
-      state.web3.networkId = web3.networkId;
-      state.web3.balance = parseInt(web3.balance, 10);
-      state.web3.isInjected = true;
-      state.web3.currentBlock = web3.currentBlock;
-      state.web3.ethereum = web3.ethereum;
+      if (!web3) {
+        state.web3 = false;
+      } else {
+        state.web3.web3Instance = web3.web3Instance;
+        state.web3.account = web3.account;
+        state.web3.networkId = web3.networkId;
+        state.web3.balance = parseInt(web3.balance, 10);
+        state.web3.isInjected = true;
+        state.web3.currentBlock = web3.currentBlock;
+        state.web3.ethereum = web3.ethereum;
+      }
     },
     setEventFactory(state, factory) {
       state.eventFactory = factory;
@@ -90,24 +94,6 @@ export default new Vuex.Store({
     async setEventFactoryContractAddress({ commit }, address) {
       commit("setEventFactoryContractAddress", address);
     },
-    async getUserApprovalLevels({ commit }) {
-      let user = state.activeUser;
-      for (const event of state.events) {
-        let approver = state.approvers.find(
-          (a) =>
-            String(a.approverAddress) === String(event.identityContractAddress)
-        );
-        if (approver) {
-          const method = await approver.getApprovalLevel(
-            state.identity,
-            user.account
-          );
-          user.setApprovalLevel(approver.approverAddress, method);
-        }
-      }
-
-      commit("setActiveUser", user);
-    },
     registerWeb3: async function({ commit }) {
       const web3 = await getWeb3();
       commit("updateWeb3", web3);
@@ -130,6 +116,25 @@ export default new Vuex.Store({
         state.IDENTITY_ADDRESS
       );
       commit("setIdentity", identity);
+    },
+    async getUserApprovalLevels({ commit }) {
+      let user = state.activeUser;
+      for (const event of state.events) {
+        let approver = state.approvers.find(
+          (a) =>
+            String(a.approverAddress) === String(event.identityContractAddress)
+        );
+        if (approver) {
+          console.log(approver.title);
+          const level = await approver.getApprovalLevel(
+            state.identity,
+            user.account
+          );
+          user.setApprovalLevel(approver.approverAddress, level);
+        }
+      }
+
+      commit("setActiveUser", user);
     },
     /* 
       Responsible for getting the current user object.
@@ -261,21 +266,26 @@ export default new Vuex.Store({
       commit("updateEvent", event);
     },
     async loadApprovers({ commit }) {
+      let alreadyUpdated = [];
       for (const event of state.events) {
         const approverAddress = event.identityContractAddress;
         if (approverAddress && approverAddress.length > 0) {
-          const inStore = await idb.getApprover(approverAddress);
-          let approver;
-          if (inStore) {
-            approver = new IdentityApprover(inStore);
-            approver.requestUrlVerification();
-            approver.requestTwitterVerification();
-          } else {
-            approver = new IdentityApprover(approverAddress);
-            await approver.loadData(state.identity);
+          if (alreadyUpdated.indexOf(approverAddress) === -1) {
+            alreadyUpdated.push(approverAddress);
+
+            const inStore = await idb.getApprover(approverAddress);
+            let approver;
+            if (inStore) {
+              approver = new IdentityApprover(inStore);
+              approver.requestUrlVerification();
+              approver.requestTwitterVerification();
+            } else {
+              approver = new IdentityApprover(approverAddress);
+              await approver.loadData(state.identity);
+            }
+            await idb.saveApprover(approver);
+            commit("updateApproverStore", approver);
           }
-          await idb.saveApprover(approver);
-          commit("updateApproverStore", approver);
         }
       }
     },

@@ -104,6 +104,12 @@ export default {
       );
       console.info(signedMessage);
       let response;
+      console.log(
+        this.result.url,
+        this.result.randId,
+        signedMessage,
+        this.$store.state.activeUser.account
+      );
       try {
         response = await axios.post(
           `${this.result.url}/verifyOwnershipOfTicket?RandId=${
@@ -114,7 +120,8 @@ export default {
         );
         console.log(response);
         this.response = response;
-      } catch {
+      } catch (e) {
+        console.log(e);
         console.log("api call error");
       }
     },
@@ -127,8 +134,8 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  height: 100vh;
-  width: 100vw;
+  height: var(--vh);
+  width: var(--vw);
   transform: translateY(100%);
   transition: 0.4s transform ease-in-out;
   background: white;

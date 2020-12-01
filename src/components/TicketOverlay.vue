@@ -350,8 +350,8 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  height: 100vh;
-  width: 100vw;
+  height: var(--vh);
+  width: var(--vw);
   transform: translateY(100%);
   transition: 0.4s transform ease-in-out;
   background: rgb(245, 222, 242);

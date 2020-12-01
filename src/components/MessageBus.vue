@@ -21,22 +21,22 @@ export default {
     return {
       isOpen: false,
       message: "",
-      type: "neutral"
+      type: "neutral",
     };
   },
   props: {
-    yPos: Number
+    yPos: Number,
   },
   computed: {},
   watch: {
     yPos: function() {
       this.$refs["bar"].style.top = `${this.yPos}px`;
-    }
+    },
   },
   methods: {
     open: async function() {
-      const delay = millis =>
-        new Promise(resolve => {
+      const delay = (millis) =>
+        new Promise((resolve) => {
           setTimeout(() => resolve(), millis);
         });
       this.$refs["bar"].classList.remove("invisible");
@@ -59,13 +59,13 @@ export default {
       this.$refs["bar"].classList.remove("open");
       this.$refs["bar"].classList.add("invisible");
       this.isOpen = false;
-    }
+    },
   },
   mounted: function() {
     //this.openSearchBar();
   },
   created: function() {
-    this.$root.$on("openMessageBus", async result => {
+    this.$root.$on("openMessageBus", async (result) => {
       this.message = result.message;
       if (result.status == 1) {
         this.type = "success";
@@ -87,7 +87,7 @@ export default {
       this.type = "neutral";
       this.hide();
     });
-  }
+  },
 };
 </script>
 
@@ -103,7 +103,7 @@ export default {
   position: fixed;
   transform: translate(-90%, -100%);
   transition: transform 0.4s ease-in-out;
-  width: 100vw;
+  width: var(--vw);
 }
 
 .message-bar-wrapper {

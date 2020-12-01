@@ -391,6 +391,15 @@ export class User {
     }
     return amount;
   }
+  ticketsOwnedForEvent(event) {
+    let amount = 0;
+    for (const t of this.fungibleTickets.concat(this.nonFungibleTickets)) {
+      if (t.eventContractAddress === event) {
+        amount += Number(t.amount);
+      }
+    }
+    return amount;
+  }
   ownsFungibles(eventContract, ticketType, amount) {
     return (
       this.fungibleTickets.filter(
