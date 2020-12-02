@@ -112,9 +112,9 @@ export default {
       );
       try {
         response = await axios.post(
-          `${this.result.url}/verifyOwnershipOfTicket?RandId=${
+          `${this.result.url}/verifyOwnershipOfTicket&RandId=${
             this.result.randId
-          }?numberOfGuests=${1}?signature=${signedMessage}?ethAddress=${
+          }&numberOfGuest=${1}&signature=${signedMessage}?&ethAddress=${
             this.$store.state.activeUser.account
           }`
         );

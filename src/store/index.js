@@ -277,8 +277,8 @@ export default new Vuex.Store({
             let approver;
             if (inStore) {
               approver = new IdentityApprover(inStore);
-              approver.requestUrlVerification();
-              approver.requestTwitterVerification();
+              await approver.requestUrlVerification();
+              await approver.requestTwitterVerification();
             } else {
               approver = new IdentityApprover(approverAddress);
               await approver.loadData(state.identity);

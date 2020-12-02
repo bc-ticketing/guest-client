@@ -3,6 +3,14 @@
     <div class="header">
       <div class="tab-headers">
         <h3>{{ $store.state.events.length }} events</h3>
+        <div class="loading-icon">
+          <md-progress-spinner
+            v-if="loadingEvents"
+            :md-diameter="20"
+            :md-stroke="4"
+            md-mode="indeterminate"
+          ></md-progress-spinner>
+        </div>
       </div>
     </div>
     <div class="content">
@@ -49,10 +57,17 @@ export default {
       sortOption: null,
       filterOption: null,
       filterText: "",
+      loadingEvents: false,
     };
   },
   watch: {},
   beforeCreate: async function() {
+    this.$root.$on("eventFactoryCreated", async () => {
+      this.loadingEvents = true;
+    });
+    this.$root.$on("loadedEvents", async () => {
+      this.loadingEvents = false;
+    });
     this.$root.$on("searchChange", (val) => {
       this.updateFilters(val);
     });
@@ -128,7 +143,7 @@ export default {
   border-radius: 12px;
   color: black;
   display: flex;
-  justify-content: start;
+  justify-content: space-between;
   background: white;
   box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);

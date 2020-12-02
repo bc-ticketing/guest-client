@@ -14,6 +14,13 @@
         <div id="header-presales" class="tab-header" @click="selectTab(1)">
           presales
         </div>
+        <md-progress-spinner
+          v-if="loadingEvents"
+          class="loading-icon"
+          :md-diameter="20"
+          :md-stroke="4"
+          md-mode="indeterminate"
+        ></md-progress-spinner>
       </v-touch>
     </div>
     <div class="container-fluid">
@@ -137,6 +144,7 @@ export default {
   name: "Inventory",
   data() {
     return {
+      loadingEvents: false,
       activeSlide: 0,
       activeTicket: 0,
       activeTicketType: 0,
@@ -293,7 +301,14 @@ export default {
       this.activeTicketType = ticket.ticketType;
     },
   },
-  beforeCreate: async function() {},
+  beforeCreate: async function() {
+    this.$root.$on("eventFactoryCreated", async () => {
+      this.loadingEvents = true;
+    });
+    this.$root.$on("loadedEvents", async () => {
+      this.loadingEvents = false;
+    });
+  },
   mounted: function() {
     this.$root.$emit("hideSearchBar");
 
@@ -315,6 +330,7 @@ export default {
   padding: 5px;
 }
 .tab-headers {
+  position: relative;
   border-radius: 12px;
   color: black;
   display: flex;
@@ -322,6 +338,11 @@ export default {
   background: white;
   box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+.loading-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
 }
 .tab-header {
   transition: 0.3s ease-in-out;

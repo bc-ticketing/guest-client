@@ -171,7 +171,7 @@ export class User {
     });
   }
   handleSellOrderNonFungiblePlaced(eventContractAddress, event) {
-    for (const id of event.ids) {
+    for (const id of event._ids) {
       let info = getTicketInfoFromType(id);
       this.sellOrders.push({
         percentage: Number(event.percentage),
@@ -344,7 +344,8 @@ export class User {
     for (const event of allEvents) {
       try {
         this[`handle${event.type}`](eventContractAddress, event.event);
-      } catch {
+      } catch (e) {
+        console.log(e);
         console.debug(`I don't have an event handler for ${event.type}!`);
       }
     }

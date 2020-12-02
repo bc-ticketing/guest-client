@@ -8,14 +8,14 @@
         >
       </div>
     </div>
-    <div class="content">
+    <div class="content" @scroll="handleScroll">
       <!-- big image -->
       <div class="header-img" :style="{ backgroundColor: `${event.color}` }">
         <img :src="event.image" alt="" />
       </div>
 
       <!-- general event information -->
-      <section class="event-information">
+      <section class="event-information higher" ref="firstinfo">
         <div class="container">
           <md-card>
             <md-card-content>
@@ -53,7 +53,7 @@
         </div>
       </section>
       <!-- information about the host -->
-      <section class="host-information">
+      <section class="event-information lower">
         <div class="container">
           <md-card
             ><md-card-content>
@@ -121,7 +121,7 @@
         </div>
       </section>
       <!-- information about the identity service -->
-      <section class="identity-information">
+      <section class="event-information lower">
         <div class="container">
           <md-card
             ><md-card-content>
@@ -314,7 +314,7 @@
             v-bind:key="'fungible_' + ticket.typeId"
           >
             <h3>{{ ticket.title }}</h3>
-            <md-card class="queue-wrapper buying">
+            <md-card class="queue-wrapper buying lower">
               <div class="top">
                 <div class="chart-wrapper">
                   <chart-test
@@ -378,7 +378,7 @@
               </div>
             </md-card>
 
-            <md-card class="queue-wrapper selling">
+            <md-card class="queue-wrapper selling lower">
               <div class="top">
                 <div class="chart-wrapper">
                   <chart-test
@@ -459,7 +459,7 @@
             v-bind:key="'nonfungible_' + ticket.typeId"
           >
             <h3>{{ ticket.title }}</h3>
-            <md-card class="queue-wrapper buying">
+            <md-card class="queue-wrapper buying lower">
               <div class="top">
                 <div class="chart-wrapper">
                   <chart-test
@@ -517,7 +517,7 @@
                 </md-card-expand>
               </div>
             </md-card>
-            <md-card class="queue-wrapper nf">
+            <md-card class="queue-wrapper nf lower">
               <div class="top">
                 <h3>Tickets for sale</h3>
               </div>
@@ -753,6 +753,26 @@ export default {
   },
   watch: {},
   methods: {
+    handleScroll(e) {
+      let scroll = e.originalTarget.scrollTop;
+      //console.log(this.$refs["firstinfo"].offsetTop);
+      //console.log(scroll);
+      for (const ref of document.getElementsByClassName("event-information")) {
+        if (scroll + 543 >= ref.offsetTop + ref.offsetHeight) {
+          ref.classList.remove("lower");
+        }
+      }
+      for (const ref of document.getElementsByClassName("queue-wrapper")) {
+        if (scroll + 543 >= ref.offsetTop + ref.offsetHeight - 50) {
+          ref.classList.remove("lower");
+        }
+      }
+      if (scroll >= 10) {
+        this.$refs["firstinfo"].classList.remove("higher");
+      } else {
+        this.$refs["firstinfo"].classList.add("higher");
+      }
+    },
     getPriceConverted(value) {
       return (this.exchangeRate * value).toFixed(2);
     },
@@ -1530,5 +1550,21 @@ export default {
 }
 p.bold {
   font-weight: bold;
+}
+
+.event-information,
+.queue-wrapper {
+  transition: 0.3s ease-in-out;
+  transform: translateY(0px);
+  opacity: 1;
+}
+
+.event-information.higher {
+  transform: translateY(-80px);
+}
+.event-information.lower,
+.queue-wrapper.lower {
+  transform: translateY(150px);
+  opacity: 0;
 }
 </style>

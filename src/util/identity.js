@@ -1,7 +1,7 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
 
-const IDETIX_APPROVAL_SERVER = "https://identity.icuzh.ch:9191";
+const IDETIX_APPROVAL_SERVER = "http://identity.icuzh.ch:9191";
 
 export class IdentityApprover {
   constructor(approverAddress) {
@@ -67,7 +67,9 @@ export class IdentityApprover {
       return;
     }
     let address = await requestTwitterVerification(getHandle(this.twitter.url));
+    console.log(address === this.approverAddress);
     this.twitter.verification = address === this.approverAddress;
+    console.log(this.twitter.verification);
   }
 
   async requestUrlVerification() {
@@ -80,8 +82,6 @@ export class IdentityApprover {
   }
 
   async getApprovalLevel(identitySC, userAddress) {
-    console.log(`user address: ${userAddress}`);
-    console.log(`approver address: ${this.approverAddress}`);
     const level = await identitySC.methods
       .getSecurityLevel(this.approverAddress, userAddress)
       .call();

@@ -106,7 +106,7 @@ export default {
   async beforeCreate() {
     this.$root.$on("transactionStarted", async () => {
       this.overlayAutoClose = false;
-      this.overlayMessage = "Transaction!";
+      this.overlayMessage = "Processing your transaction.";
       this.$root.$emit("openMessageOverlay");
     });
     this.$root.$on("transactionEnded", async () => {

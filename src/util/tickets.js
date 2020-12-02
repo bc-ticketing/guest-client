@@ -802,9 +802,7 @@ export function getTicketInfoFromType(ticketType) {
   );
   const nf = isNf(new BigNumber(ticketType));
   const ticketId = nf
-    ? Number(
-        getTicketId(new BigNumber(event.returnValues.ticketType)).toFixed()
-      )
+    ? Number(getTicketId(new BigNumber(ticketType)).toFixed())
     : undefined;
   return { ticketTypeId, nf, ticketId };
 }
