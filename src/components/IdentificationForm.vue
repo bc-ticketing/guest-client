@@ -431,10 +431,8 @@ export default {
 </script>
 
 <style scoped>
-.md-button {
-  min-width: unset;
-}
-.step-content {
+.img-list {
+  min-height: 100px;
 }
 .preview-img {
   max-width: 80px;

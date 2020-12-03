@@ -894,6 +894,8 @@ export default {
       this.$root.$emit("transactionEnded");
 
       await this.$store.dispatch("updateEvent", this.event.ContractAddress);
+      this.$root.$emit("userUpdated");
+      this.$root.$emit("updateCharts");
       this.$root.$emit("openMessageBus", result);
     },
     async fillSellOrderNonFungible(ticketTypeId, ticketId, percentage, price) {
@@ -909,6 +911,8 @@ export default {
       );
       this.$root.$emit("transactionEnded");
       await this.$store.dispatch("updateEvent", this.event.contractAddress);
+      this.$root.$emit("userUpdated");
+      this.$root.$emit("updateCharts");
       this.$root.$emit("openMessageBus", result);
     },
     async fillSellOrderFungible(ticketType) {
@@ -927,6 +931,8 @@ export default {
         "updateEvent",
         ticketType.eventContractAddress
       );
+      this.$root.$emit("userUpdated");
+      this.$root.$emit("updateCharts");
       this.$root.$emit("openMessageBus", result);
     },
     setActiveQueueTip(ticket) {

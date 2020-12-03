@@ -210,6 +210,7 @@ export default new Vuex.Store({
           event = new Event(inStore, state.web3.web3Instance);
         }
         result = await event.handleMissedEvents(state.activeUser.account);
+
         if (result.success) {
           const block = await state.web3.web3Instance.eth.getBlock("latest");
           await user.handleMissedEvents(
@@ -223,10 +224,8 @@ export default new Vuex.Store({
           commit("setActiveUser", user);
 
           event.lastFetchedBlock = block.number;
-          // event.lastFetchedBlock = loadToBlock;
         }
         await event.verifySocials();
-        //event.initSubscriptions(state.web3.web3Instance);
         await idb.saveEvent(event);
         if (!inStore) {
           commit("addEventToStore", event);

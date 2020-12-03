@@ -1,6 +1,8 @@
 /* 
   This file contains the Event class and all its member functions. The main functionality contained here is the loading of event metadata and tickets from the Blockchain as well as handling Solidity events related to the event and its ticket. 
 */
+import { EventBus } from "./EventBus.js";
+
 import {
   getIdAsBigNumber,
   getTicketId,
@@ -18,6 +20,7 @@ import {
   removeSellOrders,
   getLowestSellOrder,
 } from "./tickets";
+
 import axios from "axios";
 
 import { NULL_ADDRESS } from "./constants/constants";
@@ -33,8 +36,6 @@ import {
 } from "./identity";
 
 const BigNumber = require("bignumber.js");
-
-import { subscribeTo } from "./../components/StateManager";
 
 export class Event {
   constructor(contractAddress, web3) {
@@ -81,56 +82,22 @@ export class Event {
     });
   }
 
+  notifyApp() {
+    EventBus.$emit("updateEvent", this.contractAddress);
+  }
+
   //subscribe to solidity events
-  initSubscriptions(web3) {
-    const contract = new web3.eth.Contract(
-      EVENT_MINTABLE_AFTERMARKET_ABI,
-      this.contractAddress
-    );
-    subscribeTo("MintFungibles", contract, (event) =>
-      this.handleMintFungibles(event)
-    );
-    subscribeTo("MintNonFungibles", contract, (event) =>
-      this.handleMintNonFungibles(event)
-    );
-    subscribeTo("BuyOrderWithdrawn", contract, (event) =>
-      this.handleBuyOrderWithdrawn(event)
-    );
-    subscribeTo("SellOrderWithdrawn", contract, (event) => this.handle(event));
-    subscribeTo("SellOrderFungibleWithdrawn", contract, (event) =>
-      this.handleSellOrderFungibleWithdrawn(event)
-    );
-    subscribeTo("SellOrderNonFungibleWithdrawn", contract, (event) =>
-      this.handleSellOrderNonFungibleWithdrawn(event)
-    );
-    subscribeTo("BuyOrderNonFungibleFilled", contract, (event) =>
-      this.handleBuyOrderNonFungibleFilled(event)
-    );
-    subscribeTo("SellOrderNonFungibleFilled", contract, (event) =>
-      this.handleSellOrderNonFungibleFilled(event)
-    );
-    subscribeTo("SellOrderNonFungiblePlaced", contract, (event) =>
-      this.handleSellOrderNonFungiblePlaced(event)
-    );
-    subscribeTo("BuyOrderFungibleFilled", contract, (event) =>
-      this.handleBuyOrderFungibleFilled(event)
-    );
-    subscribeTo("SellOrderFungibleFilled", contract, (event) =>
-      this.handleSellOrderFungibleFilled(event)
-    );
-    subscribeTo("SellOrderFungiblePlaced", contract, (event) =>
-      this.handleSellOrderFungiblePlaced(event)
-    );
-    subscribeTo("BuyOrderPlaced", contract, (event) =>
-      this.handleBuyOrderPlaced(event)
-    );
-    // subscribeTo("TicketTransferred", contract, (event) => console.log(event));
-    subscribeTo("TicketMetadata", contract, (event) =>
-      this.handleTicketMetadata(event)
-    );
-    subscribeTo("EventMetadata", contract, (event) =>
-      this.handleEventMetadata(event)
-    );
+  async initSubscriptions() {
+    this.contract.events
+      .allEvents()
+      .on("data", async (event) => {
+        console.log(event.event);
+        console.log(this[event.event]);
+        if (this[`handle${event.event}`]) {
+          this.notifyApp();
+        }
+      })
+      .on("error", console.error);
   }
 
   getTime() {
@@ -594,6 +561,7 @@ export class Event {
       getTicketTypeIndex(new BigNumber(event.returnValues.ticketType)).toFixed()
     );
     const percentage = event.returnValues.percentage;
+    console.log(event);
     this.adjustOrders(
       ticketTypeId,
       false,
@@ -751,8 +719,6 @@ export class Event {
 
   // we dont need these events at the moment
 
-  async handleValueTransferred() {}
-
   // go over all missed events while the app was offline and handle them
   async handleMissedEvents(currentUserAddress) {
     let events = await this.contract.getPastEvents("allEvents", {
@@ -776,8 +742,8 @@ export class Event {
       try {
         await this[`handle${event.event}`](event);
       } catch {
-        //console.info(`i dont have an event handler for ${event.event}`);
-        //console.info(e);
+        // console.info(`i dont have an event handler for ${event.event}`);
+        // console.info(e);
       }
       if (
         (event.returnValues.owner &&

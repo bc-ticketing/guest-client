@@ -76,6 +76,15 @@ export class User {
     );
   }
 
+  removeFTicket(eventContractAddress, ticketType) {
+    this.fungibleTickets = this.fungibleTickets.filter(
+      (t) =>
+        t.ticketType !== ticketType ||
+        t.eventContractAddress !== eventContractAddress ||
+        t.quantity > 0
+    );
+  }
+
   removeSellOrder(eventContractAddress, ticketType, ticketId, percentage) {
     if (ticketId) {
       this.sellOrders = this.sellOrders.filter(
@@ -213,6 +222,9 @@ export class User {
     if (event.addr === this.account) {
       if (ticket) {
         ticket.quantity -= 1;
+        if (ticket.quantity === 0) {
+          this.removeFTicket(eventContractAddress, info.ticketTypeId);
+        }
       }
     }
   }

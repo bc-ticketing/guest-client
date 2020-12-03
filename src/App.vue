@@ -191,9 +191,7 @@ export default {
     await this.$store.dispatch("createIdentity");
     this.$root.$emit("identityCreated");
   },
-  mounted: async function() {
-    console.log(process.env.VUE_APP_IDENTITY_CONTRACT_ADDRESS);
-  },
+  mounted: async function() {},
 };
 </script>
 

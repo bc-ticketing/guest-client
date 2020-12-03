@@ -213,12 +213,15 @@ export function hasBuyOrder(ticket) {
  * @returns highestBuyOrder or 0 if none
  */
 export function getHighestBuyOrder(ticket) {
-  console.log(ticket.buyOrders);
-  const sorted = ticket.buyOrders.sort(
-    (a, b) => Number(a.percentage) - Number(b.percentage)
-  );
-  console.log(ticket.buyOrders);
-  return sorted.length > 0 ? sorted[sorted.length - 1] : {};
+  console.log(ticket.buyOrders.filter((o) => o.quantity > 0));
+  const sorted = ticket.buyOrders
+    .filter((o) => o.quantity > 0)
+    .reduce(function(acc, it) {
+      return Number(acc.percentage) > Number(it.percentage) ? acc : it;
+    }, {});
+  //.sort((a, b) => Number(a.percentage) - Number(b.percentage));
+  console.log(sorted);
+  return sorted;
 }
 
 /**
@@ -917,21 +920,23 @@ export function removeSellOrders(
   ticketId = 0
 ) {
   if (ticketId == 0) {
-    // console.debug(ticketType, percentage, quantity, address);
+    console.debug(ticketType, percentage, quantity, address);
     let order = ticketType.sellOrders.find(
-      (o) => o.address === address && Number(o.percentage) == Number(percentage)
+      (o) =>
+        o.address === address && Number(o.percentage) === Number(percentage)
     );
-    //console.log(order);
+    console.log(order);
     if (!order) {
       return;
     }
     if (Number(quantity) >= Number(order.quantity)) {
+      console.log("would be empty");
       ticketType.sellOrders = ticketType.sellOrders.filter(
         (o) =>
           o.address !== address || Number(o.percentage) !== Number(percentage)
       );
     } else {
-      order.quantity = Math.min(0, Number(order.quantity) - Number(quantity));
+      order.quantity = Math.max(0, Number(order.quantity) - Number(quantity));
     }
   } else {
     let ticket = ticketType.tickets.find((t) => t.ticketId === ticketId);
