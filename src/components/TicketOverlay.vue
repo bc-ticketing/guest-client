@@ -1,18 +1,25 @@
 <template>
-  <div class="overlay" v-bind:class="{ open: open }">
+  <div
+    class="overlay"
+    v-bind:class="{ open: open }"
+    :style="{
+      backgroundImage: `url(${eventImage})`,
+    }"
+  >
     <v-touch v-on:swipedown="$emit('close')" class="close-bar">
+      <h1>{{ eventTitle }}</h1>
       <div class="close-icon" @click="$emit('close')">
         <md-icon>close</md-icon>
       </div>
     </v-touch>
     <div class="ticket">
-      <div
+      <!-- <div
         class="ticket-section image"
         :style="{
           backgroundImage: `url(${eventImage})`,
           backgroundColor: `${eventColor}`,
         }"
-      ></div>
+      ></div> -->
       <div class="ticket-section">
         <div class="group">
           <div class="label">Ticket Category</div>
@@ -163,7 +170,7 @@ export default {
       return this.event ? this.event.getTimeAndDate() : "";
     },
     eventImage() {
-      return this.event ? this.event.img_url : "";
+      return this.event ? this.event.image : "";
     },
     eventLocation() {
       return this.event ? this.event.location : "";
@@ -256,6 +263,7 @@ export default {
       this.$emit("close");
     },
     sellTicket: async function() {
+      this.$root.$emit("transactionStarted");
       if (this.isNf) {
         const result = await makeSellOrderNonFungible(
           this.ticketTypeId,
@@ -265,6 +273,8 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("transactionEnded");
+
         if (result.status == 1) {
           await this.$store.dispatch("updateEvent", result.event);
           this.$root.$emit("userUpdated");
@@ -280,6 +290,8 @@ export default {
           this.$store.state.web3.web3Instance,
           this.eventContractAddress
         );
+        this.$root.$emit("transactionEnded");
+
         if (result.status == 1) {
           await this.$store.dispatch("updateEvent", result.event);
           this.$root.$emit("userUpdated");
@@ -291,6 +303,8 @@ export default {
     },
     async withdrawSellOrder(percentage, quantity) {
       let result;
+      this.$root.$emit("transactionStarted");
+
       if (this.isNf) {
         result = await withdrawSellOrderNonFungible(
           this.ticketTypeId,
@@ -309,6 +323,8 @@ export default {
           this.eventContractAddress
         );
       }
+      this.$root.$emit("transactionEnded");
+
       if (result.status === 1) {
         await this.$store.dispatch("updateEvent", result.event);
         this.$root.$emit("userUpdated");
@@ -316,6 +332,8 @@ export default {
       this.$root.$emit("openMessageBus", result);
     },
     fillBuyOrder: async function() {
+      this.$root.$emit("transactionStarted");
+
       if (this.isNf) {
         const result = await fillBuyOrderNonFungible(
           this.ticketTypeId,
@@ -337,6 +355,8 @@ export default {
         );
         this.$root.$emit("openMessageBus", result);
       }
+      this.$root.$emit("transactionEnded");
+
       await this.$store.dispatch("updateEvent", this.eventContractAddress);
       this.$root.$emit("userUpdated");
       this.$root.$emit("updateCharts");
@@ -347,6 +367,7 @@ export default {
 
 <style scoped>
 .overlay {
+  padding-bottom: 5rem;
   position: absolute;
   top: 0;
   left: 0;
@@ -357,9 +378,9 @@ export default {
   background: rgb(245, 222, 242);
   background: linear-gradient(
     0deg,
-    rgba(208, 135, 122, 1) 0%,
-    rgba(208, 135, 122, 1) 34%,
-    rgba(208, 135, 122, 0) 100%
+    #1dba9d 0%,
+    #1dba9d 34%,
+    rgba(208, 135, 122, 1) 100%
   );
   overflow-y: scroll;
 }
@@ -374,11 +395,15 @@ export default {
     0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
   padding: 1rem;
   display: flex;
-  justify-content: end;
+  justify-content: space-between;
+  align-items: center;
   position: sticky;
   top: 0;
   opacity: 0;
   transition: opacity 1s ease-in-out;
+}
+.close-bar h1 {
+  margin: 0;
 }
 .overlay.open .close-bar {
   opacity: 1;
@@ -405,6 +430,7 @@ export default {
 .ticket-section.image {
   height: 200px;
   padding: 0;
+  background-size: cover;
 }
 .group {
   margin-bottom: 1rem;

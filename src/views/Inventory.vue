@@ -125,7 +125,7 @@
         v-bind:ticketTypeId="activeTicketType"
         v-bind:isNf="activeIsNf"
         v-bind:open="ticketScanner.open"
-        v-on:close="ticketScanner.open = false"
+        v-on:close="closeScanner()"
       />
     </div>
   </div>
@@ -215,6 +215,9 @@ export default {
     },
   },
   methods: {
+    closeScanner() {
+      this.ticketScanner.open = false;
+    },
     selectTab(i) {
       if (i === 0) {
         document.getElementById("tab-owned").classList.add("active");

@@ -112,14 +112,21 @@ export default {
       );
       try {
         response = await axios.post(
-          `${this.result.url}/verifyOwnershipOfTicket&RandId=${
+          `${this.result.url}/verifyOwnershipOfTicket?RandId=${
             this.result.randId
-          }&numberOfGuest=${1}&signature=${signedMessage}?&ethAddress=${
+          }&numberOfGuest=${1}&signature=${signedMessage}&ethAddress=${
             this.$store.state.activeUser.account
           }`
         );
         console.log(response);
         this.response = response;
+        if (response.data) {
+          this.$emit("close");
+          this.$root.$emit("openMessageBus", {
+            message: "Ticket scanned successfully, enjoy the event!",
+            status: "success",
+          });
+        }
       } catch (e) {
         console.log(e);
         console.log("api call error");

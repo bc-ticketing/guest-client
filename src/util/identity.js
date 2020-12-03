@@ -1,7 +1,7 @@
 import { argsToCid } from "idetix-utils";
 import axios from "axios";
 
-const IDETIX_APPROVAL_SERVER = "http://identity.icuzh.ch:9191";
+const IDETIX_APPROVAL_SERVER = "http://identity.icu.uzh.ch:9191";
 
 export class IdentityApprover {
   constructor(approverAddress) {

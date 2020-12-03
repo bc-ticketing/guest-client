@@ -125,11 +125,11 @@ export class User {
         t.eventContractAddress === eventContractAddress
     );
     if (t) {
-      t.amount += Number(quantity);
+      t.quantity += Number(quantity);
     } else {
       this.fungibleTickets.push({
         ticketType: ticketType,
-        amount: Number(quantity),
+        quantity: Number(quantity),
         eventContractAddress: eventContractAddress,
       });
     }
@@ -194,17 +194,26 @@ export class User {
     // user is the one whe made the buy order and bought the ticket
     if (event.buyer === this.account) {
       if (ticket) {
-        ticket.amount += 1;
+        ticket.quantity += 1;
+        this.removeBuyOrder(
+          eventContractAddress,
+          info.ticketTypeId,
+          info.ticketId,
+          Number(event.percentage)
+        );
       } else {
         this.fungibleTickets.push({
           ticketType: info.ticketTypeId,
-          amount: 1,
+          quantity: 1,
           eventContractAddress: eventContractAddress,
         });
       }
       // user is the one whe filled the buy order and sold the ticket
-    } else {
-      ticket.quantity -= 1;
+    }
+    if (event.addr === this.account) {
+      if (ticket) {
+        ticket.quantity -= 1;
+      }
     }
   }
   handleBuyOrderNonFungibleFilled(eventContractAddress, event) {
@@ -217,6 +226,12 @@ export class User {
         ticketType: info.ticketTypeId,
         eventContractAddress: eventContractAddress,
       });
+      this.removeBuyOrder(
+        eventContractAddress,
+        info.ticketTypeId,
+        info.ticketId,
+        Number(event.percentage)
+      );
     } else {
       this.removeNfTicket(
         eventContractAddress,
@@ -236,13 +251,20 @@ export class User {
     // user is the one who made the sell order and sold the ticket
     if (event.seller === this.account) {
       ticket.quantity -= 1;
-    } else {
+      this.removeSellOrder(
+        eventContractAddress,
+        info.ticketTypeId,
+        info.ticketId,
+        Number(event.percentage)
+      );
+    }
+    if (event.addr === this.account) {
       if (ticket) {
-        ticket.amount += 1;
+        ticket.quantity += 1;
       } else {
         this.fungibleTickets.push({
           ticketType: info.ticketTypeId,
-          amount: 1,
+          quantity: 1,
           eventContractAddress: eventContractAddress,
         });
       }
@@ -257,6 +279,12 @@ export class User {
         eventContractAddress,
         info.ticketTypeId,
         info.ticketId
+      );
+      this.removeSellOrder(
+        eventContractAddress,
+        info.ticketTypeId,
+        info.ticketId,
+        Number(event.percentage)
       );
     } else {
       this.nonFungibleTickets.push({
@@ -384,29 +412,29 @@ export class User {
     );
   }
   getNumberFungibleOwned(event, type) {
-    let amount = 0;
+    let quantity = 0;
     for (const t of this.fungibleTickets) {
       if (t.eventContractAddress === event && t.ticketType === type) {
-        amount += Number(t.amount);
+        quantity += Number(t.quantity);
       }
     }
-    return amount;
+    return quantity;
   }
   ticketsOwnedForEvent(event) {
-    let amount = 0;
+    let quantity = 0;
     for (const t of this.fungibleTickets.concat(this.nonFungibleTickets)) {
       if (t.eventContractAddress === event) {
-        amount += Number(t.amount);
+        quantity += Number(t.quantity);
       }
     }
-    return amount;
+    return quantity;
   }
-  ownsFungibles(eventContract, ticketType, amount) {
+  ownsFungibles(eventContract, ticketType, quantity) {
     return (
       this.fungibleTickets.filter(
         (t) =>
           t.ticketType === ticketType &&
-          t.amount >= amount &&
+          t.quantity >= quantity &&
           t.eventContractAddress == eventContract
       ).length > 0
     );

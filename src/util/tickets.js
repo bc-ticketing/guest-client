@@ -201,7 +201,7 @@ export function hasSellOrder(ticket) {
 
 export function hasBuyOrder(ticket) {
   if (!ticket.isNf) {
-    return ticket.buyOrders.length != 0;
+    return ticket.buyOrders.filter((b) => b.quantity > 0).length != 0;
   } else {
     return ticket.buyOrders.length != 0;
   }
@@ -441,7 +441,9 @@ export async function withdrawSellOrderFungible(
     .sellingQueue(getFullTicketTypeId(false, ticketType), percentage)
     .call();
   let foundIndex;
-  for (let i = queue.head; i <= queue.tail; i++) {
+  console.log(queue);
+  for (let i = Number(queue.head); i <= Number(queue.tail); i++) {
+    console.log(i);
     const queuedUser = await contract.methods
       .getQueuedUserSelling(
         getFullTicketTypeId(false, ticketType),
@@ -449,6 +451,7 @@ export async function withdrawSellOrderFungible(
         i
       )
       .call();
+    console.log(queuedUser);
     if (
       queuedUser.userAddress === account &&
       Number(queuedUser.quantity) >= amount
@@ -834,18 +837,32 @@ export function addBuyOrders(
   ticketId = 0
 ) {
   if (ticketId == 0) {
-    ticketType.buyOrders.push({
-      address: address,
-      percentage: percentage,
-      quantity: quantity,
-    });
+    let existingOrder = ticketType.buyOrders.find(
+      (o) => o.address === address && o.percentage === percentage
+    );
+    if (existingOrder) {
+      existingOrder.quantity += 1;
+    } else {
+      ticketType.buyOrders.push({
+        address: address,
+        percentage: percentage,
+        quantity: quantity,
+      });
+    }
   } else {
     let ticket = ticketType.tickets.find((t) => t.ticketId == ticketId);
-    ticket.buyOrders.push({
-      address: address,
-      percentage: percentage,
-      quantity: quantity,
-    });
+    let existingOrder = ticket.buyOrders.find(
+      (o) => o.address === address && o.percentage === percentage
+    );
+    if (existingOrder) {
+      existingOrder.quantity += 1;
+    } else {
+      ticket.buyOrders.push({
+        address: address,
+        percentage: percentage,
+        quantity: quantity,
+      });
+    }
   }
 }
 
@@ -882,13 +899,13 @@ export function removeBuyOrders(
     let order = ticketType.buyOrders.find(
       (o) => o.address === address && o.percentage === percentage
     );
-    order.quantity = Math.min(0, order.quantity - quantity);
+    order.quantity = Math.max(0, order.quantity - quantity);
   } else {
     let ticket = ticketType.tickets.find((t) => t.ticketId === ticketId);
     let order = ticket.buyOrders.find(
       (o) => o.address === address && o.percentage === percentage
     );
-    order.quantity = Math.min(0, order.quantity - quantity);
+    order.quantity = Math.max(0, order.quantity - quantity);
   }
 }
 

@@ -314,110 +314,46 @@
             v-bind:key="'fungible_' + ticket.typeId"
           >
             <h3>{{ ticket.title }}</h3>
-            <md-card class="queue-wrapper buying lower">
-              <div class="top">
-                <div class="chart-wrapper">
-                  <chart-test
-                    v-bind:chartId="`${ticket.typeId}_buy`"
-                    v-bind:chartdata="{
-                      labels: getPercentagesFromTicket(ticket),
-                      datasets: [
-                        {
-                          label: 'orders',
-                          borderWidth: 2,
-                          backgroundColor: '#1dba9d',
-                          borderColor: 'white',
-                          data: getOrdersFromTicket(ticket, 'buy').map(
-                            (o) => o.amount
-                          ),
-                        },
-                      ],
-                    }"
-                  />
+            <div class="moving lower">
+              <md-card class="queue-wrapper buying">
+                <div class="top">
+                  <div class="chart-wrapper">
+                    <chart-test
+                      v-bind:chartId="`${ticket.typeId}_buy`"
+                      v-bind:chartdata="{
+                        labels: getPercentagesFromTicket(ticket),
+                        datasets: [
+                          {
+                            label: 'orders',
+                            borderWidth: 2,
+                            backgroundColor: '#1dba9d',
+                            borderColor: 'white',
+                            data: getOrdersFromTicket(ticket, 'buy').map(
+                              (o) => o.amount
+                            ),
+                          },
+                        ],
+                      }"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div class="bottom">
-                <md-card-content v-if="ticketsToBuyLeft === 0">
-                  You already own the maximum allowed tickets for this event.
-                </md-card-content>
-                <md-card-expand v-else>
-                  <md-card-actions md-alignment="space-between">
-                    <p>
-                      buying queue
-                    </p>
-                    <md-card-expand-trigger>
-                      <md-button class="md-icon-button">
-                        <md-icon>keyboard_arrow_down</md-icon>
-                      </md-button>
-                    </md-card-expand-trigger>
-                  </md-card-actions>
-                  <md-card-expand-content>
-                    Join queue at
-                    <div class="selection">
-                      <md-field>
-                        <md-select
-                          md-dense
-                          v-model="queueToJoin"
-                          name="queue"
-                          id="queue"
-                        >
-                          <md-option
-                            v-for="perc in getPercentagesFromTicket(ticket)"
-                            v-bind:key="'ticket.typeId_buying_' + perc"
-                            :value="perc"
-                          >
-                            {{ perc }}%
-                          </md-option>
-                        </md-select>
-                      </md-field>
-                    </div>
-                    <md-button @click="createBuyOrder(ticket)">Join</md-button>
-                  </md-card-expand-content>
-                  <div></div>
-                </md-card-expand>
-              </div>
-            </md-card>
-
-            <md-card class="queue-wrapper selling lower">
-              <div class="top">
-                <div class="chart-wrapper">
-                  <chart-test
-                    v-bind:chartId="`${ticket.typeId}_sell`"
-                    v-bind:chartdata="{
-                      labels: getPercentagesFromTicket(ticket),
-                      datasets: [
-                        {
-                          label: 'orders',
-                          borderWidth: 2,
-                          backgroundColor: '#1dba9d',
-                          borderColor: 'white',
-                          data: getOrdersFromTicket(ticket, 'sell').map(
-                            (o) => o.amount
-                          ),
-                        },
-                      ],
-                    }"
-                  />
-                </div>
-              </div>
-              <div class="bottom">
-                <md-card-content v-if="ticketsToBuyLeft === 0">
-                  You already own the maximum allowed tickets for this event.
-                </md-card-content>
-                <md-card-expand v-else>
-                  <md-card-actions md-alignment="space-between">
-                    <p>
-                      selling queue
-                    </p>
-                    <md-card-expand-trigger>
-                      <md-button class="md-icon-button">
-                        <md-icon>keyboard_arrow_down</md-icon>
-                      </md-button>
-                    </md-card-expand-trigger>
-                  </md-card-actions>
-                  <md-card-expand-content>
-                    <div v-if="getOrdersFromTicket(ticket, 'sell').length > 0">
-                      Buy for
+                <div class="bottom">
+                  <md-card-content v-if="ticketsToBuyLeft === 0">
+                    You already own the maximum allowed tickets for this event.
+                  </md-card-content>
+                  <md-card-expand v-else>
+                    <md-card-actions md-alignment="space-between">
+                      <p>
+                        buying queue
+                      </p>
+                      <md-card-expand-trigger>
+                        <md-button class="md-icon-button">
+                          <md-icon>keyboard_arrow_down</md-icon>
+                        </md-button>
+                      </md-card-expand-trigger>
+                    </md-card-actions>
+                    <md-card-expand-content>
+                      Join queue at
                       <div class="selection">
                         <md-field>
                           <md-select
@@ -427,31 +363,103 @@
                             id="queue"
                           >
                             <md-option
-                              v-for="order in getOrdersFromTicket(
-                                ticket,
-                                'sell'
-                              ).filter((o) => o.amount > 0)"
-                              v-bind:key="
-                                'ticket.typeId_buying_' + order.percentage
-                              "
-                              :value="order.percentage"
+                              v-for="perc in getPercentagesFromTicket(ticket)"
+                              v-bind:key="'ticket.typeId_buying_' + perc"
+                              :value="perc"
                             >
-                              {{ order.percentage }}%
+                              {{ perc }}%
                             </md-option>
                           </md-select>
                         </md-field>
                       </div>
-                      <md-button @click="fillSellOrderFungible(ticket)"
-                        >Buy</md-button
+                      <md-button @click="createBuyOrder(ticket)"
+                        >Join</md-button
                       >
-                    </div>
-                    <div v-else>
-                      <p>No tickets currently for sale in this category</p>
-                    </div>
-                  </md-card-expand-content>
-                </md-card-expand>
-              </div>
-            </md-card>
+                    </md-card-expand-content>
+                    <div></div>
+                  </md-card-expand>
+                </div>
+              </md-card>
+            </div>
+
+            <div class="moving lower">
+              <md-card class="queue-wrapper selling">
+                <div class="top">
+                  <div class="chart-wrapper">
+                    <chart-test
+                      v-bind:chartId="`${ticket.typeId}_sell`"
+                      v-bind:chartdata="{
+                        labels: getPercentagesFromTicket(ticket),
+                        datasets: [
+                          {
+                            label: 'orders',
+                            borderWidth: 2,
+                            backgroundColor: '#1dba9d',
+                            borderColor: 'white',
+                            data: getOrdersFromTicket(ticket, 'sell').map(
+                              (o) => o.amount
+                            ),
+                          },
+                        ],
+                      }"
+                    />
+                  </div>
+                </div>
+                <div class="bottom">
+                  <md-card-content v-if="ticketsToBuyLeft === 0">
+                    You already own the maximum allowed tickets for this event.
+                  </md-card-content>
+                  <md-card-expand v-else>
+                    <md-card-actions md-alignment="space-between">
+                      <p>
+                        selling queue
+                      </p>
+                      <md-card-expand-trigger>
+                        <md-button class="md-icon-button">
+                          <md-icon>keyboard_arrow_down</md-icon>
+                        </md-button>
+                      </md-card-expand-trigger>
+                    </md-card-actions>
+                    <md-card-expand-content>
+                      <div
+                        v-if="getOrdersFromTicket(ticket, 'sell').length > 0"
+                      >
+                        Buy for
+                        <div class="selection">
+                          <md-field>
+                            <md-select
+                              md-dense
+                              v-model="queueToJoin"
+                              name="queue"
+                              id="queue"
+                            >
+                              <md-option
+                                v-for="order in getOrdersFromTicket(
+                                  ticket,
+                                  'sell'
+                                ).filter((o) => o.amount > 0)"
+                                v-bind:key="
+                                  'ticket.typeId_buying_' + order.percentage
+                                "
+                                :value="order.percentage"
+                              >
+                                {{ order.percentage }}%
+                              </md-option>
+                            </md-select>
+                          </md-field>
+                        </div>
+                        <md-button @click="fillSellOrderFungible(ticket)"
+                          >Buy</md-button
+                        >
+                      </div>
+                      <div v-else>
+                        <p>No tickets currently for sale in this category</p>
+                      </div>
+                    </md-card-expand-content>
+                  </md-card-expand>
+                </div>
+              </md-card>
+            </div>
           </div>
           <div
             class="ticket-type-am"
@@ -459,117 +467,126 @@
             v-bind:key="'nonfungible_' + ticket.typeId"
           >
             <h3>{{ ticket.title }}</h3>
-            <md-card class="queue-wrapper buying lower">
-              <div class="top">
-                <div class="chart-wrapper">
-                  <chart-test
-                    v-bind:chartId="`${ticket.typeId}_nf_buy`"
-                    v-bind:chartdata="{
-                      labels: getPercentagesFromTicket(ticket),
-                      datasets: [
-                        {
-                          label: 'orders',
-                          borderWidth: 2,
-                          backgroundColor: '#1dba9d',
-                          borderColor: 'white',
-                          data: getOrdersFromTicket(ticket, 'buy').map(
-                            (o) => o.amount
-                          ),
-                        },
-                      ],
-                    }"
-                  />
+            <div class="moving lower">
+              <md-card class="queue-wrapper buying">
+                <div class="top">
+                  <div class="chart-wrapper">
+                    <chart-test
+                      v-bind:chartId="`${ticket.typeId}_nf_buy`"
+                      v-bind:chartdata="{
+                        labels: getPercentagesFromTicket(ticket),
+                        datasets: [
+                          {
+                            label: 'orders',
+                            borderWidth: 2,
+                            backgroundColor: '#1dba9d',
+                            borderColor: 'white',
+                            data: getOrdersFromTicket(ticket, 'buy').map(
+                              (o) => o.amount
+                            ),
+                          },
+                        ],
+                      }"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div class="bottom">
-                <md-card-content v-if="ticketsToBuyLeft === 0">
-                  You already own the maximum allowed tickets for this event.
-                </md-card-content>
-                <md-card-expand v-else>
-                  <md-card-actions md-alignment="space-between">
-                    <p>
-                      buying queue
-                    </p>
-                    <md-card-expand-trigger>
-                      <md-button class="md-icon-button">
-                        <md-icon>keyboard_arrow_down</md-icon>
-                      </md-button>
-                    </md-card-expand-trigger>
-                  </md-card-actions>
-                  <md-card-expand-content>
-                    Join queue at
-                    <div class="selection">
-                      <md-field>
-                        <md-select md-dense v-model="queueToJoin" name="queue">
-                          <md-option
-                            v-for="perc in getPercentagesFromTicket(ticket)"
-                            v-bind:key="'ticket.typeId_buying_' + perc"
-                            :value="perc"
+                <div class="bottom">
+                  <md-card-content v-if="ticketsToBuyLeft === 0">
+                    You already own the maximum allowed tickets for this event.
+                  </md-card-content>
+                  <md-card-expand v-else>
+                    <md-card-actions md-alignment="space-between">
+                      <p>
+                        buying queue
+                      </p>
+                      <md-card-expand-trigger>
+                        <md-button class="md-icon-button">
+                          <md-icon>keyboard_arrow_down</md-icon>
+                        </md-button>
+                      </md-card-expand-trigger>
+                    </md-card-actions>
+                    <md-card-expand-content>
+                      Join queue at
+                      <div class="selection">
+                        <md-field>
+                          <md-select
+                            md-dense
+                            v-model="queueToJoin"
+                            name="queue"
                           >
-                            {{ perc }}%
-                          </md-option>
-                        </md-select>
-                      </md-field>
-                    </div>
-                    <md-button @click="createBuyOrder(ticket)">Join</md-button>
-                  </md-card-expand-content>
-                  <div></div>
-                </md-card-expand>
-              </div>
-            </md-card>
-            <md-card class="queue-wrapper nf lower">
-              <div class="top">
-                <h3>Tickets for sale</h3>
-              </div>
-              <div class="bottom">
-                <md-card-content v-if="ticketsToBuyLeft === 0">
-                  You already own the maximum allowed tickets for this event.
-                </md-card-content>
-                <md-card-expand v-else>
-                  <md-card-actions md-alignment="space-between">
-                    <p>
-                      {{ allSellOferingsNfTicketType(ticket).length }} tickets
-                    </p>
-                    <md-card-expand-trigger>
-                      <md-button class="md-icon-button">
-                        <md-icon>keyboard_arrow_down</md-icon>
-                      </md-button>
-                    </md-card-expand-trigger>
-                  </md-card-actions>
-                  <md-card-expand-content>
-                    <div class="sell-offers-nf">
-                      <div
-                        class="sell-offering"
-                        v-for="(offering, index) in allSellOferingsNfTicketType(
-                          ticket
-                        )"
-                        v-bind:key="'sellOffering_' + index"
-                      >
-                        <span class="ticket-number"
-                          >Seat Number {{ offering.ticketId }}</span
-                        >
-                        <span class="percentage"
-                          >{{ offering.percentage }}%</span
-                        >
-                        <span
-                          class="fill-sell"
-                          @click="
-                            fillSellOrderNonFungible(
-                              ticket.typeId,
-                              offering.ticketId,
-                              offering.percentage,
-                              ticket.price
-                            )
-                          "
-                        >
-                          <md-icon>shop</md-icon>
-                        </span>
+                            <md-option
+                              v-for="perc in getPercentagesFromTicket(ticket)"
+                              v-bind:key="'ticket.typeId_buying_' + perc"
+                              :value="perc"
+                            >
+                              {{ perc }}%
+                            </md-option>
+                          </md-select>
+                        </md-field>
                       </div>
-                    </div>
-                  </md-card-expand-content>
-                </md-card-expand>
-              </div>
-            </md-card>
+                      <md-button @click="createBuyOrder(ticket)"
+                        >Join</md-button
+                      >
+                    </md-card-expand-content>
+                    <div></div>
+                  </md-card-expand>
+                </div>
+              </md-card>
+            </div>
+            <div class="moving lower">
+              <md-card class="queue-wrapper nf">
+                <div class="top">
+                  <h3>Tickets for sale</h3>
+                </div>
+                <div class="bottom">
+                  <md-card-content v-if="ticketsToBuyLeft === 0">
+                    You already own the maximum allowed tickets for this event.
+                  </md-card-content>
+                  <md-card-expand v-else>
+                    <md-card-actions md-alignment="space-between">
+                      <p>
+                        {{ allSellOferingsNfTicketType(ticket).length }} tickets
+                      </p>
+                      <md-card-expand-trigger>
+                        <md-button class="md-icon-button">
+                          <md-icon>keyboard_arrow_down</md-icon>
+                        </md-button>
+                      </md-card-expand-trigger>
+                    </md-card-actions>
+                    <md-card-expand-content>
+                      <div class="sell-offers-nf">
+                        <div
+                          class="sell-offering"
+                          v-for="(offering,
+                          index) in allSellOferingsNfTicketType(ticket)"
+                          v-bind:key="'sellOffering_' + index"
+                        >
+                          <span class="ticket-number"
+                            >Seat Number {{ offering.ticketId }}</span
+                          >
+                          <span class="percentage"
+                            >{{ offering.percentage }}%</span
+                          >
+                          <span
+                            class="fill-sell"
+                            @click="
+                              fillSellOrderNonFungible(
+                                ticket.typeId,
+                                offering.ticketId,
+                                offering.percentage,
+                                ticket.price
+                              )
+                            "
+                          >
+                            <md-icon>shop</md-icon>
+                          </span>
+                        </div>
+                      </div>
+                    </md-card-expand-content>
+                  </md-card-expand>
+                </div>
+              </md-card>
+            </div>
           </div>
         </div>
       </section>
@@ -754,15 +771,18 @@ export default {
   watch: {},
   methods: {
     handleScroll(e) {
-      let scroll = e.originalTarget.scrollTop;
-      //console.log(this.$refs["firstinfo"].offsetTop);
-      //console.log(scroll);
+      let scroll = e.originalTarget
+        ? e.originalTarget.scrollTop
+        : e.target
+        ? e.target.scrollTop
+        : 1000;
+
       for (const ref of document.getElementsByClassName("event-information")) {
         if (scroll + 543 >= ref.offsetTop + ref.offsetHeight) {
           ref.classList.remove("lower");
         }
       }
-      for (const ref of document.getElementsByClassName("queue-wrapper")) {
+      for (const ref of document.getElementsByClassName("moving")) {
         if (scroll + 543 >= ref.offsetTop + ref.offsetHeight - 50) {
           ref.classList.remove("lower");
         }
@@ -1553,7 +1573,8 @@ p.bold {
 }
 
 .event-information,
-.queue-wrapper {
+.queue-wrapper,
+.moving {
   transition: 0.3s ease-in-out;
   transform: translateY(0px);
   opacity: 1;
@@ -1563,7 +1584,8 @@ p.bold {
   transform: translateY(-80px);
 }
 .event-information.lower,
-.queue-wrapper.lower {
+.queue-wrapper.lower,
+.moving.lower {
   transform: translateY(150px);
   opacity: 0;
 }

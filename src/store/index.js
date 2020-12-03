@@ -219,8 +219,7 @@ export default new Vuex.Store({
             event.contract
           );
           user.setEventUpToDate(event.contractAddress, block.number);
-          // user.setEventUpToDate(event.contractAddress, loadToBlock);
-          // await idb.saveUser(user);
+          await idb.saveUser(user);
           commit("setActiveUser", user);
 
           event.lastFetchedBlock = block.number;

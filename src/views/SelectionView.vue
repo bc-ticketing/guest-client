@@ -310,7 +310,7 @@ export default {
 <style scoped>
 .selection {
   position: fixed;
-  top: 100vh;
+  top: var(--vh);
   left: 0;
   transition: transform 0.5s ease-in-out;
   width: 100%;

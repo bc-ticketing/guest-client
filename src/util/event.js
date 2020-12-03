@@ -432,7 +432,6 @@ export class Event {
 
   async getMaxTicketsPerPerson() {
     const tickets = await this.contract.methods.maxTicketsPerPerson().call();
-    console.log(tickets);
     this.maxTicketsPerPerson = Number(tickets);
   }
 
@@ -587,7 +586,7 @@ export class Event {
       1,
       "buy",
       "filled",
-      event.returnValues.buyer
+      event.returnValues.addr
     );
   }
   handleSellOrderFungibleFilled(event) {
@@ -756,11 +755,22 @@ export class Event {
 
   // go over all missed events while the app was offline and handle them
   async handleMissedEvents(currentUserAddress) {
-    const events = await this.contract.getPastEvents("allEvents", {
+    let events = await this.contract.getPastEvents("allEvents", {
       fromBlock: this.lastFetchedBlock + 1,
     });
+    const metadataEvents = await this.contract.getPastEvents("EventMetadata", {
+      fromBlock: this.lastFetchedBlock + 1,
+    });
+    const latestMetadataEvent =
+      metadataEvents.length > 0
+        ? metadataEvents[metadataEvents.length - 1]
+        : undefined;
+    events = events.filter((e) => e.event !== "EventMetadata");
     // this list will be populated by the event handlers and contain all events which are relevant for the current user!
     let userEvents = [];
+    if (latestMetadataEvent) {
+      await this.handleEventMetadata(latestMetadataEvent);
+    }
     for (const event of events) {
       // console.debug("handling missed event", event.event);
       try {
