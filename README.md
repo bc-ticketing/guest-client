@@ -85,3 +85,30 @@ npm run lint
 
 :warning: Make sure your Metamask is connected to the correct network! :warning:
 
+## Environment File & Variables
+
+The application needs a file named `.env.local` in the root directory. The content of the file needs to be a set of key-value pairs in the format `KEY=VALUE`. The following values need to be set:
+
+### Identity Contract Address
+Public address of the deployed Identity contract
+`VUE_APP_IDENTITY_CONTRACT_ADDRESS`
+
+### Event Factory Contract Address
+Public address of the deployed Event Factory Contract
+`VUE_APP_EVENT_FACTORY_CONTRACT_ADDRESS`
+
+### Trust Certificates API Url
+Url for the trust certificates API
+`VUE_APP_TRUST_CERTIFICATES_API_URL`
+
+### Trust Certificates API Port
+Port for the trust certificates API
+`VUE_APP_TRUST_CERTIFICATES_API_PORT`
+
+### Twitter Bearer Token
+Twitter API token for the trust certificates API
+`VUE_APP_TWITTER_BEARER_TOKEN`
+
+### Idetix Approver Address
+Public address of the Idetix Identity approver
+`VUE_APP_IDETIX_APPROVER_ADDRESS`
